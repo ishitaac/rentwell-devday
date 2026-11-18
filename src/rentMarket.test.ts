@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateRentComparison, type RentListing, type RentSnapshot } from "./rentMarket";
+import {
+  calculateRentComparison,
+  describeRentDifference,
+  type RentComparison,
+  type RentListing,
+  type RentSnapshot,
+} from "./rentMarket";
 
 const listing = (
   price: number,
@@ -96,5 +102,53 @@ describe("calculateRentComparison", () => {
 
   it("returns null for an empty snapshot", () => {
     expect(calculateRentComparison(snapshot([]), 2)).toBeNull();
+  });
+});
+
+describe("describeRentDifference", () => {
+  const comparison: RentComparison = {
+    count: 3,
+    lower: 1500,
+    median: 1800,
+    upper: 2100,
+    differenceScope: "exact-bedrooms",
+    observedStart: "2026-11-14T00:00:00.000Z",
+    observedEnd: "2026-11-18T00:00:00.000Z",
+  };
+
+  it("describes an above-median asking rent", () => {
+    expect(describeRentDifference(2100, comparison)).toEqual({
+      percentage: 16.666666666666664,
+      percentageLabel: "+16.7%",
+      directionLabel: "above median",
+      heading: "This rent is above the snapshot median.",
+    });
+  });
+
+  it("describes a below-median asking rent", () => {
+    expect(describeRentDifference(1600, comparison)).toEqual({
+      percentage: -11.11111111111111,
+      percentageLabel: "-11.1%",
+      directionLabel: "below median",
+      heading: "This rent is below the snapshot median.",
+    });
+  });
+
+  it("describes an asking rent equal to the median", () => {
+    expect(describeRentDifference(1800, comparison)).toEqual({
+      percentage: 0,
+      percentageLabel: "0.0%",
+      directionLabel: "at median",
+      heading: "This rent matches the snapshot median.",
+    });
+  });
+
+  it("describes an unavailable comparison without numeric claims", () => {
+    expect(describeRentDifference(1800, null)).toEqual({
+      percentage: null,
+      percentageLabel: "—",
+      directionLabel: "comparison unavailable",
+      heading: "Market comparison is unavailable.",
+    });
   });
 });

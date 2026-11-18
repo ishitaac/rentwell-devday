@@ -39,6 +39,13 @@ export type RentComparison = {
   observedEnd: string | null;
 };
 
+export type RentDifferenceDescription = {
+  percentage: number | null;
+  percentageLabel: string;
+  directionLabel: string;
+  heading: string;
+};
+
 export function calculateRentComparison(
   snapshot: RentSnapshot,
   bedrooms: number,
@@ -69,5 +76,39 @@ export function calculateRentComparison(
     differenceScope: usesExactBedrooms ? "exact-bedrooms" : "all-bedrooms-fallback",
     observedStart: observedDates.at(0) ?? null,
     observedEnd: observedDates.at(-1) ?? null,
+  };
+}
+
+export function describeRentDifference(
+  askingRent: number,
+  comparison: RentComparison | null,
+): RentDifferenceDescription {
+  if (!comparison || !Number.isFinite(askingRent) || comparison.median <= 0) {
+    return {
+      percentage: null,
+      percentageLabel: "—",
+      directionLabel: "comparison unavailable",
+      heading: "Market comparison is unavailable.",
+    };
+  }
+
+  const percentage = ((askingRent - comparison.median) / comparison.median) * 100;
+
+  if (percentage === 0) {
+    return {
+      percentage,
+      percentageLabel: "0.0%",
+      directionLabel: "at median",
+      heading: "This rent matches the snapshot median.",
+    };
+  }
+
+  const isAbove = percentage > 0;
+
+  return {
+    percentage,
+    percentageLabel: `${isAbove ? "+" : ""}${percentage.toFixed(1)}%`,
+    directionLabel: isAbove ? "above median" : "below median",
+    heading: `This rent is ${isAbove ? "above" : "below"} the snapshot median.`,
   };
 }
