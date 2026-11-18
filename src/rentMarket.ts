@@ -112,3 +112,19 @@ export function describeRentDifference(
     heading: `This rent is ${isAbove ? "above" : "below"} the snapshot median.`,
   };
 }
+
+export function describeComparisonMethod(
+  comparison: RentComparison | null,
+  bedrooms: number,
+): string {
+  if (!comparison) {
+    return "No valid listing prices were available in the dated RentCast snapshot, so no market comparison could be calculated.";
+  }
+
+  const scope =
+    comparison.differenceScope === "exact-bedrooms"
+      ? `${bedrooms}-bedroom listings`
+      : "all bedroom counts (broader fallback)";
+
+  return `We compared your asking rent with ${comparison.count} active Salt Lake City rentals from a dated RentCast snapshot using ${scope}.`;
+}

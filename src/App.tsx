@@ -7,7 +7,12 @@ import {
   type AdvisorScreen,
 } from "./Advisor";
 import rentSnapshotData from "./data/rentcast-slc.json";
-import { calculateRentComparison, describeRentDifference, type RentSnapshot } from "./rentMarket";
+import {
+  calculateRentComparison,
+  describeComparisonMethod,
+  describeRentDifference,
+  type RentSnapshot,
+} from "./rentMarket";
 
 type Screen = "home" | "rental" | "analysis" | "math" | "preferences" | "matches" | AdvisorScreen;
 type IconName =
@@ -513,6 +518,7 @@ function RentalInput({
 function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => void }) {
   const comparison = calculateRentComparison(RENT_SNAPSHOT, rental.bedrooms);
   const difference = describeRentDifference(rental.rent, comparison);
+  const comparisonMethod = describeComparisonMethod(comparison, rental.bedrooms);
   const max = Math.ceil(Math.max(rental.rent, comparison?.upper ?? 0, 1) / 100) * 100;
   const scopeLabel =
     comparison?.differenceScope === "exact-bedrooms"
@@ -613,10 +619,9 @@ function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => 
         <div>
           <h3>How we got here</h3>
           <p>
-            We compared your asking rent with {comparison?.count ?? 0} active Salt Lake City rentals
-            from a dated RentCast snapshot using {scopeLabel}. The median is the middle listed
-            rent—not an appraisal, a guarantee, or live market coverage. Building age, condition,
-            parking, location, and utilities can all explain differences.
+            {comparisonMethod} The median is the middle listed rent—not an appraisal, a guarantee,
+            or live market coverage. Building age, condition, parking, location, and utilities can
+            all explain differences.
           </p>
         </div>
       </section>

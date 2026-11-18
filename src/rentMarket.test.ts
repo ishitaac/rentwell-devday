@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateRentComparison,
+  describeComparisonMethod,
   describeRentDifference,
   type RentComparison,
   type RentListing,
@@ -150,5 +151,13 @@ describe("describeRentDifference", () => {
       directionLabel: "comparison unavailable",
       heading: "Market comparison is unavailable.",
     });
+  });
+});
+
+describe("describeComparisonMethod", () => {
+  it("does not claim that a comparison was performed when no valid listings are available", () => {
+    expect(describeComparisonMethod(null, 2)).toBe(
+      "No valid listing prices were available in the dated RentCast snapshot, so no market comparison could be calculated.",
+    );
   });
 });
