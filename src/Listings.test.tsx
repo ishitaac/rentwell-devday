@@ -114,6 +114,8 @@ describe("ListingsBrowser", () => {
     );
 
     expect(html).toContain("No rentals match those filters");
+    expect(html).toContain("move-in date");
+    expect(html).not.toContain("move-in month");
     expect(html).toContain("Clear all filters");
   });
 });

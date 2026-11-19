@@ -226,7 +226,7 @@ export function ListingsBrowser({
       ) : (
         <section className="listings-empty-state" aria-live="polite">
           <h2>No rentals match those filters</h2>
-          <p>Try a different price, bedroom count, move-in month, or search.</p>
+          <p>Try a different price, bedroom count, move-in date, or search.</p>
           <button type="button" onClick={clearFilters}>
             Clear all filters
           </button>
