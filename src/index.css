@@ -164,6 +164,27 @@
   border-radius: 10px;
   place-items: center;
 }
+.journey-notice {
+  display: flex;
+  width: min(1144px, calc(100% - 56px));
+  align-items: center;
+  gap: 10px;
+  margin: 22px auto -30px;
+  padding: 13px 16px;
+  border: 1px solid #cbe5dc;
+  border-radius: 12px;
+  color: var(--teal-dark);
+  background: var(--mint-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+.journey-notice button {
+  margin-left: auto;
+  border: 0;
+  color: var(--teal-dark);
+  background: transparent;
+  font-weight: 800;
+}
 
 .rental-plan-main {
   width: min(1200px, 100%);
@@ -3282,6 +3303,12 @@
 }
 .match-actions .text-button {
   font-size: 11px;
+}
+.roommate-choice-handoff {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
 }
 .prototype-note {
   display: flex;

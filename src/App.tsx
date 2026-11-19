@@ -9,8 +9,10 @@ import {
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { ManagerWorkspace } from "./ManagerWorkspace";
+import { RentalPlanSummary } from "./RentalPlan";
 import { RentalEntry } from "./RentalEntry";
 import rentSnapshotData from "./data/rentcast-slc.json";
+import type { DecisionOrigin, RoommateSelection } from "./demoAccount";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
 import {
   createDemoRentalDecision,
@@ -24,6 +26,12 @@ import {
   getRoommateStages,
   type RoommatePlanningContext,
 } from "./roommatePlanning";
+import {
+  ROOMMATE_PROFILES,
+  bindPendingRoommate,
+  createRoommateSelection,
+  type RoommateProfile,
+} from "./roommateProfiles";
 import {
   calculateRentComparison,
   describeComparisonMethod,
@@ -42,6 +50,7 @@ type Screen =
   | "math"
   | "preferences"
   | "matches"
+  | "plan-summary"
   | AdvisorScreen;
 type IconName =
   | "arrow"
@@ -62,7 +71,7 @@ export const HERO_IMAGE = "/listings/interior-warm.jpg";
 export const APARTMENT_IMAGE = "/listings/interior-blue.jpg";
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
 
-export type DecisionOrigin = "listings" | "rental-entry" | "manager";
+export type { DecisionOrigin } from "./demoAccount";
 
 export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
   return origin;
@@ -334,11 +343,24 @@ function Field({
   );
 }
 
-export function Home({ go }: { go: (screen: Screen) => void }) {
+export function Home({
+  go,
+  journeyNotice,
+}: {
+  go: (screen: Screen) => void;
+  journeyNotice?: string | null;
+}) {
   const sampleListing = getDemoListings(demoListingsDataset)[2].synthetic;
 
   return (
     <main>
+      {journeyNotice && (
+        <div className="journey-notice" role="status">
+          <Icon name="check" size={18} />
+          <span>{journeyNotice}</span>
+          <button onClick={() => go("listings")}>Choose a rental</button>
+        </div>
+      )}
       <section className="hero">
         <div className="hero-copy">
           <div className="location-pill">
@@ -1082,56 +1104,14 @@ export function Preferences({
   );
 }
 
-const profiles = [
-  {
-    initials: "MJ",
-    name: "Maya J.",
-    score: 94,
-    role: "Fictional profile · Graduate student",
-    budget: "$1,050–$1,250",
-    area: "The Avenues, Central City",
-    matches: [
-      "Similar tidy-but-not-perfect style",
-      "Compatible move-in timing",
-      "Friendly, independent home vibe",
-    ],
-    difference: "Maya starts her day earlier and prefers quiet after 10:30 PM.",
-    color: "peach",
-  },
-  {
-    initials: "AK",
-    name: "Alex K.",
-    score: 89,
-    role: "Fictional profile · UX designer",
-    budget: "$1,100–$1,350",
-    area: "The Avenues, Downtown",
-    matches: [
-      "Great fit with your stated housing budget",
-      "Similar approach to occasional guests",
-      "Both value clear chore expectations",
-    ],
-    difference: "Alex works from home three days a week.",
-    color: "mint-avatar",
-  },
-  {
-    initials: "RS",
-    name: "Riley S.",
-    score: 83,
-    role: "Fictional profile · Research assistant",
-    budget: "$950–$1,200",
-    area: "Central City, 9th & 9th",
-    matches: ["Flexible on neighborhood", "Compatible shared-space habits", "Same move-in window"],
-    difference: "Riley prefers a more social household on weekends.",
-    color: "blue-avatar",
-  },
-];
-
 export function Matches({
   context,
   go,
+  onChooseRoommate,
 }: {
   context: RoommatePlanningContext;
   go: (screen: Screen) => void;
+  onChooseRoommate: (profile: RoommateProfile) => void;
 }) {
   const [open, setOpen] = useState(0);
   const rental = context.rental;
@@ -1167,7 +1147,7 @@ export function Matches({
         </div>
       )}
       <div className="match-list">
-        {profiles.map((profile, index) => (
+        {ROOMMATE_PROFILES.map((profile, index) => (
           <article className={`match-card ${open === index ? "open" : ""}`} key={profile.name}>
             <div className="profile-core">
               <div className={`profile-avatar ${profile.color}`}>
@@ -1217,16 +1197,23 @@ export function Matches({
                 </div>
               </div>
               <div className="match-actions">
-                <Button onClick={() => setOpen(index)}>
-                  {open === index ? "Profile selected" : "View match details"}{" "}
-                  {open === index && <Icon name="check" size={17} />}
+                <Button onClick={() => onChooseRoommate(profile)}>
+                  Choose this roommate <Icon name="check" size={17} />
                 </Button>
+                <button className="text-button" onClick={() => setOpen(index)}>
+                  {open === index ? "Details expanded" : "View match details"}
+                </button>
                 {rental && (
                   <button className="text-button" onClick={() => go("math")}>
                     See apartment split <Icon name="arrow" size={16} />
                   </button>
                 )}
               </div>
+              <p className="roommate-choice-handoff">
+                {rental
+                  ? `Add ${profile.name} to My Rental Plan for ${rental.title}.`
+                  : "Choose a rental next. We’ll keep this roommate choice pending without inventing a monthly share."}
+              </p>
             </div>
           </article>
         ))}
@@ -1276,6 +1263,11 @@ function App() {
   const [roommateContext, setRoommateContext] = useState<RoommatePlanningContext>(() =>
     createRoommateFirstContext(),
   );
+  const [selectedRoommate, setSelectedRoommate] = useState<RoommateSelection | null>(null);
+  const [roommateStatus, setRoommateStatus] = useState<"not-started" | "selected" | "skipped">(
+    "not-started",
+  );
+  const [journeyNotice, setJourneyNotice] = useState<string | null>(null);
   const [savedDecisionIds, setSavedDecisionIds] = useState<string[]>([]);
   const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
   const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
@@ -1299,6 +1291,7 @@ function App() {
   };
   const startRoommateFirst = () => {
     setRoommateContext(createRoommateFirstContext());
+    setJourneyNotice(null);
     go("preferences");
   };
   const planWithRoommates = () => {
@@ -1306,6 +1299,29 @@ function App() {
     setRoommateContext(createRentalFirstRoommateContext(activeDecision));
     go("math");
   };
+  const chooseRoommate = (profile: RoommateProfile) => {
+    const decisionId = roommateContext.rental?.decisionId ?? null;
+    const selection = createRoommateSelection(profile, decisionId);
+    setSelectedRoommate(selection);
+    setRoommateStatus("selected");
+    if (decisionId && activeDecision?.decisionId === decisionId) {
+      setJourneyNotice(null);
+      go("plan-summary");
+      return;
+    }
+    setJourneyNotice(
+      `${profile.name} is saved as your pending roommate choice. Choose a rental to calculate the real share.`,
+    );
+    go("home");
+  };
+  useEffect(() => {
+    if (!activeDecision) return;
+    setSelectedRoommate((current) => {
+      const next = bindPendingRoommate(current, activeDecision.decisionId);
+      if (current && !next) setRoommateStatus("not-started");
+      return next;
+    });
+  }, [activeDecision?.decisionId]);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
@@ -1366,7 +1382,7 @@ function App() {
           <Icon name={menu ? "x" : "menu"} />
         </button>
       </header>
-      {screen === "home" && <Home go={go} />}
+      {screen === "home" && <Home go={go} journeyNotice={journeyNotice} />}
       {screen === "listings" && (
         <ListingsBrowser
           listings={demoListings}
@@ -1443,7 +1459,32 @@ function App() {
         />
       )}
       {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
-      {screen === "matches" && <Matches context={roommateContext} go={go} />}
+      {screen === "matches" && (
+        <Matches context={roommateContext} go={go} onChooseRoommate={chooseRoommate} />
+      )}
+      {screen === "plan-summary" && activeDecision && (
+        <RentalPlanSummary
+          decision={activeDecision}
+          roommate={selectedRoommate}
+          roommateStatus={roommateStatus}
+          advisorStatus="not-started"
+          savedAt={null}
+          saveState="idle"
+          onViewReceipt={() => go("listing-details")}
+          onChangeRental={() => go("listings")}
+          onExploreRoommates={planWithRoommates}
+          onChangeRoommate={planWithRoommates}
+          onReviewAdvisor={() => go("advisor")}
+          onViewAdvisor={() => go("decision")}
+          onSkipRoommate={() => {
+            setSelectedRoommate(null);
+            setRoommateStatus("skipped");
+          }}
+          onSkipAdvisor={() => undefined}
+          onSave={() => undefined}
+          onContinueWithoutSaving={() => go("home")}
+        />
+      )}
       {screen === "advisor" && activeDecision && <AdvisorHome decision={activeDecision} go={go} />}
       {screen === "lease" && activeDecision && <LeaseAnalysis decision={activeDecision} go={go} />}
       {screen === "truecost" && activeDecision && (

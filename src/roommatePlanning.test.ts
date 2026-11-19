@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { Matches, Preferences } from "./App";
 import { demoListingsDataset, getDemoListings, updateDemoListing } from "./demoListings";
 import { createDemoRentalDecision, createExternalRentalDecision } from "./rentalDecision";
+import { ROOMMATE_PROFILES } from "./roommateProfiles";
 import {
   createRentalFirstRoommateContext,
   createRoommateFirstContext,
@@ -107,6 +108,7 @@ describe("Matches context", () => {
       createElement(Matches, {
         context: createRoommateFirstContext(),
         go: () => undefined,
+        onChooseRoommate: () => undefined,
       }),
     );
 
@@ -134,12 +136,61 @@ describe("Matches context", () => {
       },
     };
 
-    const html = renderToStaticMarkup(createElement(Matches, { context, go: () => undefined }));
+    const html = renderToStaticMarkup(
+      createElement(Matches, {
+        context,
+        go: () => undefined,
+        onChooseRoommate: () => undefined,
+      }),
+    );
 
     expect(html).toContain("Campus apartment");
     expect(html).toContain("$2,300/mo total");
     expect(html).toContain("$1,150 each with two");
     expect(html).toContain("Back to Decision Receipt");
     expect(html).not.toContain("Start a new search");
+  });
+
+  it("offers a real choose action for every fictional profile", () => {
+    const html = renderToStaticMarkup(
+      createElement(Matches, {
+        context: createRoommateFirstContext(),
+        go: () => undefined,
+        onChooseRoommate: () => undefined,
+      }),
+    );
+
+    expect(html.match(/Choose this roommate/g)).toHaveLength(ROOMMATE_PROFILES.length);
+  });
+
+  it("explains the rental-first handoff to My Rental Plan", () => {
+    const context = createRentalFirstRoommateContext(
+      createDemoRentalDecision(getDemoListings(demoListingsDataset)[1]),
+    );
+    const html = renderToStaticMarkup(
+      createElement(Matches, {
+        context,
+        go: () => undefined,
+        onChooseRoommate: () => undefined,
+      }),
+    );
+
+    expect(html).toContain("Add Maya J. to My Rental Plan");
+    expect(html).toContain("Avenues Garden Apartment");
+    expect(html).toContain("$682 each with two");
+  });
+
+  it("sends a roommate-first choice to choose a rental without fabricating costs", () => {
+    const html = renderToStaticMarkup(
+      createElement(Matches, {
+        context: createRoommateFirstContext(),
+        go: () => undefined,
+        onChooseRoommate: () => undefined,
+      }),
+    );
+
+    expect(html).toContain("Choose a rental next");
+    expect(html).not.toContain("each with two");
+    expect(html).toContain("without inventing a monthly share");
   });
 });
