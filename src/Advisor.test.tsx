@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { AdvisorHome, DecisionSummary, LeaseAnalysis, TrueHousingCost } from "./Advisor";
 import { demoListingsDataset, getDemoListings } from "./demoListings";
-import { createDemoRentalDecision } from "./rentalDecision";
+import { createDemoRentalDecision, createExternalRentalDecision } from "./rentalDecision";
 
 const decision = createDemoRentalDecision(getDemoListings(demoListingsDataset)[1]);
 
@@ -50,5 +50,41 @@ describe("Advisor rental context", () => {
     expect(html).toContain("Plan with roommates");
     expect(html).not.toContain("24 sample listings");
     expect(html).not.toContain("View fictional roommate matches");
+  });
+
+  it("preserves cents and marks unknown external-rental evidence as missing", () => {
+    const externalDecision = createExternalRentalDecision({
+      label: "Three-bedroom rental",
+      neighborhood: "Central City",
+      askingRent: 1750.49,
+      bedrooms: 3,
+      squareFootage: 1200,
+      mandatoryRecurringFeeTotal: 10.5,
+      noMandatoryRecurringFees: false,
+      moveInDate: "2027-01-15",
+    });
+    const costs = renderToStaticMarkup(
+      <TrueHousingCost decision={externalDecision} go={() => undefined} />,
+    );
+    const summary = renderToStaticMarkup(
+      <DecisionSummary
+        decision={externalDecision}
+        go={() => undefined}
+        onBackToDecision={() => undefined}
+        onPlanWithRoommates={() => undefined}
+      />,
+    );
+
+    expect(costs).toContain("$1,760.99");
+    expect(costs).not.toContain("$1,761");
+    expect(summary).not.toContain("4 of 7 topics supported");
+    expect(summary).toMatch(/Refundable deposit<\/span><em class="missing">Missing/);
+  });
+
+  it("describes the guided Advisor as a fictional sample instead of uploaded-file analysis", () => {
+    const html = renderToStaticMarkup(<AdvisorHome decision={decision} go={() => undefined} />);
+
+    expect(html).toContain("fictional sample lease and the active Decision Receipt");
+    expect(html).not.toContain("grounded only in the document you provide");
   });
 });

@@ -74,6 +74,17 @@ export function getAdvisorEntryScreen(
   return decision ? "advisor" : "rental-entry";
 }
 
+export function refreshActiveDecisionFromListings(
+  decision: RentalDecisionRecord | null,
+  listings: DemoListing[],
+): RentalDecisionRecord | null {
+  if (!decision || decision.source !== "synthetic-demo-listing") return decision;
+  const currentListing = listings.find(
+    (listing) => listing.synthetic.listingId === decision.decisionId,
+  );
+  return currentListing ? createDemoRentalDecision(currentListing) : decision;
+}
+
 export function getNavSection(
   screen: Screen,
   decisionOrigin: DecisionOrigin,
@@ -1410,7 +1421,10 @@ function App() {
       {screen === "manager" && (
         <ManagerWorkspace
           listings={demoListings}
-          onListingsChange={setDemoListings}
+          onListingsChange={(listings) => {
+            setDemoListings(listings);
+            setActiveDecision((current) => refreshActiveDecisionFromListings(current, listings));
+          }}
           onPreviewListing={(listing) => openListing(listing, "manager")}
         />
       )}

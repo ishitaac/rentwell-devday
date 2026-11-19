@@ -10,11 +10,7 @@ export type AdvisorScreen = "advisor" | "lease" | "truecost" | "decision";
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
 
 function formatMoney(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
 type AdvisorIconName =
@@ -328,8 +324,8 @@ export function AdvisorHome({
             <i>Decide with confidence.</i>
           </h1>
           <p>
-            Clear, evidence-backed explanations for complicated rental decisions—grounded only in
-            the document you provide.
+            This guided prototype combines a fictional sample lease and the active Decision Receipt.
+            It does not process an uploaded document.
           </p>
           <p className="advisor-decision-context">
             Decision Receipt: <b>{model.title}</b> · {formatMoney(model.trueMonthlyCost)} true
@@ -428,10 +424,10 @@ export function AdvisorHome({
             <span>
               <AdvisorIcon name={uploaded ? "check" : "upload"} size={25} />
             </span>
-            <b>{uploaded ? "Document ready for demo" : "Drop a document here"}</b>
+            <b>{uploaded ? "File selected—not analyzed" : "Drop a document here"}</b>
             <p>
               {uploaded
-                ? "No file was transmitted or processed."
+                ? "The guided review still uses the fictional sample lease."
                 : "or click to choose a PDF or DOC"}
             </p>
             <small>PROTOTYPE · NO EXTERNAL UPLOAD OCCURS</small>
@@ -874,6 +870,17 @@ export function DecisionSummary({
   const [panel, setPanel] = useState<"document" | "assistant">("assistant");
   const model = buildAdvisorDecisionModel(decision, RENT_SNAPSHOT);
   const decisionSections = getDecisionSections(model);
+  const evidenceRows = [
+    ["§ 2.1", "Rent and 12-month term", "Used"],
+    ["§ 3.2", "Refundable deposit", model.securityDeposit === null ? "Missing" : "Used"],
+    ["§ 4.1", "Recurring mandatory fees", "Used"],
+    ["§ 6.3", "Late payment fees", "Used"],
+    ["§ 9.2", "Early termination", "Used"],
+    ["§ 12.4", "Roommates and subletting", "Used"],
+    ["—", "HOA / community rules", "Missing"],
+    ["—", "Renewal and move-out terms", "Missing"],
+  ];
+  const supportedEvidenceCount = evidenceRows.filter(([, , status]) => status === "Used").length;
   return (
     <main className="advisor-main advisor-workspace decision-workspace">
       <AdvisorProgress current="decision" go={(screen) => go(screen)} />
@@ -904,21 +911,14 @@ export function DecisionSummary({
               </span>
               <div>
                 <small>EVIDENCE COVERAGE</small>
-                <strong>4 of 7 topics supported</strong>
-                <p>Three topics still need written clarification.</p>
+                <strong>
+                  {supportedEvidenceCount} of {evidenceRows.length} evidence topics supported
+                </strong>
+                <p>Unknown terms stay marked as missing rather than being assumed.</p>
               </div>
             </div>
             <h3>Source index</h3>
-            {[
-              ["§ 2.1", "Rent and 12-month term", "Used"],
-              ["§ 3.2", "Refundable deposit", "Used"],
-              ["§ 4.1", "Recurring and admin fees", "Used"],
-              ["§ 6.3", "Late payment fees", "Used"],
-              ["§ 9.2", "Early termination", "Used"],
-              ["§ 12.4", "Roommates and subletting", "Used"],
-              ["—", "HOA / community rules", "Missing"],
-              ["—", "Renewal and move-out terms", "Missing"],
-            ].map(([cite, label, status]) => (
+            {evidenceRows.map(([cite, label, status]) => (
               <div className="source-index-row" key={label}>
                 <b>{cite}</b>
                 <span>{label}</span>

@@ -1,12 +1,30 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import App, { getAdvisorEntryScreen, getDecisionBackScreen, getNavSection } from "./App";
+import App, {
+  getAdvisorEntryScreen,
+  getDecisionBackScreen,
+  getNavSection,
+  refreshActiveDecisionFromListings,
+} from "./App";
+import { demoListingsDataset, getDemoListings, updateDemoListing } from "./demoListings";
+import { createDemoRentalDecision } from "./rentalDecision";
 
 describe("unified App navigation", () => {
   it("requires a rental decision before opening the Advisor", () => {
     expect(getAdvisorEntryScreen(null)).toBe("rental-entry");
     expect(getAdvisorEntryScreen({ decisionId: "selected" })).toBe("advisor");
+  });
+
+  it("refreshes an active rental decision after a manager saves that listing", () => {
+    const listings = getDemoListings(demoListingsDataset);
+    const original = listings[1];
+    const active = createDemoRentalDecision(original);
+    const updated = updateDemoListing(listings, original.synthetic.listingId, {
+      askingRent: 1500,
+    });
+
+    expect(refreshActiveDecisionFromListings(active, updated)?.askingRent).toBe(1500);
   });
 
   it("exposes renter choices and separates the property-manager role", () => {
