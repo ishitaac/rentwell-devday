@@ -2,16 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { demoListingsDataset, getDemoListings } from "./demoListings";
-import {
-  ListingCard,
-  ListingDetails,
-  ListingsBrowser,
-  RentalDecisionDetails,
-} from "./Listings";
-import {
-  createDemoRentalDecision,
-  createExternalRentalDecision,
-} from "./rentalDecision";
+import { ListingCard, ListingDetails, ListingsBrowser, RentalDecisionDetails } from "./Listings";
+import { createDemoRentalDecision, createExternalRentalDecision } from "./rentalDecision";
+import { DEFAULT_LISTING_FILTERS } from "./listingFilters";
 
 describe("ListingCard", () => {
   it("shows the renter-facing cost and disclosure facts", () => {
@@ -45,6 +38,55 @@ describe("ListingsBrowser", () => {
     expect(html).toContain("/listings/interior-blue.jpg");
     expect(html).toContain("/listings/interior-warm.jpg");
     expect(html.match(/View details/g)).toHaveLength(3);
+  });
+
+  it("renders usable price, bedroom, move-in, and fee controls", () => {
+    const listings = getDemoListings(demoListingsDataset).slice(0, 6);
+
+    const html = renderToStaticMarkup(
+      <ListingsBrowser listings={listings} onViewDetails={() => undefined} />,
+    );
+
+    expect(html).toContain("True monthly cost");
+    expect(html).toContain("Bedrooms");
+    expect(html).toContain("Move-in month");
+    expect(html).toContain("No mandatory recurring fees");
+    expect(html).toContain("Complete fee disclosure");
+    expect(html).not.toContain("Clear all");
+  });
+
+  it("applies controlled filters and offers a clear action", () => {
+    const listings = getDemoListings(demoListingsDataset).slice(0, 6);
+
+    const html = renderToStaticMarkup(
+      <ListingsBrowser
+        listings={listings}
+        onViewDetails={() => undefined}
+        filters={{ ...DEFAULT_LISTING_FILTERS, bedrooms: "2" }}
+        onFiltersChange={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("1 rental match");
+    expect(html).toContain("University View Condo");
+    expect(html).not.toContain("Foothill Family Home");
+    expect(html).toContain("Clear all");
+  });
+
+  it("shows a helpful empty state when no listing matches", () => {
+    const listings = getDemoListings(demoListingsDataset).slice(0, 6);
+
+    const html = renderToStaticMarkup(
+      <ListingsBrowser
+        listings={listings}
+        onViewDetails={() => undefined}
+        query="not a real neighborhood"
+        onQueryChange={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("No rentals match those filters");
+    expect(html).toContain("Clear all filters");
   });
 });
 

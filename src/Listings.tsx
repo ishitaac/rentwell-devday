@@ -3,6 +3,15 @@ import { useMemo, useState } from "react";
 import rentSnapshotData from "./data/rentcast-slc.json";
 import type { DemoListing } from "./demoListings";
 import {
+  DEFAULT_LISTING_FILTERS,
+  filterListings,
+  hasActiveListingFilters,
+  type ListingBedroomFilter,
+  type ListingFilters,
+  type ListingMoveInFilter,
+  type ListingPriceFilter,
+} from "./listingFilters";
+import {
   buildListingDecisionReceipt,
   buildRentalDecisionReceipt,
 } from "./listingDecision";
@@ -79,25 +88,33 @@ export function ListingsBrowser({
   onViewDetails,
   query: controlledQuery,
   onQueryChange,
+  filters: controlledFilters,
+  onFiltersChange,
 }: {
   listings: DemoListing[];
   onViewDetails: (listing: DemoListing) => void;
   query?: string;
   onQueryChange?: (query: string) => void;
+  filters?: ListingFilters;
+  onFiltersChange?: (filters: ListingFilters) => void;
 }) {
   const [localQuery, setLocalQuery] = useState("");
+  const [localFilters, setLocalFilters] = useState<ListingFilters>(DEFAULT_LISTING_FILTERS);
   const query = controlledQuery ?? localQuery;
   const setQuery = onQueryChange ?? setLocalQuery;
-  const filteredListings = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return listings;
-    return listings.filter(({ synthetic }) =>
-      [synthetic.title, synthetic.neighborhood, synthetic.propertyType]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalized),
-    );
-  }, [listings, query]);
+  const filters = controlledFilters ?? localFilters;
+  const setFilters = onFiltersChange ?? setLocalFilters;
+  const filteredListings = useMemo(
+    () => filterListings(listings, query, filters),
+    [filters, listings, query],
+  );
+  const filtersAreActive = hasActiveListingFilters(query, filters);
+  const updateFilter = <Key extends keyof ListingFilters>(key: Key, value: ListingFilters[Key]) =>
+    setFilters({ ...filters, [key]: value });
+  const clearFilters = () => {
+    setQuery("");
+    setFilters({ ...DEFAULT_LISTING_FILTERS });
+  };
 
   return (
     <main className="listings-page">
@@ -114,7 +131,7 @@ export function ListingsBrowser({
       </section>
 
       <section className="listings-controls" aria-label="Rental search controls">
-        <label>
+        <label className="listing-search-field">
           <span>Search listings</span>
           <input
             type="search"
@@ -123,31 +140,95 @@ export function ListingsBrowser({
             placeholder="Neighborhood, property, or type"
           />
         </label>
-        <div className="listing-filter-pills" aria-label="Available filters">
-          <span>Any price</span>
-          <span>Any beds</span>
-          <span>Any move-in date</span>
-          <span>Complete fee disclosure</span>
+        <div className="listing-filter-fields" aria-label="Available filters">
+          <label>
+            <span>True monthly cost</span>
+            <select
+              value={filters.price}
+              onChange={(event) => updateFilter("price", event.target.value as ListingPriceFilter)}
+            >
+              <option value="any">Any price</option>
+              <option value="under-1200">Under $1,200</option>
+              <option value="1200-1600">$1,200–$1,600</option>
+              <option value="over-1600">Over $1,600</option>
+            </select>
+          </label>
+          <label>
+            <span>Bedrooms</span>
+            <select
+              value={filters.bedrooms}
+              onChange={(event) =>
+                updateFilter("bedrooms", event.target.value as ListingBedroomFilter)
+              }
+            >
+              <option value="any">Any beds</option>
+              <option value="studio">Studio</option>
+              <option value="1">1 bedroom</option>
+              <option value="2">2 bedrooms</option>
+              <option value="3-plus">3+ bedrooms</option>
+            </select>
+          </label>
+          <label>
+            <span>Move-in month</span>
+            <select
+              value={filters.moveInMonth}
+              onChange={(event) =>
+                updateFilter("moveInMonth", event.target.value as ListingMoveInFilter)
+              }
+            >
+              <option value="any">Any move-in date</option>
+              <option value="2026-12">December 2026</option>
+              <option value="2027-01">January 2027</option>
+            </select>
+          </label>
+          <label className="listing-checkbox-filter">
+            <input
+              type="checkbox"
+              checked={filters.noMandatoryFees}
+              onChange={(event) => updateFilter("noMandatoryFees", event.target.checked)}
+            />
+            <span>No mandatory recurring fees</span>
+          </label>
+        </div>
+        <div className="listing-filter-meta">
+          <span className="listing-disclosure-badge">Complete fee disclosure</span>
+          {filtersAreActive && (
+            <button type="button" onClick={clearFilters}>
+              Clear all
+            </button>
+          )}
         </div>
       </section>
 
       <div className="listings-results-heading">
         <div>
-          <h2>{filteredListings.length} rentals match</h2>
+          <h2>
+            {filteredListings.length} {filteredListings.length === 1 ? "rental" : "rentals"} match
+          </h2>
           <p>Known mandatory fees are included in the displayed monthly cost.</p>
         </div>
         <span>Demo data only</span>
       </div>
 
-      <section className="listings-grid" aria-label="Rental listings">
-        {filteredListings.map((listing) => (
-          <ListingCard
-            key={listing.synthetic.listingId}
-            listing={listing}
-            onViewDetails={onViewDetails}
-          />
-        ))}
-      </section>
+      {filteredListings.length > 0 ? (
+        <section className="listings-grid" aria-label="Rental listings">
+          {filteredListings.map((listing) => (
+            <ListingCard
+              key={listing.synthetic.listingId}
+              listing={listing}
+              onViewDetails={onViewDetails}
+            />
+          ))}
+        </section>
+      ) : (
+        <section className="listings-empty-state" aria-live="polite">
+          <h2>No rentals match those filters</h2>
+          <p>Try a different price, bedroom count, move-in month, or search.</p>
+          <button type="button" onClick={clearFilters}>
+            Clear all filters
+          </button>
+        </section>
+      )}
     </main>
   );
 }

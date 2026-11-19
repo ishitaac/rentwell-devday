@@ -7,6 +7,7 @@ import {
   type AdvisorScreen,
 } from "./Advisor";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
+import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { ManagerWorkspace } from "./ManagerWorkspace";
 import { RentalEntry } from "./RentalEntry";
 import rentSnapshotData from "./data/rentcast-slc.json";
@@ -1256,6 +1257,9 @@ function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [menu, setMenu] = useState(false);
   const [listingQuery, setListingQuery] = useState("");
+  const [listingFilters, setListingFilters] = useState<ListingFilters>(() => ({
+    ...DEFAULT_LISTING_FILTERS,
+  }));
   const [activeDecision, setActiveDecision] = useState<RentalDecisionRecord | null>(null);
   const [decisionOrigin, setDecisionOrigin] = useState<DecisionOrigin>("listings");
   const [externalEntry, setExternalEntry] = useState<ExternalRentalEntry>(
@@ -1366,6 +1370,8 @@ function App() {
           onViewDetails={(listing) => openListing(listing, "listings")}
           query={listingQuery}
           onQueryChange={setListingQuery}
+          filters={listingFilters}
+          onFiltersChange={setListingFilters}
         />
       )}
       {screen === "listing-details" && activeDecision && (
