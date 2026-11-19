@@ -1,19 +1,18 @@
+import { assembleAnalysis } from "../src/finePrint/lib/assemble.js";
 import { segmentLease } from "../src/finePrint/lib/segment.js";
-import { verifyExtraction, type VerifiedExtraction } from "../src/finePrint/lib/verifyExtraction.js";
-import type { Clause } from "../src/finePrint/lib/types.js";
+import type { AnalysisResult } from "../src/finePrint/lib/types.js";
+import { verifyExtraction } from "../src/finePrint/lib/verifyExtraction.js";
 import { extractFromClauses } from "./extract.js";
 
-export interface RawAnalysis extends VerifiedExtraction {
-  clauses: Clause[];
-  model: string;
-  ms: number;
-}
-
-/** segment -> extract (model) -> verify (code). Lease text is never logged or stored. */
-export async function analyzeLease(leaseText: string): Promise<RawAnalysis> {
+/** segment -> extract (model) -> verify (code) -> costs/checklist/questions (code). */
+export async function analyzeLease(leaseText: string): Promise<AnalysisResult> {
   const started = Date.now();
   const clauses = segmentLease(leaseText);
   const { extraction, model } = await extractFromClauses(clauses);
   const verified = verifyExtraction(extraction, clauses);
-  return { ...verified, clauses, model, ms: Date.now() - started };
+  return assembleAnalysis({ ...verified, clauses }, leaseText, {
+    model,
+    source: "live",
+    ms: Date.now() - started,
+  });
 }

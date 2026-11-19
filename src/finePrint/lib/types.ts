@@ -92,7 +92,7 @@ export interface CostSummary {
     paidEarlierCents: number;
     totalCashOutCents: number;
     nonRefundableSubtotalCents: number; // signing fees + stated deposit deductions + paid earlier
-    maxDepositReturnCents: number;
+    depositReturns: { findingId: string; label: string; depositCents: number; deductionCents: number; maxReturnCents: number }[];
   } | null;
   percentExamples: {
     findingId: string;

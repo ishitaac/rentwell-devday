@@ -1,3 +1,4 @@
+import { looksLikeInjection } from "./injection.js";
 import type { Clause, Finding, QuoteRef, RentPhase } from "./types";
 
 /**
@@ -103,6 +104,7 @@ export function verifyFinding(finding: Unverified, clausesById: Map<string, Clau
   const fail = (reason: string): Finding => ({ ...finding, verified: false, verifyFailure: reason });
   const clause = clausesById.get(finding.clauseId);
   if (!clause) return fail(`clause ${finding.clauseId} does not exist`);
+  if (looksLikeInjection(clause.text)) return fail("clause contains instructions aimed at software");
   const quote = canonicalQuote(finding.quote, clause.text);
   if (!quote) return fail("quote not found in clause");
 
