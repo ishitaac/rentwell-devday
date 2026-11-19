@@ -1,0 +1,1055 @@
+{
+  "version": 1,
+  "generatedFrom": "2026-11-18T23:05:30.917Z",
+  "source": {
+    "provider": "RentCast",
+    "endpoint": "https://api.rentcast.io/v1/listings/rental/long-term",
+    "documentation": "https://developers.rentcast.io/reference/rental-listings-long-term"
+  },
+  "query": {
+    "city": "Salt Lake City",
+    "state": "UT",
+    "status": "Active",
+    "limit": 20
+  },
+  "limitations": [
+    "Cached snapshot; not live market coverage.",
+    "Listings may change or become unavailable after the retrieval time.",
+    "Market comparisons are informational and are not appraisals or guarantees."
+  ],
+  "listingCount": 20,
+  "listings": [
+    {
+      "market": {
+        "sourceKey": "[\"84108\",\"Single Family\",4,2,1874,2875]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84108",
+        "propertyType": "Single Family",
+        "bedrooms": 4,
+        "bathrooms": 2,
+        "squareFootage": 1874,
+        "price": 2875,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.206Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-001",
+        "managerId": "demo-manager-east",
+        "title": "Foothill Family Home",
+        "neighborhood": "East Bench",
+        "description": "Fictional four-bedroom demo home with flexible living space and quick access to foothill trails.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "resident-services",
+            "label": "Resident services",
+            "amount": 35
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 35,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 2910,
+        "securityDeposit": 1800,
+        "availableDate": "2026-12-15",
+        "images": [
+          "/listings/townhouse-exterior.jpg"
+        ],
+        "amenities": [
+          "Fenced yard",
+          "Covered parking",
+          "In-home laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84102\",\"Apartment\",1,1,550,1299]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84102",
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 550,
+        "price": 1299,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.205Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-002",
+        "managerId": "demo-manager-central",
+        "title": "Avenues Garden Apartment",
+        "neighborhood": "The Avenues",
+        "description": "Fictional one-bedroom demo apartment with a bright interior and compact, efficient layout.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "technology",
+            "label": "Technology fee",
+            "amount": 45
+          },
+          {
+            "id": "trash",
+            "label": "Trash service",
+            "amount": 20
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 65,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1364,
+        "securityDeposit": 700,
+        "availableDate": "2026-12-01",
+        "images": [
+          "/listings/interior-blue.jpg"
+        ],
+        "amenities": [
+          "Bike storage",
+          "Shared courtyard",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84111\",\"Apartment\",1,1,600,1350]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84111",
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 600,
+        "price": 1350,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.204Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-003",
+        "managerId": "demo-manager-central",
+        "title": "Central City Corner One-Bedroom",
+        "neighborhood": "Central City",
+        "description": "Fictional city apartment demo with natural light and a walkable downtown-edge location.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "water-sewer",
+            "label": "Water and sewer",
+            "amount": 38
+          },
+          {
+            "id": "building-services",
+            "label": "Building services",
+            "amount": 30
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 68,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1418,
+        "securityDeposit": 750,
+        "availableDate": "2026-12-05",
+        "images": [
+          "/listings/interior-warm.jpg"
+        ],
+        "amenities": [
+          "Secure entry",
+          "Package room",
+          "Transit nearby"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84111\",\"Apartment\",0,1,400,1095]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84111",
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 400,
+        "price": 1095,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.203Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-004",
+        "managerId": "demo-manager-downtown",
+        "title": "Library Square Studio",
+        "neighborhood": "Downtown",
+        "description": "Fictional studio demo designed for a simple commute and an efficient downtown lifestyle.",
+        "mandatoryRecurringFees": [],
+        "mandatoryRecurringFeeTotal": 0,
+        "noMandatoryRecurringFees": true,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1095,
+        "securityDeposit": 550,
+        "availableDate": "2026-12-10",
+        "images": [
+          "/listings/interior-gray.jpg"
+        ],
+        "amenities": [
+          "Secure entry",
+          "Community lounge",
+          "Walkable location"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84102\",\"Condo\",2,1.5,1200,1495]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84102",
+        "propertyType": "Condo",
+        "bedrooms": 2,
+        "bathrooms": 1.5,
+        "squareFootage": 1200,
+        "price": 1495,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.201Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-005",
+        "managerId": "demo-manager-east",
+        "title": "University View Condo",
+        "neighborhood": "University District",
+        "description": "Fictional two-bedroom condo demo with generous shared space and a dedicated dining area.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "hoa-services",
+            "label": "Resident association services",
+            "amount": 75
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 75,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1570,
+        "securityDeposit": 1000,
+        "availableDate": "2027-01-05",
+        "images": [
+          "/listings/interior-blue.jpg"
+        ],
+        "amenities": [
+          "Covered parking",
+          "Balcony",
+          "In-home laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84115\",\"Townhouse\",3,2,1275,1595]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84115",
+        "propertyType": "Townhouse",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "squareFootage": 1275,
+        "price": 1595,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.200Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-006",
+        "managerId": "demo-manager-south",
+        "title": "Liberty Wells Townhome",
+        "neighborhood": "Liberty Wells",
+        "description": "Fictional three-bedroom townhome demo with two levels and practical roommate-friendly space.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "trash",
+            "label": "Trash service",
+            "amount": 25
+          },
+          {
+            "id": "landscape",
+            "label": "Landscape service",
+            "amount": 40
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 65,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1660,
+        "securityDeposit": 1200,
+        "availableDate": "2026-12-20",
+        "images": [
+          "/listings/townhouse-exterior.jpg"
+        ],
+        "amenities": [
+          "Private patio",
+          "In-home laundry",
+          "Storage room"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84102\",\"Apartment\",2,1,null,1345]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84102",
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": null,
+        "price": 1345,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.200Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-007",
+        "managerId": "demo-manager-central",
+        "title": "University District Two-Bedroom",
+        "neighborhood": "University District",
+        "description": "Fictional two-bedroom demo listing with square footage intentionally unavailable for fallback testing.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "technology",
+            "label": "Technology fee",
+            "amount": 50
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 50,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1395,
+        "securityDeposit": 800,
+        "availableDate": "2026-12-08",
+        "images": [
+          "/listings/interior-warm.jpg"
+        ],
+        "amenities": [
+          "Study room",
+          "Bike storage",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84104\",\"Apartment\",1,1,750,950]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84104",
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 750,
+        "price": 950,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.199Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-008",
+        "managerId": "demo-manager-west",
+        "title": "Glendale Courtyard One-Bedroom",
+        "neighborhood": "Glendale",
+        "description": "Fictional one-bedroom demo apartment with a roomy layout and shared landscaped courtyard.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "water-sewer",
+            "label": "Water and sewer",
+            "amount": 35
+          },
+          {
+            "id": "trash",
+            "label": "Trash service",
+            "amount": 18
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 53,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1003,
+        "securityDeposit": 500,
+        "availableDate": "2026-12-03",
+        "images": [
+          "/listings/interior-gray.jpg"
+        ],
+        "amenities": [
+          "Shared courtyard",
+          "Off-street parking",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84129\",\"Townhouse\",3,2,1350,2299]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84129",
+        "propertyType": "Townhouse",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "squareFootage": 1350,
+        "price": 2299,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.198Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-009",
+        "managerId": "demo-manager-west",
+        "title": "Westside Three-Bedroom Townhome",
+        "neighborhood": "Westside",
+        "description": "Fictional three-bedroom townhome demo with an attached garage and flexible shared living space.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "community-services",
+            "label": "Community services",
+            "amount": 55
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 55,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 2354,
+        "securityDeposit": 1500,
+        "availableDate": "2027-01-10",
+        "images": [
+          "/listings/townhouse-exterior.jpg"
+        ],
+        "amenities": [
+          "Attached garage",
+          "Private entry",
+          "In-home laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84102\",\"Apartment\",2,1,900,1595]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84102",
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 900,
+        "price": 1595,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.197Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-010",
+        "managerId": "demo-manager-east",
+        "title": "Avenues Two-Bedroom Retreat",
+        "neighborhood": "The Avenues",
+        "description": "Fictional two-bedroom demo apartment with a calm interior and space for a home office.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "parking",
+            "label": "Required parking",
+            "amount": 65
+          },
+          {
+            "id": "trash",
+            "label": "Trash service",
+            "amount": 20
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 85,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1680,
+        "securityDeposit": 950,
+        "availableDate": "2026-12-18",
+        "images": [
+          "/listings/interior-blue.jpg"
+        ],
+        "amenities": [
+          "Covered parking",
+          "Dishwasher",
+          "Storage closet"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84104\",\"Apartment\",1,1,500,895]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84104",
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 500,
+        "price": 895,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.196Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-011",
+        "managerId": "demo-manager-west",
+        "title": "Poplar Grove Compact One-Bedroom",
+        "neighborhood": "Poplar Grove",
+        "description": "Fictional value-focused one-bedroom demo apartment with a simple, compact floor plan.",
+        "mandatoryRecurringFees": [],
+        "mandatoryRecurringFeeTotal": 0,
+        "noMandatoryRecurringFees": true,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 895,
+        "securityDeposit": 450,
+        "availableDate": "2026-12-02",
+        "images": [
+          "/listings/interior-warm.jpg"
+        ],
+        "amenities": [
+          "Off-street parking",
+          "Shared green space",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84105\",\"Apartment\",2,1,1004,1500]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84105",
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 1004,
+        "price": 1500,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.191Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-012",
+        "managerId": "demo-manager-sugarhouse",
+        "title": "Sugar House Park Two-Bedroom",
+        "neighborhood": "Sugar House",
+        "description": "Fictional two-bedroom demo apartment with a spacious living area near neighborhood parks.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "water-sewer",
+            "label": "Water and sewer",
+            "amount": 42
+          },
+          {
+            "id": "technology",
+            "label": "Technology fee",
+            "amount": 35
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 77,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1577,
+        "securityDeposit": 900,
+        "availableDate": "2026-12-12",
+        "images": [
+          "/listings/interior-gray.jpg"
+        ],
+        "amenities": [
+          "Balcony",
+          "Dishwasher",
+          "Bike storage"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84103\",\"Apartment\",0,1,633,915]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84103",
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 633,
+        "price": 915,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.190Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-013",
+        "managerId": "demo-manager-north",
+        "title": "Capitol Hill Oversized Studio",
+        "neighborhood": "Capitol Hill",
+        "description": "Fictional oversized studio demo with defined living and sleeping zones.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "building-services",
+            "label": "Building services",
+            "amount": 28
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 28,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 943,
+        "securityDeposit": 500,
+        "availableDate": "2026-12-06",
+        "images": [
+          "/listings/interior-blue.jpg"
+        ],
+        "amenities": [
+          "Secure entry",
+          "Hill views",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84105\",\"Apartment\",1,1,588,870]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84105",
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 588,
+        "price": 870,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.189Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-014",
+        "managerId": "demo-manager-sugarhouse",
+        "title": "Sugar House Garden One-Bedroom",
+        "neighborhood": "Sugar House",
+        "description": "Fictional one-bedroom demo with garden-level access and a practical everyday layout.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "water-sewer",
+            "label": "Water and sewer",
+            "amount": 32
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 32,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 902,
+        "securityDeposit": 475,
+        "availableDate": "2026-12-04",
+        "images": [
+          "/listings/interior-warm.jpg"
+        ],
+        "amenities": [
+          "Garden access",
+          "Bike storage",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84111\",\"Apartment\",0,1,400,995]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84111",
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 400,
+        "price": 995,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.189Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-015",
+        "managerId": "demo-manager-downtown",
+        "title": "Broadway District Studio",
+        "neighborhood": "Central City",
+        "description": "Fictional studio demo with a streamlined interior near dining, transit, and downtown services.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "technology",
+            "label": "Technology fee",
+            "amount": 40
+          },
+          {
+            "id": "trash",
+            "label": "Trash service",
+            "amount": 15
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 55,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1050,
+        "securityDeposit": 500,
+        "availableDate": "2026-12-11",
+        "images": [
+          "/listings/interior-gray.jpg"
+        ],
+        "amenities": [
+          "Secure entry",
+          "Package lockers",
+          "Transit nearby"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84116\",\"Apartment\",2,1,700,995]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84116",
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 700,
+        "price": 995,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.188Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-016",
+        "managerId": "demo-manager-northwest",
+        "title": "Rose Park Two-Bedroom",
+        "neighborhood": "Rose Park",
+        "description": "Fictional two-bedroom demo apartment with straightforward costs and convenient shared parking.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "water-sewer",
+            "label": "Water and sewer",
+            "amount": 36
+          },
+          {
+            "id": "trash",
+            "label": "Trash service",
+            "amount": 18
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 54,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1049,
+        "securityDeposit": 550,
+        "availableDate": "2026-12-09",
+        "images": [
+          "/listings/interior-blue.jpg"
+        ],
+        "amenities": [
+          "Off-street parking",
+          "Shared courtyard",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84102\",\"Apartment\",2,1,879,1545]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84102",
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 879,
+        "price": 1545,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.187Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-017",
+        "managerId": "demo-manager-east",
+        "title": "Lower Avenues Two-Bedroom",
+        "neighborhood": "Lower Avenues",
+        "description": "Fictional two-bedroom demo apartment balancing shared space with a walkable central location.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "parking",
+            "label": "Required parking",
+            "amount": 60
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 60,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1605,
+        "securityDeposit": 900,
+        "availableDate": "2027-01-03",
+        "images": [
+          "/listings/interior-warm.jpg"
+        ],
+        "amenities": [
+          "Covered parking",
+          "Dishwasher",
+          "Bike storage"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84111\",\"Apartment\",0,1,229,750]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84111",
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 229,
+        "price": 750,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.187Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-018",
+        "managerId": "demo-manager-downtown",
+        "title": "Downtown Micro Studio",
+        "neighborhood": "Downtown",
+        "description": "Fictional micro-studio demo built around affordability, storage, and a highly efficient footprint.",
+        "mandatoryRecurringFees": [],
+        "mandatoryRecurringFeeTotal": 0,
+        "noMandatoryRecurringFees": true,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 750,
+        "securityDeposit": 400,
+        "availableDate": "2026-12-01",
+        "images": [
+          "/listings/interior-gray.jpg"
+        ],
+        "amenities": [
+          "Built-in storage",
+          "Secure entry",
+          "Community lounge"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84104\",\"Apartment\",2,1,900,1050]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84104",
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 900,
+        "price": 1050,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.186Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-019",
+        "managerId": "demo-manager-west",
+        "title": "Glendale Two-Bedroom",
+        "neighborhood": "Glendale",
+        "description": "Fictional two-bedroom demo apartment with comfortable shared space and transparent monthly charges.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "water-sewer",
+            "label": "Water and sewer",
+            "amount": 40
+          },
+          {
+            "id": "trash",
+            "label": "Trash service",
+            "amount": 20
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 60,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1110,
+        "securityDeposit": 600,
+        "availableDate": "2026-12-14",
+        "images": [
+          "/listings/interior-blue.jpg"
+        ],
+        "amenities": [
+          "Off-street parking",
+          "Dishwasher",
+          "Shared green space"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    },
+    {
+      "market": {
+        "sourceKey": "[\"84105\",\"Apartment\",1,1,null,983]",
+        "city": "Salt Lake City",
+        "state": "UT",
+        "zipCode": "84105",
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": null,
+        "price": 983,
+        "listedDate": "2026-11-17T00:00:00.000Z",
+        "lastSeenDate": "2026-11-18T03:01:55.186Z"
+      },
+      "synthetic": {
+        "listingId": "demo-slc-020",
+        "managerId": "demo-manager-sugarhouse",
+        "title": "East Liberty One-Bedroom",
+        "neighborhood": "East Liberty Park",
+        "description": "Fictional one-bedroom demo listing with square footage unavailable and all recurring fees disclosed.",
+        "mandatoryRecurringFees": [
+          {
+            "id": "building-services",
+            "label": "Building services",
+            "amount": 25
+          },
+          {
+            "id": "technology",
+            "label": "Technology fee",
+            "amount": 35
+          }
+        ],
+        "mandatoryRecurringFeeTotal": 60,
+        "noMandatoryRecurringFees": false,
+        "feeDisclosureState": "complete",
+        "trueMonthlyCost": 1043,
+        "securityDeposit": 525,
+        "availableDate": "2026-12-07",
+        "images": [
+          "/listings/interior-warm.jpg"
+        ],
+        "amenities": [
+          "Bike storage",
+          "Shared patio",
+          "On-site laundry"
+        ],
+        "inventorySource": "synthetic",
+        "createdAt": "2026-11-18T18:00:00.000Z",
+        "updatedAt": "2026-11-18T18:00:00.000Z"
+      },
+      "provenance": {
+        "market": "RentCast sanitized snapshot",
+        "synthetic": "RentWell synthetic demo fixture"
+      }
+    }
+  ]
+}

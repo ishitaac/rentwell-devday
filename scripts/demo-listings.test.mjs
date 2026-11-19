@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -189,4 +189,130 @@ test("does not replace an existing output when fixture validation fails", async 
     /source coverage/,
   );
   assert.equal(await readFile(outputPath, "utf8"), originalOutput);
+});
+
+async function loadCommittedFixtures() {
+  const [snapshotText, enrichmentText] = await Promise.all([
+    readFile(path.join(process.cwd(), "src/data/rentcast-slc.json"), "utf8"),
+    readFile(path.join(process.cwd(), "src/data/demo-listing-enrichment.json"), "utf8"),
+  ]);
+  const source = JSON.parse(snapshotText);
+  const fixture = JSON.parse(enrichmentText);
+  return { source, fixture, dataset: buildDemoListings(source, fixture) };
+}
+
+test("builds exactly 20 complete demo listings from committed fixtures", async () => {
+  const { source, fixture, dataset } = await loadCommittedFixtures();
+
+  assert.equal(source.listings.length, 20);
+  assert.equal(fixture.listings.length, 20);
+  assert.equal(dataset.listingCount, 20);
+  assert.equal(dataset.listings.length, 20);
+  assert.equal(dataset.listings.every((listing) => listing.synthetic.inventorySource === "synthetic"), true);
+});
+
+test("uses every committed source key exactly once", async () => {
+  const { source, fixture } = await loadCommittedFixtures();
+  const sourceKeys = source.listings.map(createSourceKey);
+  const fixtureKeys = fixture.listings.map((listing) => listing.sourceKey);
+
+  assert.equal(new Set(sourceKeys).size, 20);
+  assert.equal(new Set(fixtureKeys).size, 20);
+  assert.deepEqual(new Set(fixtureKeys), new Set(sourceKeys));
+});
+
+test("covers studios through four bedrooms and all source property types", async () => {
+  const { dataset } = await loadCommittedFixtures();
+  const bedrooms = new Set(dataset.listings.map((listing) => listing.market.bedrooms));
+  const propertyTypes = new Set(dataset.listings.map((listing) => listing.market.propertyType));
+
+  assert.deepEqual([...bedrooms].sort(), [0, 1, 2, 3, 4]);
+  assert.deepEqual([...propertyTypes].sort(), ["Apartment", "Condo", "Single Family", "Townhouse"]);
+});
+
+test("has complete presentation fees images and availability on every fixture record", async () => {
+  const { dataset } = await loadCommittedFixtures();
+
+  for (const { synthetic } of dataset.listings) {
+    assert.match(synthetic.listingId, /^demo-slc-\d{3}$/);
+    assert.ok(synthetic.title.length > 0);
+    assert.ok(synthetic.neighborhood.length > 0);
+    assert.ok(synthetic.description.length > 0);
+    assert.equal(synthetic.feeDisclosureState, "complete");
+    assert.ok(Number.isFinite(synthetic.trueMonthlyCost));
+    assert.match(synthetic.availableDate, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(synthetic.images.length > 0);
+    assert.ok(synthetic.amenities.length > 0);
+  }
+});
+
+test("includes at least two listings that explicitly have no mandatory recurring fees", async () => {
+  const { dataset } = await loadCommittedFixtures();
+  const noFeeListings = dataset.listings.filter(
+    (listing) => listing.synthetic.noMandatoryRecurringFees === true,
+  );
+
+  assert.ok(noFeeListings.length >= 2);
+  assert.equal(
+    noFeeListings.every(
+      (listing) =>
+        listing.synthetic.mandatoryRecurringFees.length === 0 &&
+        listing.synthetic.trueMonthlyCost === listing.market.price,
+    ),
+    true,
+  );
+});
+
+test("references only committed local listing JPGs", async () => {
+  const { dataset } = await loadCommittedFixtures();
+  const imagePaths = new Set(dataset.listings.flatMap((listing) => listing.synthetic.images));
+
+  assert.equal(imagePaths.size, 4);
+  for (const imagePath of imagePaths) {
+    assert.match(imagePath, /^\/listings\/[a-z-]+\.jpg$/);
+    await access(path.join(process.cwd(), "public", imagePath.slice(1)));
+  }
+});
+
+test("contains no address contact credential agent or office fields", async () => {
+  const { fixture } = await loadCommittedFixtures();
+  const forbiddenKeys = new Set([
+    "address",
+    "formattedAddress",
+    "streetAddress",
+    "unit",
+    "personName",
+    "email",
+    "phone",
+    "apiKey",
+    "agent",
+    "listingAgent",
+    "office",
+    "listingOffice",
+  ]);
+  const found = [];
+  const visit = (value) => {
+    if (Array.isArray(value)) return value.forEach(visit);
+    if (!value || typeof value !== "object") return;
+    for (const [key, child] of Object.entries(value)) {
+      if (forbiddenKeys.has(key)) found.push(key);
+      visit(child);
+    }
+  };
+  visit(fixture);
+
+  assert.deepEqual(found, []);
+});
+
+test("labels market and synthetic provenance separately in every generated record", async () => {
+  const { dataset } = await loadCommittedFixtures();
+
+  assert.equal(
+    dataset.listings.every(
+      (listing) =>
+        listing.provenance.market === "RentCast sanitized snapshot" &&
+        listing.provenance.synthetic === "RentWell synthetic demo fixture",
+    ),
+    true,
+  );
 });
