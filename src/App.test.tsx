@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import App, { getDecisionBackScreen } from "./App";
+import App, { getDecisionBackScreen, getNavSection } from "./App";
 
 describe("unified App navigation", () => {
   it("exposes renter choices and separates the property-manager role", () => {
@@ -21,5 +21,11 @@ describe("unified App navigation", () => {
     expect(getDecisionBackScreen("listings")).toBe("listings");
     expect(getDecisionBackScreen("rental-entry")).toBe("rental-entry");
     expect(getDecisionBackScreen("manager")).toBe("manager");
+  });
+
+  it("keeps the roommate section active throughout cost split and matching", () => {
+    expect(getNavSection("math", "listings")).toBe("roommates");
+    expect(getNavSection("preferences", "rental-entry")).toBe("roommates");
+    expect(getNavSection("matches", "manager")).toBe("roommates");
   });
 });

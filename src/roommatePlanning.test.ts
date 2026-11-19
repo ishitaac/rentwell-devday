@@ -108,6 +108,7 @@ describe("Matches context", () => {
     expect(html).toContain("Matches based on your living preferences");
     expect(html).not.toContain("View apartment");
     expect(html).not.toContain("See apartment split");
+    expect(html).not.toContain("this apartment");
     expect(html).not.toContain("$2,300");
     expect(html).not.toContain("$1,150 each");
   });

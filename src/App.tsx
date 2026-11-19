@@ -67,6 +67,22 @@ export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
   return origin;
 }
 
+export function getNavSection(
+  screen: Screen,
+  decisionOrigin: DecisionOrigin,
+): "" | "advisor" | "listings" | "manager" | "rental" | "roommates" {
+  if (["advisor", "lease", "truecost", "decision"].includes(screen)) return "advisor";
+  if (["math", "preferences", "matches"].includes(screen)) return "roommates";
+  if (screen === "manager" || (screen === "listing-details" && decisionOrigin === "manager")) {
+    return "manager";
+  }
+  if (screen === "listings" || (screen === "listing-details" && decisionOrigin === "listings")) {
+    return "listings";
+  }
+  if (screen === "home") return "";
+  return "rental";
+}
+
 const INITIAL_EXTERNAL_ENTRY: ExternalRentalEntry = {
   label: "",
   neighborhood: "",
@@ -1087,7 +1103,7 @@ const profiles = [
     budget: "$1,100–$1,350",
     area: "The Avenues, Downtown",
     matches: [
-      "Great budget fit for this apartment",
+      "Great fit with your stated housing budget",
       "Similar approach to occasional guests",
       "Both value clear chore expectations",
     ],
@@ -1285,20 +1301,7 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
   const navActive = useMemo(
-    () =>
-      ["advisor", "lease", "truecost", "decision"].includes(screen)
-        ? "advisor"
-        : screen === "preferences" || screen === "matches"
-          ? "roommates"
-          : screen === "manager" ||
-              (screen === "listing-details" && decisionOrigin === "manager")
-            ? "manager"
-            : screen === "listings" ||
-                (screen === "listing-details" && decisionOrigin === "listings")
-              ? "listings"
-              : screen === "home"
-                ? ""
-                : "rental",
+    () => getNavSection(screen, decisionOrigin),
     [decisionOrigin, screen],
   );
 
