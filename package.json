@@ -9,8 +9,9 @@
     "preview": "vite preview",
     "format": "oxfmt",
     "test": "vitest run src",
-    "test:data": "node --test scripts/rentcast-data.test.mjs",
-    "data:rentcast": "node --env-file-if-exists=.env.local scripts/fetch-rentcast-listings.mjs"
+    "test:data": "node --test scripts/rentcast-data.test.mjs scripts/demo-listings.test.mjs",
+    "data:rentcast": "node --env-file-if-exists=.env.local scripts/fetch-rentcast-listings.mjs",
+    "data:demo": "node scripts/build-demo-listings.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",
