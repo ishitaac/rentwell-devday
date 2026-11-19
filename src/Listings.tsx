@@ -20,9 +20,11 @@ function formatDate(value: string): string {
 export function ListingCard({
   listing,
   onViewDetails,
+  showAction = true,
 }: {
   listing: DemoListing;
   onViewDetails: (listing: DemoListing) => void;
+  showAction?: boolean;
 }) {
   const { synthetic } = listing;
   const receipt = buildListingDecisionReceipt(listing, RENT_SNAPSHOT);
@@ -55,9 +57,11 @@ export function ListingCard({
           <span>Complete fee disclosure</span>
         </div>
 
-        <button className="listing-card-action" onClick={() => onViewDetails(listing)}>
-          View details <span aria-hidden="true">→</span>
-        </button>
+        {showAction && (
+          <button className="listing-card-action" onClick={() => onViewDetails(listing)}>
+            View details <span aria-hidden="true">→</span>
+          </button>
+        )}
       </div>
     </article>
   );

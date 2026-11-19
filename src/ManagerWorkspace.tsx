@@ -527,8 +527,8 @@ export function ManagerEditor({
         <button type="button" onClick={onCancel}>
           Cancel
         </button>
-        <button type="button" onClick={onPreview}>
-          Preview as renter
+        <button type="button" onClick={onPreview} disabled={saveState === "unsaved"}>
+          {saveState === "saved" ? "Preview as renter" : "Save before renter preview"}
         </button>
         <button type="submit" className="primary">
           Save changes
@@ -546,7 +546,7 @@ export function ManagerRenterPreview({ listing }: { listing: DemoListing }) {
         <h2>Renter preview</h2>
         <p>This card uses the same listing record renters see.</p>
       </div>
-      <ListingCard listing={listing} onViewDetails={() => undefined} />
+      <ListingCard listing={listing} onViewDetails={() => undefined} showAction={false} />
     </aside>
   );
 }
@@ -644,7 +644,7 @@ export function ManagerWorkspace({
   const openEditor = (listing: DemoListing) => {
     setDraft(createManagerListingDraft(listing));
     setErrors({});
-    setSaveState("unsaved");
+    setSaveState("saved");
   };
 
   const saveDraft = () => {
@@ -689,7 +689,7 @@ export function ManagerWorkspace({
                 setDraft(null);
                 setErrors({});
               }}
-              onPreview={() => onPreviewListing(previewListing)}
+              onPreview={() => sourceListing && onPreviewListing(sourceListing)}
             />
             <ManagerRenterPreview listing={previewListing} />
           </div>

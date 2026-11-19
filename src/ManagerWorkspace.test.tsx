@@ -98,7 +98,8 @@ describe("ManagerEditor", () => {
     expect(html).toContain("Add fee");
     expect(html).toContain("Save changes");
     expect(html).toContain("Cancel");
-    expect(html).toContain("Preview as renter");
+    expect(html).toContain("Save before renter preview");
+    expect(html).toContain('disabled=""');
   });
 
   it("shows field errors and saved confirmation without hiding the draft", () => {
@@ -120,6 +121,7 @@ describe("ManagerEditor", () => {
     expect(html).toContain("Changes saved locally");
     expect(html).toContain("Base rent must be greater than zero.");
     expect(html).toContain("Avenues Garden Apartment");
+    expect(html).toContain("Preview as renter");
   });
 
   it("labels an explicit no-fee draft as known zero fees", () => {
@@ -158,6 +160,7 @@ describe("ManagerRenterPreview", () => {
     expect(html).toContain("/listings/interior-blue.jpg");
     expect(html).toContain("$1,364");
     expect(html).toContain("True monthly cost");
+    expect(html).not.toContain("View details");
   });
 
   it("shows the recalculated cost from the manager's saved listing record", () => {

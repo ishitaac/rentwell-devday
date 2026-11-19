@@ -1498,6 +1498,12 @@
   color: white;
   background: var(--teal);
 }
+.manager-editor-actions button:disabled {
+  cursor: not-allowed;
+  border-color: #c9d5d2;
+  color: #748682;
+  background: #eef2f1;
+}
 .manager-renter-preview {
   position: sticky;
   top: 0;
