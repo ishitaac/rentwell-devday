@@ -979,6 +979,346 @@
   margin-top: 9px;
   text-align: center;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.manager-page {
+  width: min(1240px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 42px 0 76px;
+}
+.manager-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+.manager-hero > div:first-child {
+  max-width: 720px;
+}
+.manager-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--teal-dark);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.manager-kicker span:last-child {
+  padding: 5px 8px;
+  border-radius: 99px;
+  background: var(--coral);
+  color: #854527;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.manager-hero h1 {
+  margin: 10px 0 9px;
+  max-width: 700px;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.08;
+}
+.manager-hero p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.manager-import-button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 16px;
+  border: 1px solid var(--teal);
+  border-radius: 11px;
+  color: var(--teal-dark);
+  background: white;
+  font-weight: 800;
+}
+.manager-import-button span {
+  padding: 3px 7px;
+  border-radius: 99px;
+  color: #854527;
+  background: var(--coral);
+  font-size: 9px;
+}
+.manager-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 28px 0 20px;
+}
+.manager-summary > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+.manager-summary strong {
+  font: 800 25px "Manrope";
+}
+.manager-summary span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.manager-listings-panel {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 12px 36px rgba(30, 66, 57, 0.06);
+}
+.manager-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.manager-toolbar label {
+  width: min(480px, 60%);
+}
+.manager-toolbar label > span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.manager-toolbar input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid #cfddd8;
+  border-radius: 10px;
+  color: var(--ink);
+  background: white;
+  outline: none;
+}
+.manager-toolbar input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.1);
+}
+.manager-toolbar > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.manager-toolbar > div strong {
+  font-size: 14px;
+}
+.manager-toolbar > div small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.manager-table-wrap {
+  overflow-x: auto;
+}
+.manager-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+}
+.manager-table th,
+.manager-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  text-align: left;
+  vertical-align: middle;
+}
+.manager-table th {
+  color: var(--muted);
+  background: var(--cream);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.manager-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.manager-table tbody tr:hover {
+  background: #fbfdfc;
+}
+.manager-property-cell {
+  display: grid;
+  grid-template-columns: 48px minmax(145px, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+.manager-property-cell img,
+.manager-mobile-heading img {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.manager-property-cell strong,
+.manager-property-cell span,
+.manager-mobile-heading strong,
+.manager-mobile-heading span {
+  display: block;
+}
+.manager-property-cell span,
+.manager-mobile-heading span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.manager-status {
+  display: inline-block;
+  padding: 5px 7px;
+  border-radius: 99px;
+  color: var(--teal-dark);
+  background: var(--mint-soft);
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.manager-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.manager-row-actions button,
+.manager-empty-state button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--teal);
+  border-radius: 8px;
+  color: var(--teal-dark);
+  background: white;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.manager-row-actions .primary {
+  color: white;
+  background: var(--teal);
+}
+.manager-empty-state {
+  display: flex;
+  min-height: 330px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 40px 20px;
+  text-align: center;
+}
+.manager-empty-state > span {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--teal-dark);
+  background: var(--mint-soft);
+  font-size: 24px;
+}
+.manager-empty-state h2 {
+  font-size: 20px;
+}
+.manager-empty-state p {
+  margin: 6px 0 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.manager-mobile-list {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .manager-page {
+    width: calc(100% - 32px);
+    padding: 30px 0 62px;
+  }
+  .manager-hero,
+  .manager-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .manager-import-button {
+    width: 100%;
+  }
+  .manager-summary {
+    grid-template-columns: 1fr;
+  }
+  .manager-summary > div {
+    justify-content: space-between;
+  }
+  .manager-toolbar label {
+    width: 100%;
+  }
+  .manager-toolbar > div {
+    align-items: flex-start;
+  }
+  .manager-table-wrap {
+    display: none;
+  }
+  .manager-mobile-list {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+  }
+  .manager-mobile-card {
+    padding: 15px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: white;
+  }
+  .manager-mobile-heading {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+  }
+  .manager-mobile-card dl {
+    display: grid;
+    gap: 7px;
+    margin: 15px 0 10px;
+  }
+  .manager-mobile-card dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11px;
+  }
+  .manager-mobile-card dt {
+    color: var(--muted);
+  }
+  .manager-mobile-card dd {
+    font-weight: 800;
+  }
+  .manager-mobile-card p {
+    margin-bottom: 12px;
+    color: var(--teal-dark);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .manager-mobile-card .manager-row-actions button {
+    flex: 1;
+  }
+}
 
 @media (max-width: 1000px) {
   .listings-grid {
