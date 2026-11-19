@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { Matches } from "./App";
+import { Matches, Preferences } from "./App";
 import {
   demoListingsDataset,
   getDemoListings,
@@ -97,6 +97,20 @@ describe("roommate planning stages", () => {
 });
 
 describe("Matches context", () => {
+  it("uses current move-in choices instead of expired 2025 dates", () => {
+    const html = renderToStaticMarkup(
+      createElement(Preferences, {
+        context: createRoommateFirstContext(),
+        go: () => undefined,
+      }),
+    );
+
+    expect(html).toContain("December 2026");
+    expect(html).toContain("January 2027");
+    expect(html).toContain("Flexible");
+    expect(html).not.toContain("2025");
+  });
+
   it("keeps roommate-first matches independent from a sample apartment", () => {
     const html = renderToStaticMarkup(
       createElement(Matches, {
@@ -111,6 +125,8 @@ describe("Matches context", () => {
     expect(html).not.toContain("this apartment");
     expect(html).not.toContain("$2,300");
     expect(html).not.toContain("$1,150 each");
+    expect(html).toContain("Back to home");
+    expect(html).not.toContain("Back to Decision Receipt");
   });
 
   it("uses the exact rental title and cost supplied by the handoff", () => {
@@ -134,5 +150,7 @@ describe("Matches context", () => {
     expect(html).toContain("Campus apartment");
     expect(html).toContain("$2,300/mo total");
     expect(html).toContain("$1,150 each with two");
+    expect(html).toContain("Back to Decision Receipt");
+    expect(html).not.toContain("Start a new search");
   });
 });

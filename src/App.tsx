@@ -874,7 +874,7 @@ function RoommateMath({
 
 const neighborhoods = ["The Avenues", "Central City", "Sugar House", "Downtown", "9th & 9th"];
 
-function Preferences({
+export function Preferences({
   context,
   go,
 }: {
@@ -884,7 +884,7 @@ function Preferences({
   const [budget, setBudget] = useState(1250);
   const [selectedAreas, setSelectedAreas] = useState(["The Avenues", "Central City"]);
   const [clean, setClean] = useState(4);
-  const [moveIn, setMoveIn] = useState("August 2025");
+  const [moveIn, setMoveIn] = useState("December 2026");
   const [schedule, setSchedule] = useState("Early-ish");
   const [guests, setGuests] = useState("Sometimes");
   const [atmosphere, setAtmosphere] = useState("Friendly & independent");
@@ -959,7 +959,7 @@ function Preferences({
             <p>How soon are you looking?</p>
           </div>
           <div className="select-cards">
-            {["August 2025", "September 2025", "Flexible"].map((x) => (
+            {["December 2026", "January 2027", "Flexible"].map((x) => (
               <button
                 className={moveIn === x ? "selected" : ""}
                 key={x}
@@ -1094,7 +1094,7 @@ const profiles = [
     area: "The Avenues, Central City",
     matches: [
       "Similar tidy-but-not-perfect style",
-      "Aligned August move-in",
+      "Compatible move-in timing",
       "Friendly, independent home vibe",
     ],
     difference: "Maya starts her day earlier and prefers quiet after 10:30 PM.",
@@ -1248,7 +1248,15 @@ export function Matches({
         <Button secondary onClick={() => go("preferences")}>
           Adjust preferences
         </Button>
-        <Button onClick={() => go("home")}>Start a new search</Button>
+        <Button
+          onClick={() =>
+            go(context.entryPerspective === "rental-first" ? "listing-details" : "home")
+          }
+        >
+          {context.entryPerspective === "rental-first"
+            ? "Back to Decision Receipt"
+            : "Back to home"}
+        </Button>
       </div>
     </main>
   );
