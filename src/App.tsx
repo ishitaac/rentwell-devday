@@ -6,10 +6,22 @@ import {
   TrueHousingCost,
   type AdvisorScreen,
 } from "./Advisor";
-import { ListingDetails, ListingsBrowser } from "./Listings";
+import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { ManagerWorkspace } from "./ManagerWorkspace";
+import { RentalEntry } from "./RentalEntry";
 import rentSnapshotData from "./data/rentcast-slc.json";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
+import {
+  createDemoRentalDecision,
+  createExternalRentalDecision,
+  type ExternalRentalEntry,
+  type RentalDecisionRecord,
+} from "./rentalDecision";
+import {
+  createRentalFirstRoommateContext,
+  createRoommateFirstContext,
+  type RoommatePlanningContext,
+} from "./roommatePlanning";
 import {
   calculateRentComparison,
   describeComparisonMethod,
@@ -22,6 +34,7 @@ type Screen =
   | "listings"
   | "listing-details"
   | "manager"
+  | "rental-entry"
   | "rental"
   | "analysis"
   | "math"
@@ -46,6 +59,23 @@ type IconName =
 export const HERO_IMAGE = "/listings/interior-warm.jpg";
 export const APARTMENT_IMAGE = "/listings/interior-blue.jpg";
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
+
+export type DecisionOrigin = "listings" | "rental-entry" | "manager";
+
+export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
+  return origin;
+}
+
+const INITIAL_EXTERNAL_ENTRY: ExternalRentalEntry = {
+  label: "",
+  neighborhood: "",
+  askingRent: 0,
+  bedrooms: 1,
+  squareFootage: null,
+  mandatoryRecurringFeeTotal: 0,
+  noMandatoryRecurringFees: false,
+  moveInDate: "",
+};
 
 const paths: Record<IconName, React.ReactNode> = {
   arrow: (
@@ -238,7 +268,13 @@ function Field({
   );
 }
 
-function Home({ go }: { go: (screen: Screen) => void }) {
+function Home({
+  go,
+  onStartRoommatePlanning,
+}: {
+  go: (screen: Screen) => void;
+  onStartRoommatePlanning: () => void;
+}) {
   return (
     <main>
       <section className="hero">
@@ -258,10 +294,10 @@ function Home({ go }: { go: (screen: Screen) => void }) {
             spreadsheet chaos.
           </p>
           <div className="hero-actions">
-            <Button onClick={() => go("rental")}>
+            <Button onClick={() => go("rental-entry")}>
               Check a rental <Icon name="arrow" size={18} />
             </Button>
-            <button className="text-button" onClick={() => go("rental")}>
+            <button className="text-button" onClick={() => go("rental-entry")}>
               <Icon name="sparkle" size={18} /> Try demo
             </button>
           </div>
@@ -308,7 +344,7 @@ function Home({ go }: { go: (screen: Screen) => void }) {
           </p>
         </div>
         <div className="path-grid">
-          <button className="path-card" onClick={() => go("rental")}>
+          <button className="path-card" onClick={() => go("rental-entry")}>
             <span className="number">01</span>
             <span className="icon-tile coral">
               <Icon name="building" size={26} />
@@ -332,7 +368,7 @@ function Home({ go }: { go: (screen: Screen) => void }) {
               in roommate search
             </small>
           </div>
-          <button className="path-card" onClick={() => go("preferences")}>
+          <button className="path-card" onClick={onStartRoommatePlanning}>
             <span className="number">02</span>
             <span className="icon-tile mint">
               <Icon name="people" size={26} />
@@ -1138,33 +1174,66 @@ function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [menu, setMenu] = useState(false);
   const [listingQuery, setListingQuery] = useState("");
-  const [selectedListing, setSelectedListing] = useState<DemoListing | null>(null);
-  const [savedListingIds, setSavedListingIds] = useState<string[]>([]);
-  const [comparedListingIds, setComparedListingIds] = useState<string[]>([]);
-  const [showCalculation, setShowCalculation] = useState(false);
-  const [tourRequested, setTourRequested] = useState(false);
-  const [listingReturnScreen, setListingReturnScreen] = useState<"listings" | "manager">(
-    "listings",
+  const [activeDecision, setActiveDecision] = useState<RentalDecisionRecord | null>(null);
+  const [decisionOrigin, setDecisionOrigin] = useState<DecisionOrigin>("listings");
+  const [externalEntry, setExternalEntry] = useState<ExternalRentalEntry>(
+    INITIAL_EXTERNAL_ENTRY,
   );
-  const [rental, setRental] = useState<RentalData>({
-    neighborhood: "The Avenues",
-    rent: 2100,
-    bedrooms: 2,
-    sqft: 940,
-    fees: 200,
-    date: "2025-08-15",
-  });
+  const [roommateContext, setRoommateContext] = useState<RoommatePlanningContext>(() =>
+    createRoommateFirstContext(),
+  );
+  const [savedDecisionIds, setSavedDecisionIds] = useState<string[]>([]);
+  const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
+  const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
+  const [showCalculation, setShowCalculation] = useState(false);
   const go = (next: Screen) => {
     setScreen(next);
     setMenu(false);
   };
-  const openListing = (listing: DemoListing, returnScreen: "listings" | "manager" = "listings") => {
-    setSelectedListing(listing);
-    setListingReturnScreen(returnScreen);
+  const openListing = (
+    listing: DemoListing,
+    returnScreen: "listings" | "manager" = "listings",
+  ) => {
+    setActiveDecision(createDemoRentalDecision(listing));
+    setDecisionOrigin(returnScreen);
     setShowCalculation(false);
-    setTourRequested(false);
     go("listing-details");
   };
+  const openExternalDecision = (entry: ExternalRentalEntry) => {
+    setExternalEntry(entry);
+    setActiveDecision(createExternalRentalDecision(entry));
+    setDecisionOrigin("rental-entry");
+    setShowCalculation(false);
+    go("listing-details");
+  };
+  const startRoommateFirst = () => {
+    setRoommateContext(createRoommateFirstContext());
+    go("preferences");
+  };
+  const planWithRoommates = () => {
+    if (!activeDecision) return;
+    setRoommateContext(createRentalFirstRoommateContext(activeDecision));
+    go("math");
+  };
+  const rental = useMemo<RentalData>(() => {
+    if (roommateContext.entryPerspective === "rental-first") {
+      return {
+        neighborhood: roommateContext.rental.neighborhood,
+        rent: roommateContext.rental.advertisedRent,
+        bedrooms: roommateContext.rental.bedrooms,
+        sqft:
+          activeDecision?.decisionId === roommateContext.rental.decisionId
+            ? (activeDecision.squareFootage ?? 0)
+            : 0,
+        fees: roommateContext.rental.recurringFeeTotal,
+        date:
+          activeDecision?.decisionId === roommateContext.rental.decisionId
+            ? (activeDecision.availableDate ?? "")
+            : "",
+      };
+    }
+    return { neighborhood: "", rent: 0, bedrooms: 0, sqft: 0, fees: 0, date: "" };
+  }, [activeDecision, roommateContext]);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
@@ -1175,14 +1244,15 @@ function App() {
         : screen === "preferences" || screen === "matches"
           ? "roommates"
           : screen === "manager" ||
-              (screen === "listing-details" && listingReturnScreen === "manager")
+              (screen === "listing-details" && decisionOrigin === "manager")
             ? "manager"
-            : screen === "listings" || screen === "listing-details"
+            : screen === "listings" ||
+                (screen === "listing-details" && decisionOrigin === "listings")
               ? "listings"
               : screen === "home"
                 ? ""
                 : "rental",
-    [listingReturnScreen, screen],
+    [decisionOrigin, screen],
   );
 
   return (
@@ -1203,22 +1273,28 @@ function App() {
           >
             Browse Rentals
           </button>
-          <button className={navActive === "manager" ? "active" : ""} onClick={() => go("manager")}>
-            Manager Workspace
-          </button>
-          <button className={navActive === "rental" ? "active" : ""} onClick={() => go("rental")}>
-            Check a Rental
+          <button
+            className={navActive === "rental" ? "active" : ""}
+            onClick={() => go("rental-entry")}
+          >
+            Check Your Rental
           </button>
           <button
             className={navActive === "roommates" ? "active" : ""}
-            onClick={() => go("preferences")}
+            onClick={startRoommateFirst}
           >
-            Find a Roommate
+            Roommate Planning
           </button>
           <button className={navActive === "advisor" ? "active" : ""} onClick={() => go("advisor")}>
             AI Advisor
           </button>
           <button onClick={() => go("home")}>How It Works</button>
+          <button
+            className={`manager-role-entry ${navActive === "manager" ? "active" : ""}`}
+            onClick={() => go("manager")}
+          >
+            For property managers
+          </button>
           <Button onClick={() => go("advisor")}>
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>
@@ -1231,7 +1307,9 @@ function App() {
           <Icon name={menu ? "x" : "menu"} />
         </button>
       </header>
-      {screen === "home" && <Home go={go} />}
+      {screen === "home" && (
+        <Home go={go} onStartRoommatePlanning={startRoommateFirst} />
+      )}
       {screen === "listings" && (
         <ListingsBrowser
           listings={demoListings.slice(0, 6)}
@@ -1240,32 +1318,43 @@ function App() {
           onQueryChange={setListingQuery}
         />
       )}
-      {screen === "listing-details" && selectedListing && (
-        <ListingDetails
-          listing={selectedListing}
-          saved={savedListingIds.includes(selectedListing.synthetic.listingId)}
-          compared={comparedListingIds.includes(selectedListing.synthetic.listingId)}
-          tourRequested={tourRequested}
+      {screen === "listing-details" && activeDecision && (
+        <RentalDecisionDetails
+          decision={activeDecision}
+          saved={savedDecisionIds.includes(activeDecision.decisionId)}
+          compared={comparedDecisionIds.includes(activeDecision.decisionId)}
+          tourRequested={tourRequestedIds.includes(activeDecision.decisionId)}
           showCalculation={showCalculation}
           backLabel={
-            listingReturnScreen === "manager" ? "Back to manager workspace" : "Back to listings"
+            decisionOrigin === "manager"
+              ? "Back to manager workspace"
+              : decisionOrigin === "rental-entry"
+                ? "Back to rental entry"
+                : "Back to listings"
           }
-          onBack={() => go(listingReturnScreen)}
+          onBack={() => go(getDecisionBackScreen(decisionOrigin))}
           onToggleSaved={() =>
-            setSavedListingIds((current) =>
-              current.includes(selectedListing.synthetic.listingId)
-                ? current.filter((id) => id !== selectedListing.synthetic.listingId)
-                : [...current, selectedListing.synthetic.listingId],
+            setSavedDecisionIds((current) =>
+              current.includes(activeDecision.decisionId)
+                ? current.filter((id) => id !== activeDecision.decisionId)
+                : [...current, activeDecision.decisionId],
             )
           }
           onToggleCompared={() =>
-            setComparedListingIds((current) =>
-              current.includes(selectedListing.synthetic.listingId)
-                ? current.filter((id) => id !== selectedListing.synthetic.listingId)
-                : [...current, selectedListing.synthetic.listingId],
+            setComparedDecisionIds((current) =>
+              current.includes(activeDecision.decisionId)
+                ? current.filter((id) => id !== activeDecision.decisionId)
+                : [...current, activeDecision.decisionId],
             )
           }
-          onRequestTour={() => setTourRequested(true)}
+          onRequestTour={() =>
+            setTourRequestedIds((current) =>
+              current.includes(activeDecision.decisionId)
+                ? current
+                : [...current, activeDecision.decisionId],
+            )
+          }
+          onPlanWithRoommates={planWithRoommates}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
         />
       )}
@@ -1276,9 +1365,16 @@ function App() {
           onPreviewListing={(listing) => openListing(listing, "manager")}
         />
       )}
-      {screen === "rental" && <RentalInput rental={rental} setRental={setRental} go={go} />}
-      {screen === "analysis" && <Analysis rental={rental} go={go} />}
-      {screen === "math" && <RoommateMath rental={rental} setRental={setRental} go={go} />}
+      {screen === "rental-entry" && (
+        <RentalEntry
+          initialEntry={externalEntry}
+          onEntryChange={setExternalEntry}
+          onSubmit={openExternalDecision}
+        />
+      )}
+      {screen === "math" && (
+        <RoommateMath rental={rental} setRental={() => undefined} go={go} />
+      )}
       {screen === "preferences" && <Preferences go={go} />}
       {screen === "matches" && <Matches rental={rental} go={go} />}
       {screen === "advisor" && <AdvisorHome go={go} />}
