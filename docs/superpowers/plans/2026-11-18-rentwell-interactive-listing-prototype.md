@@ -139,4 +139,3 @@ Take a full deliverable screenshot and one targeted screenshot of the listing-de
 - [ ] **Step 4: Record implementation handoff**
 
 Document frame names, node IDs, interaction map, exact receipt formulas/copy, and any intentionally simulated behavior for the later React branch.
-

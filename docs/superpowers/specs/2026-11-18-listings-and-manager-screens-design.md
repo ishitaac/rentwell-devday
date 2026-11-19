@@ -1,7 +1,7 @@
 # RentWell Listings and Manager Screens — Design Specification
 
-**Date:** November 18, 2026  
-**Status:** Approved for implementation planning  
+**Date:** November 18, 2026
+**Status:** Approved for implementation planning
 **Audience:** RentWell hackathon team, designers, and implementers
 
 ## Intent
