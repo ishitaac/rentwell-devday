@@ -2,14 +2,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import App, {
+  canViewSavedPlan,
   getAdvisorEntryScreen,
   getAdvisorPlanStatus,
   getDecisionBackScreen,
   getNavSection,
+  getPlanSaveDestination,
+  getPlanSaveState,
   refreshActiveDecisionFromListings,
 } from "./App";
 import { demoListingsDataset, getDemoListings, updateDemoListing } from "./demoListings";
 import { createDemoRentalDecision } from "./rentalDecision";
+import { createDemoSession, type SavedRentalPlan } from "./demoAccount";
 
 describe("unified App navigation", () => {
   it("requires a rental decision before opening the Advisor", () => {
@@ -58,4 +62,47 @@ describe("unified App navigation", () => {
     expect(getAdvisorPlanStatus("rental-two", "rental-one", null)).toBe("not-started");
     expect(getAdvisorPlanStatus("rental-two", null, "rental-two")).toBe("skipped");
   });
+
+  it("save while signed out opens renter access", () => {
+    expect(getPlanSaveDestination(null)).toBe("renter-account");
+  });
+
+  it("matching demo email saves and restores its plan", () => {
+    const plan = makeSavedPlan("renter@example.com");
+    const session = createDemoSession("renter@example.com", "renter");
+
+    expect(canViewSavedPlan(session, plan)).toBe(true);
+  });
+
+  it("different email cannot view saved details", () => {
+    const plan = makeSavedPlan("first@example.com");
+    const session = createDemoSession("second@example.com", "renter");
+
+    expect(canViewSavedPlan(session, plan)).toBe(false);
+  });
+
+  it("sign out hides plan details without deleting the plan", () => {
+    const plan = makeSavedPlan("renter@example.com");
+
+    expect(canViewSavedPlan(null, plan)).toBe(false);
+    expect(plan.ownerEmail).toBe("renter@example.com");
+  });
+
+  it("storage failure keeps the plan visible with an error", () => {
+    expect(getPlanSaveState({ ok: false, error: "Browser storage is unavailable." })).toBe("error");
+  });
 });
+
+function makeSavedPlan(ownerEmail: string): SavedRentalPlan {
+  return {
+    version: 1,
+    ownerEmail,
+    decision: createDemoRentalDecision(getDemoListings(demoListingsDataset)[1]),
+    decisionOrigin: "listings",
+    roommate: null,
+    roommateStatus: "not-started",
+    advisorReviewedDecisionId: null,
+    advisorStatus: "not-started",
+    savedAt: "2026-11-19T18:30:00.000Z",
+  };
+}

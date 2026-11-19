@@ -185,6 +185,131 @@
   background: transparent;
   font-weight: 800;
 }
+.demo-account-menu {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.demo-account-menu > button {
+  border: 0;
+  color: #596a67;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+}
+.demo-account-person {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.demo-account-person > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: var(--teal);
+}
+.demo-access-main {
+  min-height: calc(100vh - 76px);
+  padding: 64px 28px;
+  background: var(--cream);
+}
+.demo-access-card {
+  display: grid;
+  width: min(940px, 100%);
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  margin: 0 auto;
+  padding: 48px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 20px 60px rgba(23, 44, 43, 0.08);
+}
+.demo-access-copy h1 {
+  margin: 8px 0 14px;
+  font-size: clamp(32px, 4vw, 46px);
+  line-height: 1.08;
+}
+.demo-access-copy > p:last-of-type {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.demo-access-disclosure {
+  margin-top: 28px;
+  padding: 16px;
+  border: 1px solid #cbe5dc;
+  border-radius: 12px;
+  background: var(--mint-soft);
+}
+.demo-access-disclosure strong,
+.demo-access-disclosure span {
+  display: block;
+}
+.demo-access-disclosure span {
+  margin-top: 4px;
+  color: #4e6561;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.demo-access-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.demo-access-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 4px;
+  border-radius: 11px;
+  background: #eef3f1;
+}
+.demo-access-tabs button {
+  padding: 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #60716e;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+}
+.demo-access-tabs button.active {
+  color: var(--ink);
+  background: white;
+  box-shadow: 0 3px 10px rgba(23, 44, 43, 0.08);
+}
+.demo-access-form > label {
+  display: grid;
+  gap: 6px;
+  color: #425653;
+  font-size: 12px;
+  font-weight: 700;
+}
+.demo-access-form input {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #cfded9;
+  border-radius: 10px;
+  outline: none;
+}
+.demo-access-form input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.1);
+}
+.demo-access-form .btn-primary {
+  width: 100%;
+}
+.demo-access-form > .text-button {
+  align-self: center;
+}
+.demo-access-error {
+  color: #a3442d;
+  font-size: 12px;
+  line-height: 1.45;
+}
 
 .rental-plan-main {
   width: min(1200px, 100%);
@@ -398,6 +523,11 @@
 }
 
 @media (max-width: 900px) {
+  .demo-access-card {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    padding: 34px;
+  }
   .rental-plan-heading,
   .rental-plan-final-actions {
     align-items: stretch;
@@ -420,6 +550,12 @@
 }
 
 @media (max-width: 520px) {
+  .demo-access-main {
+    padding: 28px 16px;
+  }
+  .demo-access-card {
+    padding: 24px 19px;
+  }
   .rental-plan-main {
     padding: 34px 16px 54px;
   }

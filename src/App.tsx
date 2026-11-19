@@ -6,13 +6,33 @@ import {
   TrueHousingCost,
   type AdvisorScreen,
 } from "./Advisor";
+import {
+  DemoAccountAccess,
+  DemoAccountMenu,
+  type DemoAccountMode,
+  type DemoAccountSubmitPayload,
+} from "./DemoAccountAccess";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { ManagerWorkspace } from "./ManagerWorkspace";
-import { RentalPlanSummary } from "./RentalPlan";
+import { RentalPlanSummary, type RentalPlanSaveState } from "./RentalPlan";
 import { RentalEntry } from "./RentalEntry";
 import rentSnapshotData from "./data/rentcast-slc.json";
-import type { DecisionOrigin, RoommateSelection } from "./demoAccount";
+import {
+  clearDemoSession,
+  createDemoSession,
+  loadDemoSession,
+  loadSavedPlan,
+  resetRentwellDemoData,
+  saveDemoSession,
+  saveSavedPlan,
+  type DecisionOrigin,
+  type DemoSession,
+  type RoommateSelection,
+  type SavedRentalPlan,
+  type StorageLike,
+  type StorageWriteResult,
+} from "./demoAccount";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
 import {
   createDemoRentalDecision,
@@ -51,6 +71,7 @@ type Screen =
   | "preferences"
   | "matches"
   | "plan-summary"
+  | "renter-account"
   | AdvisorScreen;
 type IconName =
   | "arrow"
@@ -92,6 +113,36 @@ export function getAdvisorPlanStatus(
   if (reviewedDecisionId === activeDecisionId) return "reviewed";
   if (skippedDecisionId === activeDecisionId) return "skipped";
   return "not-started";
+}
+
+export function getPlanSaveDestination(
+  session: DemoSession | null,
+): "plan-summary" | "renter-account" {
+  return session?.role === "renter" ? "plan-summary" : "renter-account";
+}
+
+export function canViewSavedPlan(
+  session: DemoSession | null,
+  plan: SavedRentalPlan | null,
+): boolean {
+  return Boolean(
+    session?.role === "renter" &&
+    plan &&
+    session.email.trim().toLowerCase() === plan.ownerEmail.trim().toLowerCase(),
+  );
+}
+
+export function getPlanSaveState(result: StorageWriteResult): RentalPlanSaveState {
+  return result.ok ? "saved" : "error";
+}
+
+function getBrowserStorage(): StorageLike | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 export function refreshActiveDecisionFromListings(
@@ -1281,6 +1332,17 @@ function App() {
   const [journeyNotice, setJourneyNotice] = useState<string | null>(null);
   const [advisorReviewedDecisionId, setAdvisorReviewedDecisionId] = useState<string | null>(null);
   const [advisorSkippedDecisionId, setAdvisorSkippedDecisionId] = useState<string | null>(null);
+  const [renterSession, setRenterSession] = useState<DemoSession | null>(() => {
+    const storage = getBrowserStorage();
+    if (!storage) return null;
+    const result = loadDemoSession(storage, "renter");
+    return result.ok ? result.value : null;
+  });
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [planSaveState, setPlanSaveState] = useState<RentalPlanSaveState>("idle");
+  const [accountMode, setAccountMode] = useState<DemoAccountMode>("sign-in");
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [pendingPlanSave, setPendingPlanSave] = useState(false);
   const [savedDecisionIds, setSavedDecisionIds] = useState<string[]>([]);
   const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
   const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
@@ -1345,6 +1407,105 @@ function App() {
     advisorSkippedDecisionId,
   );
 
+  const restoreSavedPlan = (plan: SavedRentalPlan) => {
+    setActiveDecision(plan.decision);
+    setDecisionOrigin(plan.decisionOrigin);
+    setSelectedRoommate(plan.roommate);
+    setRoommateStatus(plan.roommateStatus);
+    setAdvisorReviewedDecisionId(
+      plan.advisorStatus === "reviewed" ? plan.advisorReviewedDecisionId : null,
+    );
+    setAdvisorSkippedDecisionId(plan.advisorStatus === "skipped" ? plan.decision.decisionId : null);
+    setSavedAt(plan.savedAt);
+    setPlanSaveState("saved");
+    setJourneyNotice(null);
+    go("plan-summary");
+  };
+
+  const saveCurrentPlan = (session: DemoSession) => {
+    if (!activeDecision) return;
+    const timestamp = new Date().toISOString();
+    const plan: SavedRentalPlan = {
+      version: 1,
+      ownerEmail: session.email,
+      decision: activeDecision,
+      decisionOrigin,
+      roommate: selectedRoommate,
+      roommateStatus,
+      advisorReviewedDecisionId: advisorStatus === "reviewed" ? activeDecision.decisionId : null,
+      advisorStatus,
+      savedAt: timestamp,
+    };
+    const storage = getBrowserStorage();
+    if (!storage) {
+      setPlanSaveState("error");
+      return;
+    }
+    setPlanSaveState("saving");
+    const result = saveSavedPlan(storage, plan);
+    setPlanSaveState(getPlanSaveState(result));
+    if (result.ok) {
+      setSavedAt(timestamp);
+    }
+  };
+
+  const requestPlanSave = () => {
+    if (!activeDecision) return;
+    if (!renterSession) {
+      setPendingPlanSave(true);
+      setAccountError(null);
+      go("renter-account");
+      return;
+    }
+    saveCurrentPlan(renterSession);
+  };
+
+  const completeRenterAccess = (payload: DemoAccountSubmitPayload) => {
+    const session = createDemoSession(payload.email, "renter");
+    const storage = getBrowserStorage();
+    if (!storage) {
+      setAccountError("Browser storage is unavailable. You can still continue without saving.");
+      return;
+    }
+    const sessionResult = saveDemoSession(storage, session);
+    if (!sessionResult.ok) {
+      setAccountError(sessionResult.error);
+      return;
+    }
+    setRenterSession(session);
+    setAccountError(null);
+    if (pendingPlanSave && activeDecision) {
+      setPendingPlanSave(false);
+      saveCurrentPlan(session);
+      go("plan-summary");
+      return;
+    }
+    const loaded = loadSavedPlan(storage, session.email);
+    if (loaded.ok && loaded.value) {
+      restoreSavedPlan(loaded.value);
+      return;
+    }
+    go(activeDecision ? "plan-summary" : "listings");
+  };
+
+  const openMyPlan = () => {
+    if (!renterSession) {
+      setPendingPlanSave(false);
+      setAccountError(null);
+      go("renter-account");
+      return;
+    }
+    const storage = getBrowserStorage();
+    if (storage) {
+      const loaded = loadSavedPlan(storage, renterSession.email);
+      if (loaded.ok && loaded.value && canViewSavedPlan(renterSession, loaded.value)) {
+        restoreSavedPlan(loaded.value);
+        return;
+      }
+    }
+    go(activeDecision ? "plan-summary" : "listings");
+  };
+
   return (
     <div className="site-shell">
       <header className="site-header">
@@ -1382,6 +1543,9 @@ function App() {
             AI Advisor
           </button>
           <button onClick={() => go("home")}>How It Works</button>
+          <button className={screen === "plan-summary" ? "active" : ""} onClick={openMyPlan}>
+            My Plan
+          </button>
           <button
             className={`manager-role-entry ${navActive === "manager" ? "active" : ""}`}
             onClick={() => go("manager")}
@@ -1392,6 +1556,44 @@ function App() {
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>
         </nav>
+        {renterSession && (
+          <DemoAccountMenu
+            session={renterSession}
+            onOpenPlan={openMyPlan}
+            onSignOut={() => {
+              const storage = getBrowserStorage();
+              if (storage) clearDemoSession(storage, "renter");
+              setRenterSession(null);
+              setActiveDecision(null);
+              setSelectedRoommate(null);
+              setRoommateStatus("not-started");
+              setAdvisorReviewedDecisionId(null);
+              setAdvisorSkippedDecisionId(null);
+              setSavedAt(null);
+              setPlanSaveState("idle");
+              go("home");
+            }}
+            onReset={() => {
+              if (
+                typeof window !== "undefined" &&
+                !window.confirm("Reset only the RentWell demo account and saved-plan data?")
+              ) {
+                return;
+              }
+              const storage = getBrowserStorage();
+              if (storage) resetRentwellDemoData(storage);
+              setRenterSession(null);
+              setActiveDecision(null);
+              setSelectedRoommate(null);
+              setRoommateStatus("not-started");
+              setAdvisorReviewedDecisionId(null);
+              setAdvisorSkippedDecisionId(null);
+              setSavedAt(null);
+              setPlanSaveState("idle");
+              go("home");
+            }}
+          />
+        )}
         <button
           className="menu-button"
           onClick={() => setMenu(!menu)}
@@ -1401,6 +1603,16 @@ function App() {
         </button>
       </header>
       {screen === "home" && <Home go={go} journeyNotice={journeyNotice} />}
+      {screen === "renter-account" && (
+        <DemoAccountAccess
+          role="renter"
+          mode={accountMode}
+          onModeChange={setAccountMode}
+          onSubmit={completeRenterAccess}
+          onCancel={() => go(activeDecision ? "plan-summary" : "home")}
+          error={accountError}
+        />
+      )}
       {screen === "listings" && (
         <ListingsBrowser
           listings={demoListings}
@@ -1486,8 +1698,8 @@ function App() {
           roommate={selectedRoommate}
           roommateStatus={roommateStatus}
           advisorStatus={advisorStatus}
-          savedAt={null}
-          saveState="idle"
+          savedAt={savedAt}
+          saveState={planSaveState}
           onViewReceipt={() => go("listing-details")}
           onChangeRental={() => go("listings")}
           onExploreRoommates={planWithRoommates}
@@ -1503,7 +1715,7 @@ function App() {
             setAdvisorSkippedDecisionId(activeDecision.decisionId);
             setAdvisorReviewedDecisionId(null);
           }}
-          onSave={() => undefined}
+          onSave={requestPlanSave}
           onContinueWithoutSaving={() => go("home")}
         />
       )}

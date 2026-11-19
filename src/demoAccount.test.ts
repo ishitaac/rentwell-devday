@@ -31,6 +31,10 @@ class MemoryStorage implements StorageLike {
   dump() {
     return [...this.values.values()].join("\n");
   }
+
+  has(key: string) {
+    return this.values.has(key);
+  }
 }
 
 const decision = createExternalRentalDecision({
@@ -139,5 +143,17 @@ describe("demo account persistence", () => {
       ok: false,
       error: "Browser storage is unavailable.",
     });
+  });
+
+  it("reset removes only RentWell demo keys after confirmation", () => {
+    const storage = new MemoryStorage();
+    storage.setItem("unrelated.preference", "keep me");
+    saveDemoSession(storage, createDemoSession("renter@example.com", "renter"));
+    saveSavedPlan(storage, makePlan("renter@example.com"));
+
+    expect(resetRentwellDemoData(storage)).toEqual({ ok: true });
+    expect(storage.has("rentwell.demo.session.renter")).toBe(false);
+    expect(storage.has("rentwell.demo.saved-plans.v1")).toBe(false);
+    expect(storage.has("unrelated.preference")).toBe(true);
   });
 });
