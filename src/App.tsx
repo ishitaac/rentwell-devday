@@ -6,7 +6,9 @@ import {
   TrueHousingCost,
   type AdvisorScreen,
 } from "./Advisor";
+import { ListingsBrowser } from "./Listings";
 import rentSnapshotData from "./data/rentcast-slc.json";
+import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
 import {
   calculateRentComparison,
   describeComparisonMethod,
@@ -14,7 +16,15 @@ import {
   type RentSnapshot,
 } from "./rentMarket";
 
-type Screen = "home" | "rental" | "analysis" | "math" | "preferences" | "matches" | AdvisorScreen;
+type Screen =
+  | "home"
+  | "listings"
+  | "rental"
+  | "analysis"
+  | "math"
+  | "preferences"
+  | "matches"
+  | AdvisorScreen;
 type IconName =
   | "arrow"
   | "building"
@@ -1133,6 +1143,18 @@ function App() {
     setScreen(next);
     setMenu(false);
   };
+  const openListing = (listing: DemoListing) => {
+    const { synthetic } = listing;
+    setRental({
+      neighborhood: synthetic.neighborhood,
+      rent: synthetic.askingRent,
+      bedrooms: synthetic.bedrooms,
+      sqft: synthetic.squareFootage ?? 0,
+      fees: synthetic.mandatoryRecurringFeeTotal,
+      date: synthetic.availableDate,
+    });
+    go("analysis");
+  };
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
@@ -1142,9 +1164,11 @@ function App() {
         ? "advisor"
         : screen === "preferences" || screen === "matches"
           ? "roommates"
-          : screen === "home"
-            ? ""
-            : "rental",
+          : screen === "listings"
+            ? "listings"
+            : screen === "home"
+              ? ""
+              : "rental",
     [screen],
   );
 
@@ -1160,6 +1184,12 @@ function App() {
           </span>
         </button>
         <nav className={menu ? "open" : ""}>
+          <button
+            className={navActive === "listings" ? "active" : ""}
+            onClick={() => go("listings")}
+          >
+            Browse Rentals
+          </button>
           <button className={navActive === "rental" ? "active" : ""} onClick={() => go("rental")}>
             Check a Rental
           </button>
@@ -1186,6 +1216,12 @@ function App() {
         </button>
       </header>
       {screen === "home" && <Home go={go} />}
+      {screen === "listings" && (
+        <ListingsBrowser
+          listings={getDemoListings(demoListingsDataset).slice(0, 6)}
+          onViewDetails={openListing}
+        />
+      )}
       {screen === "rental" && <RentalInput rental={rental} setRental={setRental} go={go} />}
       {screen === "analysis" && <Analysis rental={rental} go={go} />}
       {screen === "math" && <RoommateMath rental={rental} setRental={setRental} go={go} />}
