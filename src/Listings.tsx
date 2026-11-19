@@ -2,7 +2,14 @@ import { useMemo, useState } from "react";
 
 import rentSnapshotData from "./data/rentcast-slc.json";
 import type { DemoListing } from "./demoListings";
-import { buildListingDecisionReceipt } from "./listingDecision";
+import {
+  buildListingDecisionReceipt,
+  buildRentalDecisionReceipt,
+} from "./listingDecision";
+import {
+  createDemoRentalDecision,
+  type RentalDecisionRecord,
+} from "./rentalDecision";
 import type { RentSnapshot } from "./rentMarket";
 
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
@@ -145,8 +152,8 @@ export function ListingsBrowser({
   );
 }
 
-export function ListingDetails({
-  listing,
+export function RentalDecisionDetails({
+  decision,
   saved,
   compared = false,
   tourRequested = false,
@@ -156,9 +163,10 @@ export function ListingDetails({
   onToggleSaved,
   onToggleCompared = () => undefined,
   onRequestTour = () => undefined,
+  onPlanWithRoommates,
   onToggleCalculation,
 }: {
-  listing: DemoListing;
+  decision: RentalDecisionRecord;
   saved: boolean;
   compared?: boolean;
   tourRequested?: boolean;
@@ -168,10 +176,11 @@ export function ListingDetails({
   onToggleSaved: () => void;
   onToggleCompared?: () => void;
   onRequestTour?: () => void;
+  onPlanWithRoommates: () => void;
   onToggleCalculation: () => void;
 }) {
-  const { synthetic } = listing;
-  const receipt = buildListingDecisionReceipt(listing, RENT_SNAPSHOT);
+  const receipt = buildRentalDecisionReceipt(decision, RENT_SNAPSHOT);
+  const isDemoListing = decision.source === "synthetic-demo-listing";
   const updatedDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -186,70 +195,99 @@ export function ListingDetails({
 
       <div className="listing-details-layout">
         <div className="listing-details-main">
-          <img
-            className="listing-details-image"
-            src={synthetic.images[0]}
-            alt={`${synthetic.title} demo property`}
-          />
+          {decision.images.length > 0 ? (
+            <img
+              className="listing-details-image"
+              src={decision.images[0]}
+              alt={`${decision.title} demo property`}
+            />
+          ) : (
+            <div className="entered-rental-summary">
+              <span>Rental you entered · Demo analysis</span>
+              <strong>No listing image was provided</strong>
+              <p>RentWell is evaluating only the facts entered below.</p>
+            </div>
+          )}
 
           <section className="listing-overview">
             <div className="listing-title-row">
               <div>
-                <span className="listing-demo-tag">SYNTHETIC DEMO LISTING</span>
-                <h1>{synthetic.title}</h1>
-                <p>{synthetic.neighborhood}, Salt Lake City</p>
+                <span className="listing-demo-tag">
+                  {isDemoListing
+                    ? "SYNTHETIC DEMO LISTING"
+                    : "Rental you entered · Demo analysis"}
+                </span>
+                <h1>{decision.title}</h1>
+                <p>{decision.neighborhood}, {decision.city}</p>
               </div>
-              <span className="listing-available">
-                Available {formatDate(synthetic.availableDate)}
-              </span>
+              {isDemoListing && decision.availableDate && (
+                <span className="listing-available">
+                  Available {formatDate(decision.availableDate)}
+                </span>
+              )}
             </div>
 
             <div className="listing-facts" aria-label="Property facts">
               <span>
-                <strong>{synthetic.bedrooms}</strong>{" "}
-                {synthetic.bedrooms === 1 ? "bedroom" : "bedrooms"}
+                <strong>{decision.bedrooms}</strong>{" "}
+                {decision.bedrooms === 1 ? "bedroom" : "bedrooms"}
               </span>
-              <span>
-                <strong>{synthetic.bathrooms}</strong>{" "}
-                {synthetic.bathrooms === 1 ? "bathroom" : "bathrooms"}
-              </span>
-              <span>
-                <strong>{synthetic.squareFootage?.toLocaleString("en-US") ?? "—"}</strong> sq ft
-              </span>
-              <span>
-                <strong>{synthetic.propertyType}</strong> type
-              </span>
+              {decision.bathrooms !== null && (
+                <span>
+                  <strong>{decision.bathrooms}</strong>{" "}
+                  {decision.bathrooms === 1 ? "bathroom" : "bathrooms"}
+                </span>
+              )}
+              {decision.squareFootage !== null && (
+                <span>
+                  <strong>{decision.squareFootage.toLocaleString("en-US")}</strong> sq ft
+                </span>
+              )}
+              {decision.propertyType && (
+                <span>
+                  <strong>{decision.propertyType}</strong> type
+                </span>
+              )}
+              {!isDemoListing && decision.availableDate && (
+                <span>
+                  <strong>{formatDate(decision.availableDate)}</strong> move-in
+                </span>
+              )}
             </div>
 
-            <p className="listing-description">{synthetic.description}</p>
+            {decision.description && (
+              <p className="listing-description">{decision.description}</p>
+            )}
 
-            <div className="listing-info-grid">
-              <section>
-                <h2>Amenities</h2>
-                <ul>
-                  {synthetic.amenities.map((amenity) => (
-                    <li key={amenity}>{amenity}</li>
-                  ))}
-                </ul>
-              </section>
-              <section>
-                <h2>Before you tour</h2>
-                <dl>
-                  <div>
-                    <dt>Parking</dt>
-                    <dd>Ask manager</dd>
-                  </div>
-                  <div>
-                    <dt>Pet policy</dt>
-                    <dd>Not provided</dd>
-                  </div>
-                  <div>
-                    <dt>Utilities</dt>
-                    <dd>Confirm included services</dd>
-                  </div>
-                </dl>
-              </section>
-            </div>
+            {isDemoListing && (
+              <div className="listing-info-grid">
+                <section>
+                  <h2>Amenities</h2>
+                  <ul>
+                    {decision.amenities.map((amenity) => (
+                      <li key={amenity}>{amenity}</li>
+                    ))}
+                  </ul>
+                </section>
+                <section>
+                  <h2>Before you tour</h2>
+                  <dl>
+                    <div>
+                      <dt>Parking</dt>
+                      <dd>Ask manager</dd>
+                    </div>
+                    <div>
+                      <dt>Pet policy</dt>
+                      <dd>Not provided</dd>
+                    </div>
+                    <div>
+                      <dt>Utilities</dt>
+                      <dd>Confirm included services</dd>
+                    </div>
+                  </dl>
+                </section>
+              </div>
+            )}
           </section>
         </div>
 
@@ -273,21 +311,30 @@ export function ListingDetails({
               <dt>Advertised rent</dt>
               <dd>{formatMoney(receipt.advertisedRent)}</dd>
             </div>
-            {synthetic.mandatoryRecurringFees.map((fee) => (
+            {decision.recurringFees.map((fee) => (
               <div key={fee.id}>
                 <dt>{fee.label}</dt>
                 <dd>{formatMoney(fee.amount)}</dd>
               </div>
             ))}
-            {synthetic.noMandatoryRecurringFees && (
+            {decision.noMandatoryRecurringFees && (
               <div>
                 <dt>Mandatory recurring fees</dt>
                 <dd>$0</dd>
               </div>
             )}
             <div className="receipt-total">
-              <dt>Estimated move-in cost</dt>
-              <dd>{formatMoney(receipt.estimatedMoveInCost)}</dd>
+              {receipt.estimatedMoveInCost === null ? (
+                <>
+                  <dt>Move-in cost unavailable</dt>
+                  <dd>Confirm deposit</dd>
+                </>
+              ) : (
+                <>
+                  <dt>Estimated move-in cost</dt>
+                  <dd>{formatMoney(receipt.estimatedMoveInCost)}</dd>
+                </>
+              )}
             </div>
           </dl>
 
@@ -333,20 +380,70 @@ export function ListingDetails({
 
           <div className="listing-detail-actions">
             <button className={saved ? "is-active" : ""} onClick={onToggleSaved}>
-              {saved ? "Saved" : "Save listing"}
+              {saved ? "Saved" : isDemoListing ? "Save listing" : "Save evaluation"}
             </button>
-            <button className={compared ? "is-active" : ""} onClick={onToggleCompared}>
-              {compared ? "Added to compare" : "Add to compare"}
-            </button>
-            <button className="primary" onClick={onRequestTour}>
-              {tourRequested ? "Tour request noted" : "Request a tour"}
+            {decision.capabilities.canCompare && (
+              <button className={compared ? "is-active" : ""} onClick={onToggleCompared}>
+                {compared ? "Added to compare" : "Add to compare"}
+              </button>
+            )}
+            {decision.capabilities.canRequestTour && (
+              <button className="primary" onClick={onRequestTour}>
+                {tourRequested ? "Tour request noted" : "Request a tour"}
+              </button>
+            )}
+            <button className="roommate-plan-action" onClick={onPlanWithRoommates}>
+              Plan costs with roommates
             </button>
           </div>
-          {tourRequested && (
+          {decision.capabilities.canRequestTour && tourRequested && (
             <p className="tour-feedback">Demo only: a manager would receive your tour request.</p>
           )}
         </aside>
       </div>
     </main>
+  );
+}
+
+export function ListingDetails({
+  listing,
+  saved,
+  compared = false,
+  tourRequested = false,
+  showCalculation,
+  backLabel = "Back to listings",
+  onBack,
+  onToggleSaved,
+  onToggleCompared = () => undefined,
+  onRequestTour = () => undefined,
+  onToggleCalculation,
+}: {
+  listing: DemoListing;
+  saved: boolean;
+  compared?: boolean;
+  tourRequested?: boolean;
+  showCalculation: boolean;
+  backLabel?: string;
+  onBack: () => void;
+  onToggleSaved: () => void;
+  onToggleCompared?: () => void;
+  onRequestTour?: () => void;
+  onToggleCalculation: () => void;
+}) {
+  return (
+    <RentalDecisionDetails
+      decision={createDemoRentalDecision(listing)}
+      saved={saved}
+      compared={compared}
+      tourRequested={tourRequested}
+      showCalculation={showCalculation}
+      backLabel={backLabel}
+      onBack={onBack}
+      onToggleSaved={onToggleSaved}
+      onToggleCompared={onToggleCompared}
+      onRequestTour={onRequestTour}
+      onPlanWithRoommates={() => undefined}
+      onToggleCalculation={onToggleCalculation}
+    />
   );
 }

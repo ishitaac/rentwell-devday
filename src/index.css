@@ -728,6 +728,30 @@
   height: clamp(310px, 40vw, 480px);
   object-fit: cover;
 }
+.entered-rental-summary {
+  display: flex;
+  min-height: 220px;
+  justify-content: center;
+  flex-direction: column;
+  padding: 40px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(135deg, var(--cream), #eef8f4);
+}
+.entered-rental-summary span {
+  color: var(--teal-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.entered-rental-summary strong {
+  margin: 10px 0 5px;
+  font: 800 25px "Manrope";
+}
+.entered-rental-summary p {
+  color: var(--muted);
+  font-size: 12px;
+}
 .listing-overview {
   padding: 30px;
 }
@@ -974,6 +998,12 @@
   grid-column: 1 / -1;
   color: white;
   background: var(--teal);
+}
+.listing-detail-actions .roommate-plan-action {
+  grid-column: 1 / -1;
+  border-color: var(--teal-dark);
+  color: white;
+  background: var(--teal-dark);
 }
 .tour-feedback {
   margin-top: 9px;
@@ -1753,6 +1783,10 @@
   .listing-overview,
   .decision-receipt {
     padding: 20px;
+  }
+  .entered-rental-summary {
+    min-height: 180px;
+    padding: 28px 20px;
   }
   .listing-title-row {
     flex-direction: column;
