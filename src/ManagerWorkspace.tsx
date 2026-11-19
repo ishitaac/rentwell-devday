@@ -1,6 +1,13 @@
+import { useState } from "react";
+
 import type { DemoListing } from "./demoListings";
 import { ListingCard } from "./Listings";
-import type { ManagerListingDraft, ManagerListingErrors } from "./managerListings";
+import {
+  createManagerListingDraft,
+  saveManagerListingDraft,
+  type ManagerListingDraft,
+  type ManagerListingErrors,
+} from "./managerListings";
 
 function formatMoney(value: number): string {
   return `$${value.toLocaleString("en-US")}`;
@@ -541,5 +548,164 @@ export function ManagerRenterPreview({ listing }: { listing: DemoListing }) {
       </div>
       <ListingCard listing={listing} onViewDetails={() => undefined} />
     </aside>
+  );
+}
+
+export function PropertySoftwareImportModal({
+  onLoadDemoListing,
+  onCancel,
+}: {
+  onLoadDemoListing: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="manager-import-overlay" role="presentation">
+      <section
+        className="manager-import-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manager-import-title"
+      >
+        <div className="manager-import-icon" aria-hidden="true">
+          ↔
+        </div>
+        <span className="manager-demo-label">Prototype connection</span>
+        <h2 id="manager-import-title">Import from property software</h2>
+        <p className="manager-import-lead">
+          Entrata is shown as an example property-management source.
+        </p>
+        <div className="manager-import-notice">
+          <strong>Demo connection—no live property data is transferred</strong>
+          <p>
+            This prototype loads an existing synthetic listing. It does not authenticate or
+            synchronize with Entrata.
+          </p>
+        </div>
+        <div className="manager-import-actions">
+          <button type="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="primary" onClick={onLoadDemoListing}>
+            Load demo listing
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function buildDraftPreview(source: DemoListing, draft: ManagerListingDraft): DemoListing {
+  const recurringFees = draft.mandatoryRecurringFees.map((fee) => ({ ...fee }));
+  const recurringFeeTotal = recurringFees.reduce((total, fee) => total + fee.amount, 0);
+  return {
+    ...source,
+    synthetic: {
+      ...source.synthetic,
+      title: draft.title,
+      neighborhood: draft.neighborhood,
+      description: draft.description,
+      askingRent: draft.askingRent,
+      propertyType: draft.propertyType,
+      bedrooms: draft.bedrooms,
+      bathrooms: draft.bathrooms,
+      squareFootage: draft.squareFootage,
+      mandatoryRecurringFees: recurringFees,
+      mandatoryRecurringFeeTotal: recurringFeeTotal,
+      noMandatoryRecurringFees: draft.noMandatoryRecurringFees,
+      trueMonthlyCost: draft.askingRent + recurringFeeTotal,
+      securityDeposit: draft.securityDeposit,
+      availableDate: draft.availableDate,
+      images: [...draft.images],
+      amenities: [...draft.amenities],
+      updatedAt: draft.updatedAt,
+    },
+  };
+}
+
+export function ManagerWorkspace({
+  listings,
+  onListingsChange,
+  onPreviewListing,
+}: {
+  listings: DemoListing[];
+  onListingsChange: (listings: DemoListing[]) => void;
+  onPreviewListing: (listing: DemoListing) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState<ManagerListingDraft | null>(null);
+  const [errors, setErrors] = useState<ManagerListingErrors>({});
+  const [saveState, setSaveState] = useState<"unsaved" | "saved">("unsaved");
+  const [importOpen, setImportOpen] = useState(false);
+  const sourceListing = draft
+    ? (listings.find((listing) => listing.synthetic.listingId === draft.listingId) ?? null)
+    : null;
+  const previewListing = sourceListing && draft ? buildDraftPreview(sourceListing, draft) : null;
+
+  const openEditor = (listing: DemoListing) => {
+    setDraft(createManagerListingDraft(listing));
+    setErrors({});
+    setSaveState("unsaved");
+  };
+
+  const saveDraft = () => {
+    if (!draft) return;
+    const timestampedDraft = { ...draft, updatedAt: "2026-11-19T08:00:00.000Z" };
+    const result = saveManagerListingDraft(listings, timestampedDraft);
+    setErrors(result.errors);
+    if (Object.keys(result.errors).length > 0) return;
+    onListingsChange(result.listings);
+    const savedListing = result.listings.find(
+      (listing) => listing.synthetic.listingId === draft.listingId,
+    );
+    if (savedListing) setDraft(createManagerListingDraft(savedListing));
+    setSaveState("saved");
+  };
+
+  return (
+    <>
+      <ManagerDashboard
+        listings={listings}
+        query={query}
+        onQueryChange={setQuery}
+        onEdit={openEditor}
+        onPreview={onPreviewListing}
+        onOpenImport={() => setImportOpen(true)}
+      />
+
+      {draft && previewListing && (
+        <div className="manager-editor-overlay">
+          <div className="manager-editor-layout">
+            <ManagerEditor
+              draft={draft}
+              errors={errors}
+              saveState={saveState}
+              onChange={(nextDraft) => {
+                setDraft(nextDraft);
+                setErrors({});
+                setSaveState("unsaved");
+              }}
+              onSave={saveDraft}
+              onCancel={() => {
+                setDraft(null);
+                setErrors({});
+              }}
+              onPreview={() => onPreviewListing(previewListing)}
+            />
+            <ManagerRenterPreview listing={previewListing} />
+          </div>
+        </div>
+      )}
+
+      {importOpen && (
+        <PropertySoftwareImportModal
+          onCancel={() => setImportOpen(false)}
+          onLoadDemoListing={() => {
+            setImportOpen(false);
+            const importFixture = listings[1] ?? listings[0];
+            if (importFixture) openEditor(importFixture);
+          }}
+        />
+      )}
+    </>
   );
 }

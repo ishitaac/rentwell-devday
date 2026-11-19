@@ -147,6 +147,7 @@ export function ListingDetails({
   compared = false,
   tourRequested = false,
   showCalculation,
+  backLabel = "Back to listings",
   onBack,
   onToggleSaved,
   onToggleCompared = () => undefined,
@@ -158,6 +159,7 @@ export function ListingDetails({
   compared?: boolean;
   tourRequested?: boolean;
   showCalculation: boolean;
+  backLabel?: string;
   onBack: () => void;
   onToggleSaved: () => void;
   onToggleCompared?: () => void;
@@ -175,7 +177,7 @@ export function ListingDetails({
   return (
     <main className="listing-details-page">
       <button className="listing-back" onClick={onBack}>
-        <span aria-hidden="true">←</span> Back to listings
+        <span aria-hidden="true">←</span> {backLabel}
       </button>
 
       <div className="listing-details-layout">

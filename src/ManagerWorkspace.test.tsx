@@ -2,8 +2,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { demoListingsDataset, getDemoListings } from "./demoListings";
-import { ManagerDashboard, ManagerEditor, ManagerRenterPreview } from "./ManagerWorkspace";
-import { createManagerListingDraft } from "./managerListings";
+import {
+  ManagerDashboard,
+  ManagerEditor,
+  ManagerRenterPreview,
+  PropertySoftwareImportModal,
+} from "./ManagerWorkspace";
+import { createManagerListingDraft, saveManagerListingDraft } from "./managerListings";
 
 const callbacks = {
   onQueryChange: () => undefined,
@@ -153,5 +158,40 @@ describe("ManagerRenterPreview", () => {
     expect(html).toContain("/listings/interior-blue.jpg");
     expect(html).toContain("$1,364");
     expect(html).toContain("True monthly cost");
+  });
+
+  it("shows the recalculated cost from the manager's saved listing record", () => {
+    const listings = getDemoListings(demoListingsDataset);
+    const draft = {
+      ...createManagerListingDraft(listings[1]),
+      askingRent: 1500,
+      mandatoryRecurringFees: [
+        { id: "technology", label: "Technology fee", amount: 50 },
+        { id: "trash", label: "Trash service", amount: 25 },
+      ],
+    };
+    const result = saveManagerListingDraft(listings, draft);
+
+    const html = renderToStaticMarkup(<ManagerRenterPreview listing={result.listings[1]} />);
+
+    expect(html).toContain("$1,575");
+    expect(html).toContain("$75");
+  });
+});
+
+describe("PropertySoftwareImportModal", () => {
+  it("describes the Entrata example as a non-live demo before loading a fixture", () => {
+    const html = renderToStaticMarkup(
+      <PropertySoftwareImportModal
+        onLoadDemoListing={() => undefined}
+        onCancel={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Entrata");
+    expect(html).toContain("Demo connection—no live property data is transferred");
+    expect(html).toContain("Load demo listing");
+    expect(html).toContain("Cancel");
+    expect(html).toContain("does not authenticate or synchronize");
   });
 });

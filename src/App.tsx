@@ -7,6 +7,7 @@ import {
   type AdvisorScreen,
 } from "./Advisor";
 import { ListingDetails, ListingsBrowser } from "./Listings";
+import { ManagerWorkspace } from "./ManagerWorkspace";
 import rentSnapshotData from "./data/rentcast-slc.json";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
 import {
@@ -20,6 +21,7 @@ type Screen =
   | "home"
   | "listings"
   | "listing-details"
+  | "manager"
   | "rental"
   | "analysis"
   | "math"
@@ -1130,7 +1132,9 @@ function Matches({ rental, go }: { rental: RentalData; go: (screen: Screen) => v
 }
 
 function App() {
-  const demoListings = useMemo(() => getDemoListings(demoListingsDataset).slice(0, 6), []);
+  const [demoListings, setDemoListings] = useState<DemoListing[]>(() =>
+    getDemoListings(demoListingsDataset),
+  );
   const [screen, setScreen] = useState<Screen>("home");
   const [menu, setMenu] = useState(false);
   const [listingQuery, setListingQuery] = useState("");
@@ -1139,6 +1143,9 @@ function App() {
   const [comparedListingIds, setComparedListingIds] = useState<string[]>([]);
   const [showCalculation, setShowCalculation] = useState(false);
   const [tourRequested, setTourRequested] = useState(false);
+  const [listingReturnScreen, setListingReturnScreen] = useState<"listings" | "manager">(
+    "listings",
+  );
   const [rental, setRental] = useState<RentalData>({
     neighborhood: "The Avenues",
     rent: 2100,
@@ -1151,8 +1158,9 @@ function App() {
     setScreen(next);
     setMenu(false);
   };
-  const openListing = (listing: DemoListing) => {
+  const openListing = (listing: DemoListing, returnScreen: "listings" | "manager" = "listings") => {
     setSelectedListing(listing);
+    setListingReturnScreen(returnScreen);
     setShowCalculation(false);
     setTourRequested(false);
     go("listing-details");
@@ -1166,12 +1174,15 @@ function App() {
         ? "advisor"
         : screen === "preferences" || screen === "matches"
           ? "roommates"
-          : screen === "listings" || screen === "listing-details"
-            ? "listings"
-            : screen === "home"
-              ? ""
-              : "rental",
-    [screen],
+          : screen === "manager" ||
+              (screen === "listing-details" && listingReturnScreen === "manager")
+            ? "manager"
+            : screen === "listings" || screen === "listing-details"
+              ? "listings"
+              : screen === "home"
+                ? ""
+                : "rental",
+    [listingReturnScreen, screen],
   );
 
   return (
@@ -1191,6 +1202,9 @@ function App() {
             onClick={() => go("listings")}
           >
             Browse Rentals
+          </button>
+          <button className={navActive === "manager" ? "active" : ""} onClick={() => go("manager")}>
+            Manager Workspace
           </button>
           <button className={navActive === "rental" ? "active" : ""} onClick={() => go("rental")}>
             Check a Rental
@@ -1220,8 +1234,8 @@ function App() {
       {screen === "home" && <Home go={go} />}
       {screen === "listings" && (
         <ListingsBrowser
-          listings={demoListings}
-          onViewDetails={openListing}
+          listings={demoListings.slice(0, 6)}
+          onViewDetails={(listing) => openListing(listing, "listings")}
           query={listingQuery}
           onQueryChange={setListingQuery}
         />
@@ -1233,7 +1247,10 @@ function App() {
           compared={comparedListingIds.includes(selectedListing.synthetic.listingId)}
           tourRequested={tourRequested}
           showCalculation={showCalculation}
-          onBack={() => go("listings")}
+          backLabel={
+            listingReturnScreen === "manager" ? "Back to manager workspace" : "Back to listings"
+          }
+          onBack={() => go(listingReturnScreen)}
           onToggleSaved={() =>
             setSavedListingIds((current) =>
               current.includes(selectedListing.synthetic.listingId)
@@ -1250,6 +1267,13 @@ function App() {
           }
           onRequestTour={() => setTourRequested(true)}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
+        />
+      )}
+      {screen === "manager" && (
+        <ManagerWorkspace
+          listings={demoListings}
+          onListingsChange={setDemoListings}
+          onPreviewListing={(listing) => openListing(listing, "manager")}
         />
       )}
       {screen === "rental" && <RentalInput rental={rental} setRental={setRental} go={go} />}

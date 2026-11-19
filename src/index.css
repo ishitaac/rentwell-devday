@@ -1515,6 +1515,80 @@
 .manager-renter-preview .listing-card {
   background: white;
 }
+.manager-import-overlay {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  padding: 24px;
+  place-items: center;
+  background: rgba(17, 39, 37, 0.58);
+  backdrop-filter: blur(5px);
+}
+.manager-import-modal {
+  width: min(480px, 100%);
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 24px 70px rgba(13, 42, 37, 0.25);
+}
+.manager-import-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 15px;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--teal-dark);
+  background: var(--mint-soft);
+  font-size: 22px;
+  font-weight: 800;
+}
+.manager-import-modal h2 {
+  margin: 6px 0 7px;
+  font-size: 25px;
+}
+.manager-import-lead {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.manager-import-notice {
+  margin: 18px 0;
+  padding: 15px;
+  border-left: 3px solid #d49c48;
+  border-radius: 9px;
+  background: #fff9ed;
+}
+.manager-import-notice strong {
+  font-size: 12px;
+}
+.manager-import-notice p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.manager-import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+.manager-import-actions button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--teal);
+  border-radius: 9px;
+  color: var(--teal-dark);
+  background: white;
+  font-size: 11px;
+  font-weight: 800;
+}
+.manager-import-actions .primary {
+  color: white;
+  background: var(--teal);
+}
 
 @media (max-width: 760px) {
   .manager-page {
@@ -1630,6 +1704,15 @@
     border: 0;
     border-radius: 0;
     box-shadow: none;
+  }
+  .manager-import-overlay {
+    padding: 16px;
+  }
+  .manager-import-actions {
+    flex-direction: column-reverse;
+  }
+  .manager-import-actions button {
+    width: 100%;
   }
 }
 

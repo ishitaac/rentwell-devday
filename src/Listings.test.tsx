@@ -86,4 +86,23 @@ describe("ListingDetails", () => {
     expect(html).toContain("Show calculation");
     expect(html).not.toContain("Advertised rent + mandatory recurring fees");
   });
+
+  it("uses the manager return label when details were opened from the manager workspace", () => {
+    const listing = getDemoListings(demoListingsDataset)[1];
+
+    const html = renderToStaticMarkup(
+      <ListingDetails
+        listing={listing}
+        saved={false}
+        showCalculation={false}
+        backLabel="Back to manager workspace"
+        onBack={() => undefined}
+        onToggleSaved={() => undefined}
+        onToggleCalculation={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Back to manager workspace");
+    expect(html).not.toContain("Back to listings");
+  });
 });
