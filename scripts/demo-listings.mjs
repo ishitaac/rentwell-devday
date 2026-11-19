@@ -27,7 +27,7 @@ function requireNonNegativeNumber(value, field, listingId) {
 }
 
 function validateSourceRecord(record) {
-  const stringFields = ["zipCode", "propertyType"];
+  const stringFields = ["city", "state", "zipCode", "propertyType"];
   for (const field of stringFields) requireNonEmptyString(record?.[field], field, "source record");
 
   for (const field of ["bedrooms", "bathrooms", "price"]) {
@@ -44,6 +44,25 @@ function validateSourceRecord(record) {
   }
 }
 
+function requireIsoCalendarDate(value, field, listingId) {
+  requireNonEmptyString(value, field, listingId);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(`${listingId} requires ${field} to be a valid ISO calendar date.`);
+  }
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0, 10) !== value) {
+    throw new Error(`${listingId} requires ${field} to be a valid ISO calendar date.`);
+  }
+}
+
+function requireIsoTimestamp(value, field, listingId) {
+  requireNonEmptyString(value, field, listingId);
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf()) || parsed.toISOString() !== value) {
+    throw new Error(`${listingId} requires ${field} to be a valid ISO timestamp.`);
+  }
+}
+
 function validateEnrichmentRecord(record) {
   const listingId = record?.listingId || "enrichment record";
   for (const field of requiredStrings) requireNonEmptyString(record?.[field], field, listingId);
@@ -53,6 +72,9 @@ function validateEnrichmentRecord(record) {
   }
 
   requireNonNegativeNumber(record.securityDeposit, "securityDeposit", listingId);
+  requireIsoCalendarDate(record.availableDate, "availableDate", listingId);
+  requireIsoTimestamp(record.createdAt, "createdAt", listingId);
+  requireIsoTimestamp(record.updatedAt, "updatedAt", listingId);
 
   if (!Array.isArray(record.mandatoryRecurringFees)) {
     throw new Error(`${listingId} requires mandatoryRecurringFees to be an array.`);
@@ -152,6 +174,11 @@ export function buildDemoListings(snapshot, enrichment) {
         title: presentation.title,
         neighborhood: presentation.neighborhood,
         description: presentation.description,
+        askingRent: source.price,
+        propertyType: source.propertyType,
+        bedrooms: source.bedrooms,
+        bathrooms: source.bathrooms,
+        squareFootage: source.squareFootage,
         mandatoryRecurringFees: presentation.mandatoryRecurringFees.map((fee) => ({ ...fee })),
         mandatoryRecurringFeeTotal,
         noMandatoryRecurringFees: presentation.noMandatoryRecurringFees,

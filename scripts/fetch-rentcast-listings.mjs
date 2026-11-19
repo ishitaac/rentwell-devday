@@ -2,7 +2,11 @@ import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { requireRentCastApiKey, sanitizeRentCastListings } from "./rentcast-data.mjs";
+import {
+  createRentCastHttpError,
+  requireRentCastApiKey,
+  sanitizeRentCastListings,
+} from "./rentcast-data.mjs";
 
 const apiKey = requireRentCastApiKey();
 
@@ -26,8 +30,7 @@ const response = await fetch(endpoint, {
 });
 
 if (!response.ok) {
-  const detail = (await response.text()).slice(0, 500);
-  throw new Error(`RentCast request failed (${response.status}): ${detail}`);
+  throw createRentCastHttpError(response.status);
 }
 
 const listings = sanitizeRentCastListings(await response.json());

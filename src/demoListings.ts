@@ -26,6 +26,11 @@ export type DemoListingSynthetic = {
   title: string;
   neighborhood: string;
   description: string;
+  askingRent: number;
+  propertyType: string;
+  bedrooms: number;
+  bathrooms: number;
+  squareFootage: number | null;
   mandatoryRecurringFees: MandatoryRecurringFee[];
   mandatoryRecurringFeeTotal: number;
   noMandatoryRecurringFees: boolean;
@@ -74,6 +79,11 @@ export type DemoListingUpdates = Partial<
     | "title"
     | "neighborhood"
     | "description"
+    | "askingRent"
+    | "propertyType"
+    | "bedrooms"
+    | "bathrooms"
+    | "squareFootage"
     | "mandatoryRecurringFees"
     | "noMandatoryRecurringFees"
     | "feeDisclosureState"
@@ -100,6 +110,7 @@ export function updateDemoListing(
   if (index === -1) return listings;
 
   const current = listings[index];
+  const listingLabel = current.synthetic.listingId;
   const mandatoryRecurringFees = (
     updates.mandatoryRecurringFees ?? current.synthetic.mandatoryRecurringFees
   ).map((fee) => ({ ...fee }));
@@ -107,23 +118,94 @@ export function updateDemoListing(
     (total, fee) => total + fee.amount,
     0,
   );
+  if (
+    updates.mandatoryRecurringFees?.length === 0 &&
+    updates.noMandatoryRecurringFees === undefined
+  ) {
+    throw new Error(`${listingLabel} must explicitly state whether it has no mandatory recurring fees.`);
+  }
   const noMandatoryRecurringFees =
     updates.noMandatoryRecurringFees ??
-    (updates.mandatoryRecurringFees
-      ? mandatoryRecurringFees.length === 0
-      : current.synthetic.noMandatoryRecurringFees);
+    current.synthetic.noMandatoryRecurringFees;
+
+  for (const fee of mandatoryRecurringFees) {
+    if (!fee.id.trim() || !fee.label.trim()) {
+      throw new Error(`${listingLabel} requires non-empty fee IDs and labels.`);
+    }
+    if (!Number.isFinite(fee.amount) || fee.amount < 0) {
+      throw new Error(`${listingLabel} requires every fee amount to be finite non-negative.`);
+    }
+  }
+  if (mandatoryRecurringFees.length === 0 && !noMandatoryRecurringFees) {
+    throw new Error(`${listingLabel} must explicitly state whether it has no mandatory recurring fees.`);
+  }
+  if (mandatoryRecurringFees.length > 0 && noMandatoryRecurringFees) {
+    throw new Error(`${listingLabel} cannot declare no mandatory recurring fees while fee items exist.`);
+  }
+
+  const askingRent = updates.askingRent ?? current.synthetic.askingRent;
+  if (!Number.isFinite(askingRent) || askingRent <= 0) {
+    throw new Error(`${listingLabel} requires askingRent to be a positive number.`);
+  }
+  const propertyType = updates.propertyType ?? current.synthetic.propertyType;
+  if (!propertyType.trim()) throw new Error(`${listingLabel} requires a propertyType.`);
+  const bedrooms = updates.bedrooms ?? current.synthetic.bedrooms;
+  const bathrooms = updates.bathrooms ?? current.synthetic.bathrooms;
+  const squareFootage =
+    updates.squareFootage === undefined
+      ? current.synthetic.squareFootage
+      : updates.squareFootage;
+  if (!Number.isFinite(bedrooms) || bedrooms < 0) {
+    throw new Error(`${listingLabel} requires non-negative bedrooms.`);
+  }
+  if (!Number.isFinite(bathrooms) || bathrooms <= 0) {
+    throw new Error(`${listingLabel} requires positive bathrooms.`);
+  }
+  if (
+    squareFootage !== null &&
+    (!Number.isFinite(squareFootage) || squareFootage < 0)
+  ) {
+    throw new Error(`${listingLabel} requires non-negative squareFootage or null.`);
+  }
+
+  const title = updates.title ?? current.synthetic.title;
+  const neighborhood = updates.neighborhood ?? current.synthetic.neighborhood;
+  const description = updates.description ?? current.synthetic.description;
+  for (const [field, value] of [
+    ["title", title],
+    ["neighborhood", neighborhood],
+    ["description", description],
+  ] as const) {
+    if (!value.trim()) throw new Error(`${listingLabel} requires a non-empty ${field}.`);
+  }
+  const images = updates.images ? [...updates.images] : current.synthetic.images;
+  const amenities = updates.amenities ? [...updates.amenities] : current.synthetic.amenities;
+  if (images.length === 0 || images.some((image) => !image.trim())) {
+    throw new Error(`${listingLabel} requires at least one image.`);
+  }
+  if (amenities.length === 0 || amenities.some((amenity) => !amenity.trim())) {
+    throw new Error(`${listingLabel} requires at least one amenity.`);
+  }
 
   const updatedListing: DemoListing = {
     market: current.market,
     synthetic: {
       ...current.synthetic,
       ...updates,
+      title,
+      neighborhood,
+      description,
+      askingRent,
+      propertyType,
+      bedrooms,
+      bathrooms,
+      squareFootage,
       mandatoryRecurringFees,
       mandatoryRecurringFeeTotal,
       noMandatoryRecurringFees,
-      trueMonthlyCost: current.market.price + mandatoryRecurringFeeTotal,
-      images: updates.images ? [...updates.images] : current.synthetic.images,
-      amenities: updates.amenities ? [...updates.amenities] : current.synthetic.amenities,
+      trueMonthlyCost: askingRent + mandatoryRecurringFeeTotal,
+      images,
+      amenities,
     },
     provenance: current.provenance,
   };

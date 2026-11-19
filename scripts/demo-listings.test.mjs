@@ -173,6 +173,43 @@ test("rejects unmatched, duplicate, or incomplete enrichment records", async (t)
   });
 });
 
+test("rejects incomplete locations and invalid calendar dates", async (t) => {
+  const source = sourceListing();
+
+  await t.test("missing source city", () => {
+    assert.throws(
+      () =>
+        buildDemoListings(
+          snapshot([{ ...source, city: null }]),
+          enrichment([enrichmentListing(source)]),
+        ),
+      /city/,
+    );
+  });
+
+  await t.test("impossible availability date", () => {
+    assert.throws(
+      () =>
+        buildDemoListings(
+          snapshot([source]),
+          enrichment([enrichmentListing(source, { availableDate: "2026-02-31" })]),
+        ),
+      /availableDate/,
+    );
+  });
+
+  await t.test("malformed timestamps", () => {
+    assert.throws(
+      () =>
+        buildDemoListings(
+          snapshot([source]),
+          enrichment([enrichmentListing(source, { createdAt: "not-a-timestamp" })]),
+        ),
+      /createdAt/,
+    );
+  });
+});
+
 test("does not replace an existing output when fixture validation fails", async () => {
   const projectRoot = await mkdtemp(path.join(tmpdir(), "rentwell-demo-"));
   const snapshotPath = path.join(projectRoot, "snapshot.json");
@@ -243,6 +280,10 @@ test("has complete presentation fees images and availability on every fixture re
     assert.match(synthetic.availableDate, /^\d{4}-\d{2}-\d{2}$/);
     assert.ok(synthetic.images.length > 0);
     assert.ok(synthetic.amenities.length > 0);
+    assert.ok(synthetic.askingRent > 0);
+    assert.ok(synthetic.propertyType.length > 0);
+    assert.ok(synthetic.bedrooms >= 0);
+    assert.ok(synthetic.bathrooms > 0);
   }
 });
 

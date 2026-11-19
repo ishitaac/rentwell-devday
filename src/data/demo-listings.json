@@ -39,6 +39,11 @@
         "title": "Foothill Family Home",
         "neighborhood": "East Bench",
         "description": "Fictional four-bedroom demo home with flexible living space and quick access to foothill trails.",
+        "askingRent": 2875,
+        "propertyType": "Single Family",
+        "bedrooms": 4,
+        "bathrooms": 2,
+        "squareFootage": 1874,
         "mandatoryRecurringFees": [
           {
             "id": "resident-services",
@@ -89,6 +94,11 @@
         "title": "Avenues Garden Apartment",
         "neighborhood": "The Avenues",
         "description": "Fictional one-bedroom demo apartment with a bright interior and compact, efficient layout.",
+        "askingRent": 1299,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 550,
         "mandatoryRecurringFees": [
           {
             "id": "technology",
@@ -144,6 +154,11 @@
         "title": "Central City Corner One-Bedroom",
         "neighborhood": "Central City",
         "description": "Fictional city apartment demo with natural light and a walkable downtown-edge location.",
+        "askingRent": 1350,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 600,
         "mandatoryRecurringFees": [
           {
             "id": "water-sewer",
@@ -199,6 +214,11 @@
         "title": "Library Square Studio",
         "neighborhood": "Downtown",
         "description": "Fictional studio demo designed for a simple commute and an efficient downtown lifestyle.",
+        "askingRent": 1095,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 400,
         "mandatoryRecurringFees": [],
         "mandatoryRecurringFeeTotal": 0,
         "noMandatoryRecurringFees": true,
@@ -243,6 +263,11 @@
         "title": "University View Condo",
         "neighborhood": "University District",
         "description": "Fictional two-bedroom condo demo with generous shared space and a dedicated dining area.",
+        "askingRent": 1495,
+        "propertyType": "Condo",
+        "bedrooms": 2,
+        "bathrooms": 1.5,
+        "squareFootage": 1200,
         "mandatoryRecurringFees": [
           {
             "id": "hoa-services",
@@ -293,6 +318,11 @@
         "title": "Liberty Wells Townhome",
         "neighborhood": "Liberty Wells",
         "description": "Fictional three-bedroom townhome demo with two levels and practical roommate-friendly space.",
+        "askingRent": 1595,
+        "propertyType": "Townhouse",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "squareFootage": 1275,
         "mandatoryRecurringFees": [
           {
             "id": "trash",
@@ -348,6 +378,11 @@
         "title": "University District Two-Bedroom",
         "neighborhood": "University District",
         "description": "Fictional two-bedroom demo listing with square footage intentionally unavailable for fallback testing.",
+        "askingRent": 1345,
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": null,
         "mandatoryRecurringFees": [
           {
             "id": "technology",
@@ -398,6 +433,11 @@
         "title": "Glendale Courtyard One-Bedroom",
         "neighborhood": "Glendale",
         "description": "Fictional one-bedroom demo apartment with a roomy layout and shared landscaped courtyard.",
+        "askingRent": 950,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 750,
         "mandatoryRecurringFees": [
           {
             "id": "water-sewer",
@@ -453,6 +493,11 @@
         "title": "Westside Three-Bedroom Townhome",
         "neighborhood": "Westside",
         "description": "Fictional three-bedroom townhome demo with an attached garage and flexible shared living space.",
+        "askingRent": 2299,
+        "propertyType": "Townhouse",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "squareFootage": 1350,
         "mandatoryRecurringFees": [
           {
             "id": "community-services",
@@ -503,6 +548,11 @@
         "title": "Avenues Two-Bedroom Retreat",
         "neighborhood": "The Avenues",
         "description": "Fictional two-bedroom demo apartment with a calm interior and space for a home office.",
+        "askingRent": 1595,
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 900,
         "mandatoryRecurringFees": [
           {
             "id": "parking",
@@ -558,6 +608,11 @@
         "title": "Poplar Grove Compact One-Bedroom",
         "neighborhood": "Poplar Grove",
         "description": "Fictional value-focused one-bedroom demo apartment with a simple, compact floor plan.",
+        "askingRent": 895,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 500,
         "mandatoryRecurringFees": [],
         "mandatoryRecurringFeeTotal": 0,
         "noMandatoryRecurringFees": true,
@@ -602,6 +657,11 @@
         "title": "Sugar House Park Two-Bedroom",
         "neighborhood": "Sugar House",
         "description": "Fictional two-bedroom demo apartment with a spacious living area near neighborhood parks.",
+        "askingRent": 1500,
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 1004,
         "mandatoryRecurringFees": [
           {
             "id": "water-sewer",
@@ -657,6 +717,11 @@
         "title": "Capitol Hill Oversized Studio",
         "neighborhood": "Capitol Hill",
         "description": "Fictional oversized studio demo with defined living and sleeping zones.",
+        "askingRent": 915,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 633,
         "mandatoryRecurringFees": [
           {
             "id": "building-services",
@@ -707,6 +772,11 @@
         "title": "Sugar House Garden One-Bedroom",
         "neighborhood": "Sugar House",
         "description": "Fictional one-bedroom demo with garden-level access and a practical everyday layout.",
+        "askingRent": 870,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": 588,
         "mandatoryRecurringFees": [
           {
             "id": "water-sewer",
@@ -757,6 +827,11 @@
         "title": "Broadway District Studio",
         "neighborhood": "Central City",
         "description": "Fictional studio demo with a streamlined interior near dining, transit, and downtown services.",
+        "askingRent": 995,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 400,
         "mandatoryRecurringFees": [
           {
             "id": "technology",
@@ -812,6 +887,11 @@
         "title": "Rose Park Two-Bedroom",
         "neighborhood": "Rose Park",
         "description": "Fictional two-bedroom demo apartment with straightforward costs and convenient shared parking.",
+        "askingRent": 995,
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 700,
         "mandatoryRecurringFees": [
           {
             "id": "water-sewer",
@@ -867,6 +947,11 @@
         "title": "Lower Avenues Two-Bedroom",
         "neighborhood": "Lower Avenues",
         "description": "Fictional two-bedroom demo apartment balancing shared space with a walkable central location.",
+        "askingRent": 1545,
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 879,
         "mandatoryRecurringFees": [
           {
             "id": "parking",
@@ -917,6 +1002,11 @@
         "title": "Downtown Micro Studio",
         "neighborhood": "Downtown",
         "description": "Fictional micro-studio demo built around affordability, storage, and a highly efficient footprint.",
+        "askingRent": 750,
+        "propertyType": "Apartment",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "squareFootage": 229,
         "mandatoryRecurringFees": [],
         "mandatoryRecurringFeeTotal": 0,
         "noMandatoryRecurringFees": true,
@@ -961,6 +1051,11 @@
         "title": "Glendale Two-Bedroom",
         "neighborhood": "Glendale",
         "description": "Fictional two-bedroom demo apartment with comfortable shared space and transparent monthly charges.",
+        "askingRent": 1050,
+        "propertyType": "Apartment",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "squareFootage": 900,
         "mandatoryRecurringFees": [
           {
             "id": "water-sewer",
@@ -1016,6 +1111,11 @@
         "title": "East Liberty One-Bedroom",
         "neighborhood": "East Liberty Park",
         "description": "Fictional one-bedroom demo listing with square footage unavailable and all recurring fees disclosed.",
+        "askingRent": 983,
+        "propertyType": "Apartment",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "squareFootage": null,
         "mandatoryRecurringFees": [
           {
             "id": "building-services",

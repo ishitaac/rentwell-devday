@@ -14,6 +14,12 @@ export function requireRentCastApiKey(environment = process.env) {
   return apiKey;
 }
 
+export function createRentCastHttpError(status) {
+  return new Error(
+    `RentCast request failed (${status}). Check the API key, account access, and request limits.`,
+  );
+}
+
 export function sanitizeRentCastListings(records) {
   if (!Array.isArray(records)) {
     throw new TypeError("RentCast response must be an array of rental listings.");

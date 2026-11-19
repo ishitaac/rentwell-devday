@@ -39,7 +39,7 @@ The compiled site is written to `dist/`.
 ## Project notes
 
 - Fair-rent comparisons use a dated, cached snapshot of active Salt Lake City rentals retrieved from the [RentCast API](https://developers.rentcast.io/reference/rental-listings-long-term). They are not live market coverage, appraisals, or guarantees.
-- The renter and property-manager screens use 20 synthetic **Demo listings** generated from the cached snapshot. They are not active properties available to rent.
+- The planned renter and property-manager screens will use 20 synthetic **Demo listings** generated from the cached snapshot. They are not active properties available to rent.
 - Listing-link extraction remains simulated; users can edit the extracted fields.
 - AI rental advisor responses are simulated.
 - The project runs as a standalone Vite application and does not require Figma Make files or plugins.
@@ -50,7 +50,7 @@ The demo keeps source facts and fictional presentation content separate:
 
 - `src/data/rentcast-slc.json` contains the sanitized RentCast market fields: city, state, zip code, property type, bedrooms, bathrooms, optional square footage, price, and snapshot dates.
 - `src/data/demo-listing-enrichment.json` contains synthetic renter-facing content: fictional IDs, titles, neighborhoods, descriptions, recurring fees, deposits, availability, amenities, and local image references.
-- `src/data/demo-listings.json` is the generated dataset consumed by the app. Each record contains separate `market`, `synthetic`, and `provenance` sections.
+- `src/data/demo-listings.json` is the generated dataset prepared for the planned listing screens. Each record contains separate `market`, `synthetic`, and `provenance` sections; `src/demoListings.ts` provides the typed selector and edit helper.
 - `public/listings/ASSETS.md` records image creators, source pages, and license information. The images are illustrative and are not photographs of the listed properties.
 
 Rebuild the committed demo dataset for free, without making a RentCast request:

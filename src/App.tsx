@@ -30,10 +30,8 @@ type IconName =
   | "sparkle"
   | "x";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1502672023488-70e25813eb80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicmlnaHQlMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvciUyMHBsYW50cyUyMGNpdHklMjByZW50YWx8ZW58MXx8fHwxNzk0ODY2NjEyfDA&ixlib=rb-4.1.0&q=80&w=1080";
-const APARTMENT_IMAGE =
-  "https://images.unsplash.com/photo-1650137938625-11576502aecd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwyfHxicmlnaHQlMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvciUyMHBsYW50cyUyMGNpdHklMjByZW50YWx8ZW58MXx8fHwxNzk0ODY2NjEyfDA&ixlib=rb-4.1.0&q=80&w=1080";
+export const HERO_IMAGE = "/listings/interior-warm.jpg";
+export const APARTMENT_IMAGE = "/listings/interior-blue.jpg";
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -130,17 +128,20 @@ function Button({
   secondary = false,
   className = "",
   type = "button",
+  disabled = false,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   secondary?: boolean;
   className?: string;
   type?: "button" | "submit";
+  disabled?: boolean;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`${secondary ? "btn-secondary" : "btn-primary"} ${className}`}
     >
       {children}
@@ -361,7 +362,7 @@ function Home({ go }: { go: (screen: Screen) => void }) {
   );
 }
 
-type RentalData = {
+export type RentalData = {
   neighborhood: string;
   rent: number;
   bedrooms: number;
@@ -369,6 +370,10 @@ type RentalData = {
   fees: number;
   date: string;
 };
+
+export function canAnalyzeRental(rental: RentalData): boolean {
+  return Number.isFinite(rental.rent) && rental.rent > 0;
+}
 
 function RentalInput({
   rental,
@@ -447,7 +452,7 @@ function RentalInput({
               onChange={(v) => update("rent", v)}
               type="number"
               prefix="$"
-              min={0}
+              min={1}
             />
             <Field
               label="Bedrooms"
@@ -479,7 +484,11 @@ function RentalInput({
               type="date"
             />
           </div>
-          <Button className="wide-button" onClick={() => go("analysis")}>
+          <Button
+            className="wide-button"
+            onClick={() => go("analysis")}
+            disabled={!canAnalyzeRental(rental)}
+          >
             Analyze this rental <Icon name="arrow" size={18} />
           </Button>
         </section>

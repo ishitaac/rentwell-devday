@@ -70,6 +70,51 @@ describe("updateDemoListing", () => {
     expect(target.synthetic.mandatoryRecurringFeeTotal).not.toBe(70);
   });
 
+  it("rejects ambiguous contradictory or invalid renter-visible edits", () => {
+    const original = getDemoListings(demoListingsDataset);
+    const target = original[0];
+    const listingId = target.synthetic.listingId;
+
+    expect(() =>
+      updateDemoListing(original, listingId, { mandatoryRecurringFees: [] }),
+    ).toThrow(/explicitly state/);
+    expect(() =>
+      updateDemoListing(original, listingId, { noMandatoryRecurringFees: true }),
+    ).toThrow(/fee items/);
+    expect(() =>
+      updateDemoListing(original, listingId, {
+        mandatoryRecurringFees: [{ id: "bad", label: "Bad fee", amount: Number.NaN }],
+        noMandatoryRecurringFees: false,
+      }),
+    ).toThrow(/finite non-negative/);
+    expect(() => updateDemoListing(original, listingId, { title: "" })).toThrow(/title/);
+    expect(() => updateDemoListing(original, listingId, { images: [] })).toThrow(/image/);
+  });
+
+  it("edits renter-visible rent and property facts without changing market evidence", () => {
+    const original = getDemoListings(demoListingsDataset);
+    const target = original[0];
+    const updated = updateDemoListing(original, target.synthetic.listingId, {
+      askingRent: 2500,
+      propertyType: "Townhouse",
+      bedrooms: 3,
+      bathrooms: 2.5,
+      squareFootage: 1600,
+    })[0];
+
+    expect(updated.synthetic).toMatchObject({
+      askingRent: 2500,
+      propertyType: "Townhouse",
+      bedrooms: 3,
+      bathrooms: 2.5,
+      squareFootage: 1600,
+    });
+    expect(updated.synthetic.trueMonthlyCost).toBe(
+      2500 + updated.synthetic.mandatoryRecurringFeeTotal,
+    );
+    expect(updated.market).toEqual(target.market);
+  });
+
   it("returns the original list unchanged for an unknown listing ID", () => {
     const original = getDemoListings(demoListingsDataset);
 

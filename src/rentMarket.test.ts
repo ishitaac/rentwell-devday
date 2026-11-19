@@ -152,6 +152,18 @@ describe("describeRentDifference", () => {
       heading: "Market comparison is unavailable.",
     });
   });
+
+  it.each([0, -100, Number.NaN])(
+    "does not compare an invalid asking rent of %s",
+    (askingRent) => {
+      expect(describeRentDifference(askingRent, comparison)).toEqual({
+        percentage: null,
+        percentageLabel: "—",
+        directionLabel: "comparison unavailable",
+        heading: "Market comparison is unavailable.",
+      });
+    },
+  );
 });
 
 describe("describeComparisonMethod", () => {

@@ -83,7 +83,7 @@ export function describeRentDifference(
   askingRent: number,
   comparison: RentComparison | null,
 ): RentDifferenceDescription {
-  if (!comparison || !Number.isFinite(askingRent) || comparison.median <= 0) {
+  if (!comparison || !Number.isFinite(askingRent) || askingRent <= 0 || comparison.median <= 0) {
     return {
       percentage: null,
       percentageLabel: "—",

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { requireRentCastApiKey, sanitizeRentCastListings } from "./rentcast-data.mjs";
+import {
+  createRentCastHttpError,
+  requireRentCastApiKey,
+  sanitizeRentCastListings,
+} from "./rentcast-data.mjs";
 
 test("keeps only comparison fields from valid rental listings", () => {
   const records = [
@@ -79,4 +83,12 @@ test("rejects a missing API key with setup guidance", () => {
     () => requireRentCastApiKey({ RENTCAST_API_KEY: "  " }),
     /Copy \.env\.example to \.env\.local/,
   );
+});
+
+test("does not include an upstream response body in request errors", () => {
+  const reflectedSecret = "rentcast-secret-that-must-not-be-logged";
+  const error = createRentCastHttpError(401, reflectedSecret);
+
+  assert.match(error.message, /401/);
+  assert.doesNotMatch(error.message, new RegExp(reflectedSecret));
 });
