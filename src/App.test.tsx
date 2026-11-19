@@ -1,9 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import App, { getDecisionBackScreen, getNavSection } from "./App";
+import App, { getAdvisorEntryScreen, getDecisionBackScreen, getNavSection } from "./App";
 
 describe("unified App navigation", () => {
+  it("requires a rental decision before opening the Advisor", () => {
+    expect(getAdvisorEntryScreen(null)).toBe("rental-entry");
+    expect(getAdvisorEntryScreen({ decisionId: "selected" })).toBe("advisor");
+  });
+
   it("exposes renter choices and separates the property-manager role", () => {
     const html = renderToStaticMarkup(<App />);
 

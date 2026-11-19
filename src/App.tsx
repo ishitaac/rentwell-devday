@@ -68,6 +68,12 @@ export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
   return origin;
 }
 
+export function getAdvisorEntryScreen(
+  decision: Pick<RentalDecisionRecord, "decisionId"> | null,
+): "advisor" | "rental-entry" {
+  return decision ? "advisor" : "rental-entry";
+}
+
 export function getNavSection(
   screen: Screen,
   decisionOrigin: DecisionOrigin,
@@ -1337,7 +1343,10 @@ function App() {
           >
             Roommate Planning
           </button>
-          <button className={navActive === "advisor" ? "active" : ""} onClick={() => go("advisor")}>
+          <button
+            className={navActive === "advisor" ? "active" : ""}
+            onClick={() => go(getAdvisorEntryScreen(activeDecision))}
+          >
             AI Advisor
           </button>
           <button onClick={() => go("home")}>How It Works</button>
@@ -1347,7 +1356,7 @@ function App() {
           >
             For property managers
           </button>
-          <Button onClick={() => go("advisor")}>
+          <Button onClick={() => go(getAdvisorEntryScreen(activeDecision))}>
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>
         </nav>
@@ -1409,6 +1418,7 @@ function App() {
             )
           }
           onPlanWithRoommates={planWithRoommates}
+          onOpenAdvisor={() => go("advisor")}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
         />
       )}
@@ -1435,10 +1445,19 @@ function App() {
       )}
       {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
       {screen === "matches" && <Matches context={roommateContext} go={go} />}
-      {screen === "advisor" && <AdvisorHome go={go} />}
-      {screen === "lease" && <LeaseAnalysis go={go} />}
-      {screen === "truecost" && <TrueHousingCost go={go} />}
-      {screen === "decision" && <DecisionSummary go={go} />}
+      {screen === "advisor" && activeDecision && <AdvisorHome decision={activeDecision} go={go} />}
+      {screen === "lease" && activeDecision && <LeaseAnalysis decision={activeDecision} go={go} />}
+      {screen === "truecost" && activeDecision && (
+        <TrueHousingCost decision={activeDecision} go={go} />
+      )}
+      {screen === "decision" && activeDecision && (
+        <DecisionSummary
+          decision={activeDecision}
+          go={go}
+          onBackToDecision={() => go("listing-details")}
+          onPlanWithRoommates={planWithRoommates}
+        />
+      )}
       <footer>
         <button className="brand footer-brand" onClick={() => go("home")}>
           <span className="brand-mark">

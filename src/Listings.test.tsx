@@ -206,6 +206,7 @@ describe("RentalDecisionDetails", () => {
         onToggleCompared={() => undefined}
         onRequestTour={() => undefined}
         onPlanWithRoommates={() => undefined}
+        onOpenAdvisor={() => undefined}
         onToggleCalculation={() => undefined}
       />,
     );
@@ -221,6 +222,7 @@ describe("RentalDecisionDetails", () => {
     expect(html).toContain("Add to compare");
     expect(html).toContain("Request a tour");
     expect(html).toContain("Plan costs with roommates");
+    expect(html).toContain("Review sample lease with Advisor");
   });
 
   it("shows an entered rental honestly without unsupported listing details", () => {
@@ -248,6 +250,7 @@ describe("RentalDecisionDetails", () => {
         onToggleCompared={() => undefined}
         onRequestTour={() => undefined}
         onPlanWithRoommates={() => undefined}
+        onOpenAdvisor={() => undefined}
         onToggleCalculation={() => undefined}
       />,
     );
@@ -262,6 +265,7 @@ describe("RentalDecisionDetails", () => {
     expect(html).toContain("Security deposit has not been provided.");
     expect(html).toContain("Save evaluation");
     expect(html).toContain("Plan costs with roommates");
+    expect(html).toContain("Review sample lease with Advisor");
     expect(html).not.toContain("Request a tour");
     expect(html).not.toContain("Add to compare");
     expect(html).not.toContain("<img");

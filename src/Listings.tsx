@@ -255,6 +255,7 @@ export function RentalDecisionDetails({
   onToggleCompared = () => undefined,
   onRequestTour = () => undefined,
   onPlanWithRoommates,
+  onOpenAdvisor,
   onToggleCalculation,
 }: {
   decision: RentalDecisionRecord;
@@ -268,6 +269,7 @@ export function RentalDecisionDetails({
   onToggleCompared?: () => void;
   onRequestTour?: () => void;
   onPlanWithRoommates: () => void;
+  onOpenAdvisor: () => void;
   onToggleCalculation: () => void;
 }) {
   const receipt = buildRentalDecisionReceipt(decision, RENT_SNAPSHOT);
@@ -487,6 +489,9 @@ export function RentalDecisionDetails({
             <button className="roommate-plan-action" onClick={onPlanWithRoommates}>
               Plan costs with roommates
             </button>
+            <button className="advisor-review-action" onClick={onOpenAdvisor}>
+              Review sample lease with Advisor
+            </button>
           </div>
           {decision.capabilities.canRequestTour && tourRequested && (
             <p className="tour-feedback">Demo only: a manager would receive your tour request.</p>
@@ -535,6 +540,7 @@ export function ListingDetails({
       onToggleCompared={onToggleCompared}
       onRequestTour={onRequestTour}
       onPlanWithRoommates={() => undefined}
+      onOpenAdvisor={() => undefined}
       onToggleCalculation={onToggleCalculation}
     />
   );
