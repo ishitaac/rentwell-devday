@@ -323,11 +323,7 @@ function Field({
   );
 }
 
-export function Home({
-  go,
-}: {
-  go: (screen: Screen) => void;
-}) {
+export function Home({ go }: { go: (screen: Screen) => void }) {
   const sampleListing = getDemoListings(demoListingsDataset)[2].synthetic;
 
   return (
@@ -408,9 +404,7 @@ export function Home({
             <p>
               Browse RentWell’s synthetic demo listings or check a rental you found somewhere else.
             </p>
-            <span className="card-link">
-              Two ways to start
-            </span>
+            <span className="card-link">Two ways to start</span>
           </article>
           <article className="path-card">
             <span className="number">02</span>
@@ -422,9 +416,7 @@ export function Home({
               See advertised rent, mandatory fees, true monthly cost, and Fair Rent evidence in one
               Decision Receipt.
             </p>
-            <span className="card-link">
-              One shared receipt
-            </span>
+            <span className="card-link">One shared receipt</span>
           </article>
           <article className="path-card">
             <span className="number">03</span>
@@ -436,9 +428,7 @@ export function Home({
               Finish your rental decision or continue into cost sharing and preference-based
               roommate planning.
             </p>
-            <span className="card-link">
-              Optional next step
-            </span>
+            <span className="card-link">Optional next step</span>
           </article>
         </div>
       </section>
@@ -778,7 +768,9 @@ function RoommateMath({
           <div className="card-title-row">
             <div>
               <h2>Monthly housing costs</h2>
-              <p>{rental.title} · {rental.neighborhood}</p>
+              <p>
+                {rental.title} · {rental.neighborhood}
+              </p>
             </div>
             <span className="demo-tag">FROM DECISION RECEIPT</span>
           </div>
@@ -786,12 +778,7 @@ function RoommateMath({
             <span>Base rent</span>
             <div className="inline-money">
               <span>$</span>
-              <input
-                aria-label="Base rent"
-                type="number"
-                value={rental.advertisedRent}
-                readOnly
-              />
+              <input aria-label="Base rent" type="number" value={rental.advertisedRent} readOnly />
             </div>
           </div>
           <div className="cost-row">
@@ -1274,9 +1261,7 @@ function App() {
   }));
   const [activeDecision, setActiveDecision] = useState<RentalDecisionRecord | null>(null);
   const [decisionOrigin, setDecisionOrigin] = useState<DecisionOrigin>("listings");
-  const [externalEntry, setExternalEntry] = useState<ExternalRentalEntry>(
-    INITIAL_EXTERNAL_ENTRY,
-  );
+  const [externalEntry, setExternalEntry] = useState<ExternalRentalEntry>(INITIAL_EXTERNAL_ENTRY);
   const [roommateContext, setRoommateContext] = useState<RoommatePlanningContext>(() =>
     createRoommateFirstContext(),
   );
@@ -1288,10 +1273,7 @@ function App() {
     setScreen(next);
     setMenu(false);
   };
-  const openListing = (
-    listing: DemoListing,
-    returnScreen: "listings" | "manager" = "listings",
-  ) => {
+  const openListing = (listing: DemoListing, returnScreen: "listings" | "manager" = "listings") => {
     setActiveDecision(createDemoRentalDecision(listing));
     setDecisionOrigin(returnScreen);
     setShowCalculation(false);
@@ -1316,10 +1298,7 @@ function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
-  const navActive = useMemo(
-    () => getNavSection(screen, decisionOrigin),
-    [decisionOrigin, screen],
-  );
+  const navActive = useMemo(() => getNavSection(screen, decisionOrigin), [decisionOrigin, screen]);
 
   return (
     <div className="site-shell">
@@ -1376,9 +1355,7 @@ function App() {
           <Icon name={menu ? "x" : "menu"} />
         </button>
       </header>
-      {screen === "home" && (
-        <Home go={go} />
-      )}
+      {screen === "home" && <Home go={go} />}
       {screen === "listings" && (
         <ListingsBrowser
           listings={demoListings}

@@ -39,10 +39,21 @@ The compiled site is written to `dist/`.
 ## Project notes
 
 - Fair-rent comparisons use a dated, cached snapshot of active Salt Lake City rentals retrieved from the [RentCast API](https://developers.rentcast.io/reference/rental-listings-long-term). They are not live market coverage, appraisals, or guarantees.
-- The planned renter and property-manager screens will use 20 synthetic **Demo listings** generated from the cached snapshot. They are not active properties available to rent.
+- The renter and property-manager screens use 20 synthetic **Demo listings** generated from the cached snapshot. They are not active properties available to rent.
+- Fair Rent compares advertised base rent with the dated snapshot range. Mandatory recurring fees are shown separately and included in true monthly cost.
 - Listing-link extraction remains simulated; users can edit the extracted fields.
-- AI rental advisor responses are simulated.
+- AI rental advisor responses and the sample lease are simulated. The Advisor uses the active rental's shared Decision Receipt for costs and market evidence; selected local files are not transmitted or analyzed.
 - The project runs as a standalone Vite application and does not require Figma Make files or plugins.
+
+## Recommended demo path
+
+1. Select **Browse rentals** or **Check a rental you found**.
+2. Open the shared **Decision Receipt** to explain advertised rent, mandatory fees, true monthly cost, and the dated Fair Rent comparison.
+3. Select **Review sample lease with Advisor** to demonstrate clause questions without creating a second rental calculation.
+4. Return to the Decision Receipt, then optionally select **Plan costs with roommates**.
+5. Use **For property managers** to edit a synthetic listing and preview the same renter-facing Decision Receipt.
+
+The app initially displays six cards for readability, but search and filters operate across all 20 committed demo listings. **Show more rentals** progressively reveals the remaining results.
 
 ## Demo listing data
 
@@ -50,7 +61,7 @@ The demo keeps source facts and fictional presentation content separate:
 
 - `src/data/rentcast-slc.json` contains the sanitized RentCast market fields: city, state, zip code, property type, bedrooms, bathrooms, optional square footage, price, and snapshot dates.
 - `src/data/demo-listing-enrichment.json` contains synthetic renter-facing content: fictional IDs, titles, neighborhoods, descriptions, recurring fees, deposits, availability, amenities, and local image references.
-- `src/data/demo-listings.json` is the generated dataset prepared for the planned listing screens. Each record contains separate `market`, `synthetic`, and `provenance` sections; `src/demoListings.ts` provides the typed selector and edit helper.
+- `src/data/demo-listings.json` is the generated dataset used by the listing and manager screens. Each record contains separate `market`, `synthetic`, and `provenance` sections; `src/demoListings.ts` provides the typed selector and edit helper.
 - `public/listings/ASSETS.md` records image creators, source pages, and license information. The images are illustrative and are not photographs of the listed properties.
 
 Rebuild the committed demo dataset for free, without making a RentCast request:

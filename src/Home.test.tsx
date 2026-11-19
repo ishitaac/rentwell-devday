@@ -5,9 +5,7 @@ import { Home } from "./App";
 
 describe("Home", () => {
   it("presents two rental entrances and a three-stage decision journey", () => {
-    const html = renderToStaticMarkup(
-      <Home go={() => undefined} />,
-    );
+    const html = renderToStaticMarkup(<Home go={() => undefined} />);
 
     expect(html).toMatch(/btn-primary[^>]*>Browse rentals/);
     expect(html).toContain("Check a rental you found");
@@ -19,9 +17,7 @@ describe("Home", () => {
   });
 
   it("uses a committed synthetic listing instead of the disconnected sample", () => {
-    const html = renderToStaticMarkup(
-      <Home go={() => undefined} />,
-    );
+    const html = renderToStaticMarkup(<Home go={() => undefined} />);
 
     expect(html).toContain("Central City Corner One-Bedroom");
     expect(html).toContain("$1,418 / mo true cost");

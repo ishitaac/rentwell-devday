@@ -10,14 +10,8 @@ import {
   type ListingFilters,
   type ListingPriceFilter,
 } from "./listingFilters";
-import {
-  buildListingDecisionReceipt,
-  buildRentalDecisionReceipt,
-} from "./listingDecision";
-import {
-  createDemoRentalDecision,
-  type RentalDecisionRecord,
-} from "./rentalDecision";
+import { buildListingDecisionReceipt, buildRentalDecisionReceipt } from "./listingDecision";
+import { createDemoRentalDecision, type RentalDecisionRecord } from "./rentalDecision";
 import type { RentSnapshot } from "./rentMarket";
 
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
@@ -306,12 +300,12 @@ export function RentalDecisionDetails({
             <div className="listing-title-row">
               <div>
                 <span className="listing-demo-tag">
-                  {isDemoListing
-                    ? "SYNTHETIC DEMO LISTING"
-                    : "Rental you entered · Demo analysis"}
+                  {isDemoListing ? "SYNTHETIC DEMO LISTING" : "Rental you entered · Demo analysis"}
                 </span>
                 <h1>{decision.title}</h1>
-                <p>{decision.neighborhood}, {decision.city}</p>
+                <p>
+                  {decision.neighborhood}, {decision.city}
+                </p>
               </div>
               {isDemoListing && decision.availableDate && (
                 <span className="listing-available">
@@ -348,9 +342,7 @@ export function RentalDecisionDetails({
               )}
             </div>
 
-            {decision.description && (
-              <p className="listing-description">{decision.description}</p>
-            )}
+            {decision.description && <p className="listing-description">{decision.description}</p>}
 
             {isDemoListing && (
               <div className="listing-info-grid">

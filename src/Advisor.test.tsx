@@ -16,9 +16,7 @@ describe("Advisor rental context", () => {
   });
 
   it("uses the shared rental costs instead of a second fictional cost calculation", () => {
-    const html = renderToStaticMarkup(
-      <TrueHousingCost decision={decision} go={() => undefined} />,
-    );
+    const html = renderToStaticMarkup(<TrueHousingCost decision={decision} go={() => undefined} />);
 
     expect(html).toContain("$1,299");
     expect(html).toContain("$65");

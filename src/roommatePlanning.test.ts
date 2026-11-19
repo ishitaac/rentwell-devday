@@ -3,15 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { Matches, Preferences } from "./App";
-import {
-  demoListingsDataset,
-  getDemoListings,
-  updateDemoListing,
-} from "./demoListings";
-import {
-  createDemoRentalDecision,
-  createExternalRentalDecision,
-} from "./rentalDecision";
+import { demoListingsDataset, getDemoListings, updateDemoListing } from "./demoListings";
+import { createDemoRentalDecision, createExternalRentalDecision } from "./rentalDecision";
 import {
   createRentalFirstRoommateContext,
   createRoommateFirstContext,
@@ -65,9 +58,7 @@ describe("roommate planning context", () => {
       updatedAt: "2026-11-19T08:00:00.000Z",
     })[1];
 
-    const context = createRentalFirstRoommateContext(
-      createDemoRentalDecision(edited),
-    );
+    const context = createRentalFirstRoommateContext(createDemoRentalDecision(edited));
 
     expect(context.rental).toMatchObject({
       advertisedRent: 1500,
@@ -143,9 +134,7 @@ describe("Matches context", () => {
       },
     };
 
-    const html = renderToStaticMarkup(
-      createElement(Matches, { context, go: () => undefined }),
-    );
+    const html = renderToStaticMarkup(createElement(Matches, { context, go: () => undefined }));
 
     expect(html).toContain("Campus apartment");
     expect(html).toContain("$2,300/mo total");

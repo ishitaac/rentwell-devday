@@ -92,7 +92,7 @@ Primary renter navigation becomes:
 - **Browse Rentals**
 - **Check Your Rental**
 - **Roommate Planning**
-- **AI Advisor**
+- **AI Advisor** — opens the active rental context; before a rental is selected, it routes through **Check Your Rental** rather than fabricating a sample decision
 - **How It Works**
 
 **Manager Workspace** moves out of the renter navigation and becomes a visually distinct **For property managers** role entry. It may remain in the same prototype but must not look like the next renter task.
@@ -113,7 +113,7 @@ Actions change to:
 - Primary: **Browse rentals**
 - Secondary: **Check a rental you found**
 
-The explanatory section becomes three stages rather than two unrelated cards:
+The explanatory section becomes three non-interactive stages rather than three competing entry points:
 
 1. **Find or bring a rental**
 2. **Understand the real cost**
@@ -125,7 +125,7 @@ The home-page sample should use a committed synthetic listing rather than the di
 
 ### Entrance A: Browse Rentals
 
-The renter searches the six demo listings and selects **View details**. The selected `DemoListing` becomes the decision record and opens the existing listing-details page with the Decision Receipt.
+The renter searches and filters all 20 committed demo listings and selects **View details**. Six cards appear initially for readability, and **Show more rentals** progressively reveals the remaining filtered results. The selected `DemoListing` becomes the decision record and opens the existing listing-details page with the Decision Receipt.
 
 ### Entrance B: Check Your Rental
 
@@ -151,7 +151,7 @@ All rentals use the same labels and formulas:
 - known mandatory recurring fees
 - true monthly cost
 - estimated move-in cost
-- Fair Rent result
+- Fair Rent result, explicitly based on advertised rent before mandatory fees
 - snapshot comparison range and comparable count
 - confidence and freshness
 - information to confirm
@@ -164,7 +164,14 @@ Actions are context-aware:
 - **Add to compare** when a comparable shared record exists
 - **Request a tour** only for browsed demo listings
 - **Plan costs with roommates** for any rental
+- **Review sample lease with Advisor** for any active rental
 - **Back to listings** or **Back to rental entry**, matching the entrance
+
+### Optional Advisor branch
+
+The Advisor is an extension of the active Decision Receipt, not a second rental calculator. It receives the same `RentalDecisionRecord` and derives advertised rent, mandatory recurring fees, true monthly cost, move-in estimate, market median, and comparable count from the shared receipt calculation.
+
+The lease, citations, and responses are explicitly fictional and simulated. The selected rental title and current receipt values appear throughout the Advisor. The final Advisor summary returns to the same Decision Receipt or starts rental-first roommate planning; it never jumps directly into matches with an old roommate context.
 
 ### Optional roommate branch
 
@@ -203,6 +210,7 @@ The colleague-owned roommate feature owns its landing experience, preferences, m
 - Preserve original provenance: `synthetic-demo-listing` or `user-entered-demo-analysis`.
 - Do not add fabricated amenities, images, contacts, fees, or availability to external records.
 - The active decision record feeds roommate math so rent and fees cannot diverge between screens.
+- The active decision record also feeds the Advisor so its costs and market evidence cannot diverge from the Decision Receipt.
 - The roommate handoff context remains small and typed so the colleague-owned implementation can consume it without depending on the full listing UI.
 - Returning to Browse Rentals preserves the existing query.
 
@@ -225,6 +233,10 @@ Home → Browse rentals → Select listing → Decision Receipt → Plan costs w
 
 Home → Check a rental you found → Enter/extract details → Decision Receipt → Save evaluation or plan costs with roommates.
 
+### Advisor path
+
+Decision Receipt → Review sample lease with Advisor → Lease findings → Shared costs → Advisor summary → Return to Decision Receipt or plan with roommates.
+
 ### Roommate-first path
 
 Home or navigation → Roommate Planning → colleague-owned roommate journey, with no fabricated selected rental.
@@ -240,6 +252,7 @@ For property managers → Edit listing → Save → Preview renter view → Deci
 - No global five-step progress bar remains.
 - Roommate Planning remains directly discoverable and supports a roommate-first entrance.
 - Rent and recurring fees shown in the receipt, cost split, and matches context agree.
+- Advisor rent, recurring fees, move-in estimate, comparable count, and true monthly cost agree with the active Decision Receipt.
 - A browsed listing preserves save, compare, tour, calculation disclosure, and back behavior.
 - An external rental clearly marks missing information and does not show unsupported tour or manager controls.
 - Browse search is preserved after returning from details.

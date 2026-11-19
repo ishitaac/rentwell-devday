@@ -189,13 +189,7 @@ function MobilePanelTabs({
   );
 }
 
-function LeasePaper({
-  model,
-  focus = "",
-}: {
-  model: AdvisorDecisionModel;
-  focus?: string;
-}) {
+function LeasePaper({ model, focus = "" }: { model: AdvisorDecisionModel; focus?: string }) {
   const depositText =
     model.securityDeposit === null
       ? "The security deposit amount is not stated in the selected rental facts."
@@ -338,8 +332,8 @@ export function AdvisorHome({
             the document you provide.
           </p>
           <p className="advisor-decision-context">
-            Decision Receipt: <b>{model.title}</b> · {formatMoney(model.trueMonthlyCost)} true monthly
-            cost
+            Decision Receipt: <b>{model.title}</b> · {formatMoney(model.trueMonthlyCost)} true
+            monthly cost
           </p>
         </div>
         <div className="advisor-trust">
@@ -496,33 +490,33 @@ function getFindings(model: AdvisorDecisionModel): Finding[] {
       status: "stated",
       detail: "Uses the same mandatory fees as the Decision Receipt.",
     },
-  {
-    label: "Late fees",
-    value: "$75 + $10 / day",
-    citation: "§ 6.3",
-    status: "stated",
-    detail: "Applies after the fifth calendar day.",
-  },
-  {
-    label: "Lease duration",
-    value: "12 months",
-    citation: "§ 2.1",
-    status: "stated",
-    detail: "Jan 1, 2027 through Dec 31, 2027.",
-  },
-  {
-    label: "Early termination",
-    value: `60 days + ${formatMoney(model.advertisedRent * 2)}`,
-    citation: "§ 9.2",
-    status: "stated",
-    detail: "Request only; approval is not guaranteed.",
-  },
-  {
-    label: "Roommates / subletting",
-    value: "Written approval required",
-    citation: "§ 12.4",
-    status: "ambiguous",
-    detail: "Approval criteria are not defined.",
+    {
+      label: "Late fees",
+      value: "$75 + $10 / day",
+      citation: "§ 6.3",
+      status: "stated",
+      detail: "Applies after the fifth calendar day.",
+    },
+    {
+      label: "Lease duration",
+      value: "12 months",
+      citation: "§ 2.1",
+      status: "stated",
+      detail: "Jan 1, 2027 through Dec 31, 2027.",
+    },
+    {
+      label: "Early termination",
+      value: `60 days + ${formatMoney(model.advertisedRent * 2)}`,
+      citation: "§ 9.2",
+      status: "stated",
+      detail: "Request only; approval is not guaranteed.",
+    },
+    {
+      label: "Roommates / subletting",
+      value: "Written approval required",
+      citation: "§ 12.4",
+      status: "ambiguous",
+      detail: "Approval criteria are not defined.",
     },
   ];
 }
@@ -839,29 +833,29 @@ function getDecisionSections(model: AdvisorDecisionModel) {
       evidence: "Shared RentWell Decision Receipt",
       recommendation: "Budget separately for variable utilities that are not stated.",
     },
-  {
-    title: "Lease Questions",
-    status: "Needs clarification",
-    tone: "unknown",
-    summary: "Renewal terms, move-out cleaning charges, and application fees are not included.",
-    evidence: "No supporting clause found in sample",
-    recommendation: "Get written answers and request every applicable addendum before signing.",
-  },
-  {
-    title: "HOA Restrictions",
-    status: "Needs clarification",
-    tone: "unknown",
-    summary: "No HOA addendum or community rules were included in the sample document.",
-    evidence: "No HOA evidence found",
-    recommendation: "Ask whether an HOA governs the unit and request its current rules.",
-  },
-  {
-    title: "Roommate Considerations",
-    status: "Approval required",
-    tone: "caution",
-    summary: "Roommates and sublets require prior written approval; criteria are not defined.",
-    evidence: "Sample lease § 12.4",
-    recommendation: "Ask how approval works, how long it takes, and whether fees apply.",
+    {
+      title: "Lease Questions",
+      status: "Needs clarification",
+      tone: "unknown",
+      summary: "Renewal terms, move-out cleaning charges, and application fees are not included.",
+      evidence: "No supporting clause found in sample",
+      recommendation: "Get written answers and request every applicable addendum before signing.",
+    },
+    {
+      title: "HOA Restrictions",
+      status: "Needs clarification",
+      tone: "unknown",
+      summary: "No HOA addendum or community rules were included in the sample document.",
+      evidence: "No HOA evidence found",
+      recommendation: "Ask whether an HOA governs the unit and request its current rules.",
+    },
+    {
+      title: "Roommate Considerations",
+      status: "Approval required",
+      tone: "caution",
+      summary: "Roommates and sublets require prior written approval; criteria are not defined.",
+      evidence: "Sample lease § 12.4",
+      recommendation: "Ask how approval works, how long it takes, and whether fees apply.",
     },
   ];
 }
