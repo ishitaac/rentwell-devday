@@ -432,6 +432,7 @@ export function RentalDecisionDetails({
           <section className="fair-rent-result">
             <span>Fair Rent result</span>
             <strong>{receipt.fairRentResult}</strong>
+            <small>Compares advertised rent before mandatory fees</small>
             {receipt.comparison ? (
               <p>
                 Snapshot range {formatMoney(receipt.comparison.lower)}–

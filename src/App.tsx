@@ -319,10 +319,8 @@ function Field({
 
 export function Home({
   go,
-  onStartRoommatePlanning,
 }: {
   go: (screen: Screen) => void;
-  onStartRoommatePlanning: () => void;
 }) {
   const sampleListing = getDemoListings(demoListingsDataset)[2].synthetic;
 
@@ -377,7 +375,7 @@ export function Home({
               <span>RS</span>
             </div>
             <div>
-              <strong>3 strong matches</strong>
+              <strong>Fictional roommate preview</strong>
               <small>Based on lifestyle, not identity</small>
             </div>
           </div>
@@ -395,7 +393,7 @@ export function Home({
           </p>
         </div>
         <div className="path-grid journey-grid">
-          <button className="path-card" onClick={() => go("listings")}>
+          <article className="path-card">
             <span className="number">01</span>
             <span className="icon-tile coral">
               <Icon name="building" size={26} />
@@ -405,10 +403,10 @@ export function Home({
               Browse RentWell’s synthetic demo listings or check a rental you found somewhere else.
             </p>
             <span className="card-link">
-              Browse rentals <Icon name="arrow" size={17} />
+              Two ways to start
             </span>
-          </button>
-          <button className="path-card" onClick={() => go("rental-entry")}>
+          </article>
+          <article className="path-card">
             <span className="number">02</span>
             <span className="icon-tile coral">
               <Icon name="dollar" size={26} />
@@ -419,10 +417,10 @@ export function Home({
               Decision Receipt.
             </p>
             <span className="card-link">
-              Check your rental <Icon name="arrow" size={17} />
+              One shared receipt
             </span>
-          </button>
-          <button className="path-card" onClick={onStartRoommatePlanning}>
+          </article>
+          <article className="path-card">
             <span className="number">03</span>
             <span className="icon-tile mint">
               <Icon name="people" size={26} />
@@ -433,9 +431,9 @@ export function Home({
               roommate planning.
             </p>
             <span className="card-link">
-              Roommate Planning <Icon name="arrow" size={17} />
+              Optional next step
             </span>
-          </button>
+          </article>
         </div>
       </section>
       <section className="trust-strip">
@@ -1362,7 +1360,7 @@ function App() {
         </button>
       </header>
       {screen === "home" && (
-        <Home go={go} onStartRoommatePlanning={startRoommateFirst} />
+        <Home go={go} />
       )}
       {screen === "listings" && (
         <ListingsBrowser

@@ -216,6 +216,7 @@ describe("RentalDecisionDetails", () => {
     expect(html).toContain("Amenities");
     expect(html).toContain("Technology fee");
     expect(html).toContain("Within the expected snapshot range");
+    expect(html).toContain("Compares advertised rent before mandatory fees");
     expect(html).toContain("Save listing");
     expect(html).toContain("Add to compare");
     expect(html).toContain("Request a tour");

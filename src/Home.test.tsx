@@ -6,7 +6,7 @@ import { Home } from "./App";
 describe("Home", () => {
   it("presents two rental entrances and a three-stage decision journey", () => {
     const html = renderToStaticMarkup(
-      <Home go={() => undefined} onStartRoommatePlanning={() => undefined} />,
+      <Home go={() => undefined} />,
     );
 
     expect(html).toMatch(/btn-primary[^>]*>Browse rentals/);
@@ -14,11 +14,13 @@ describe("Home", () => {
     expect(html).toContain("Find or bring a rental");
     expect(html).toContain("Understand the real cost");
     expect(html).toContain("Decide solo or shared");
+    expect(html).not.toContain('<button class="path-card"');
+    expect(html).toContain("Fictional roommate preview");
   });
 
   it("uses a committed synthetic listing instead of the disconnected sample", () => {
     const html = renderToStaticMarkup(
-      <Home go={() => undefined} onStartRoommatePlanning={() => undefined} />,
+      <Home go={() => undefined} />,
     );
 
     expect(html).toContain("Central City Corner One-Bedroom");
