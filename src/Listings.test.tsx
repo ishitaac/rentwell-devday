@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { demoListingsDataset, getDemoListings } from "./demoListings";
-import { ListingCard, ListingsBrowser } from "./Listings";
+import { ListingCard, ListingDetails, ListingsBrowser } from "./Listings";
 
 describe("ListingCard", () => {
   it("shows the renter-facing cost and disclosure facts", () => {
@@ -36,5 +36,54 @@ describe("ListingsBrowser", () => {
     expect(html).toContain("/listings/interior-blue.jpg");
     expect(html).toContain("/listings/interior-warm.jpg");
     expect(html.match(/View details/g)).toHaveLength(3);
+  });
+});
+
+describe("ListingDetails", () => {
+  it("shows property facts, the decision receipt, and renter actions", () => {
+    const listing = getDemoListings(demoListingsDataset)[1];
+
+    const html = renderToStaticMarkup(
+      <ListingDetails
+        listing={listing}
+        saved={false}
+        showCalculation={true}
+        onBack={() => undefined}
+        onToggleSaved={() => undefined}
+        onToggleCalculation={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Avenues Garden Apartment");
+    expect(html).toMatch(/<strong>1<\/strong> bedroom/);
+    expect(html).toMatch(/<strong>550<\/strong> sq ft/);
+    expect(html).toContain("Decision Receipt");
+    expect(html).toContain("$1,364");
+    expect(html).toContain("$2,064");
+    expect(html).toContain("Dated RentCast snapshot");
+    expect(html).toContain("Pet fee information is not included");
+    expect(html).toContain("How we calculated this");
+    expect(html).toContain("Save listing");
+    expect(html).toContain("Request a tour");
+    expect(html).toContain("Back to listings");
+  });
+
+  it("changes the disclosure and saved labels from App-owned state", () => {
+    const listing = getDemoListings(demoListingsDataset)[1];
+
+    const html = renderToStaticMarkup(
+      <ListingDetails
+        listing={listing}
+        saved
+        showCalculation={false}
+        onBack={() => undefined}
+        onToggleSaved={() => undefined}
+        onToggleCalculation={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Saved");
+    expect(html).toContain("Show calculation");
+    expect(html).not.toContain("Advertised rent + mandatory recurring fees");
   });
 });
