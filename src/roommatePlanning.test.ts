@@ -1,5 +1,8 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { Matches } from "./App";
 import {
   demoListingsDataset,
   getDemoListings,
@@ -12,6 +15,8 @@ import {
 import {
   createRentalFirstRoommateContext,
   createRoommateFirstContext,
+  getRoommateStages,
+  type RoommatePlanningContext,
 } from "./roommatePlanning";
 
 describe("roommate planning context", () => {
@@ -70,5 +75,63 @@ describe("roommate planning context", () => {
       trueMonthlyCost: 1575,
     });
     expect(source.synthetic.askingRent).toBe(1299);
+  });
+});
+
+describe("roommate planning stages", () => {
+  it("includes cost split only when a rental is already selected", () => {
+    const rentalFirst = createRentalFirstRoommateContext(
+      createDemoRentalDecision(getDemoListings(demoListingsDataset)[1]),
+    );
+
+    expect(getRoommateStages(rentalFirst)).toEqual([
+      { screen: "math", label: "Cost split" },
+      { screen: "preferences", label: "Living preferences" },
+      { screen: "matches", label: "Matches" },
+    ]);
+    expect(getRoommateStages(createRoommateFirstContext())).toEqual([
+      { screen: "preferences", label: "Living preferences" },
+      { screen: "matches", label: "Matches" },
+    ]);
+  });
+});
+
+describe("Matches context", () => {
+  it("keeps roommate-first matches independent from a sample apartment", () => {
+    const html = renderToStaticMarkup(
+      createElement(Matches, {
+        context: createRoommateFirstContext(),
+        go: () => undefined,
+      }),
+    );
+
+    expect(html).toContain("Matches based on your living preferences");
+    expect(html).not.toContain("View apartment");
+    expect(html).not.toContain("See apartment split");
+    expect(html).not.toContain("$2,300");
+    expect(html).not.toContain("$1,150 each");
+  });
+
+  it("uses the exact rental title and cost supplied by the handoff", () => {
+    const context: RoommatePlanningContext = {
+      entryPerspective: "rental-first",
+      rental: {
+        decisionId: "external-demo-campus",
+        title: "Campus apartment",
+        neighborhood: "Central City",
+        advertisedRent: 2100,
+        recurringFeeTotal: 200,
+        trueMonthlyCost: 2300,
+        bedrooms: 2,
+      },
+    };
+
+    const html = renderToStaticMarkup(
+      createElement(Matches, { context, go: () => undefined }),
+    );
+
+    expect(html).toContain("Campus apartment");
+    expect(html).toContain("$2,300/mo total");
+    expect(html).toContain("$1,150 each with two");
   });
 });

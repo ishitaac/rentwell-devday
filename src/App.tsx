@@ -20,6 +20,7 @@ import {
 import {
   createRentalFirstRoommateContext,
   createRoommateFirstContext,
+  getRoommateStages,
   type RoommatePlanningContext,
 } from "./roommatePlanning";
 import {
@@ -209,6 +210,37 @@ function Progress({ current, go }: { current: Screen; go: (screen: Screen) => vo
           >
             <span>{index < active ? <Icon name="check" size={14} /> : index + 1}</span>
             <small>{screenLabels[index]}</small>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RoommateProgress({
+  current,
+  context,
+  go,
+}: {
+  current: "math" | "preferences" | "matches";
+  context: RoommatePlanningContext;
+  go: (screen: Screen) => void;
+}) {
+  const stages = getRoommateStages(context);
+  const active = stages.findIndex((stage) => stage.screen === current);
+
+  return (
+    <div className="progress-wrap" aria-label="Roommate planning progress">
+      <div className={`progress roommate-progress stages-${stages.length}`}>
+        {stages.map((stage, index) => (
+          <button
+            className={`progress-step ${index <= active ? "is-active" : ""}`}
+            key={stage.screen}
+            onClick={() => index < active && go(stage.screen)}
+            disabled={index > active}
+          >
+            <span>{index < active ? <Icon name="check" size={14} /> : index + 1}</span>
+            <small>{stage.label}</small>
           </button>
         ))}
       </div>
@@ -696,31 +728,33 @@ function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => 
 }
 
 function RoommateMath({
-  rental,
-  setRental,
+  context,
   go,
+  onBackToDecision,
 }: {
-  rental: RentalData;
-  setRental: React.Dispatch<React.SetStateAction<RentalData>>;
+  context: RoommatePlanningContext;
   go: (screen: Screen) => void;
+  onBackToDecision: () => void;
 }) {
   const [occupants, setOccupants] = useState(2);
-  const total = rental.rent + rental.fees;
+  if (context.entryPerspective !== "rental-first") return null;
+  const rental = context.rental;
+  const total = rental.trueMonthlyCost;
   const each = total / occupants;
   return (
     <main className="app-main">
-      <Progress current="math" go={go} />
-      <PageHeading eyebrow="Roommate math · Step 3 of 5" title="See what sharing really saves.">
-        Adjust the fees or household size and we’ll update the split instantly.
+      <RoommateProgress current="math" context={context} go={go} />
+      <PageHeading eyebrow="Roommate planning · Cost split" title="See what sharing really saves.">
+        Review the Decision Receipt costs, then adjust the household size.
       </PageHeading>
       <div className="math-layout">
         <section className="card costs-card">
           <div className="card-title-row">
             <div>
               <h2>Monthly housing costs</h2>
-              <p>{rental.neighborhood} sample apartment</p>
+              <p>{rental.title} · {rental.neighborhood}</p>
             </div>
-            <span className="demo-tag">EDITABLE</span>
+            <span className="demo-tag">FROM DECISION RECEIPT</span>
           </div>
           <div className="cost-row">
             <span>Base rent</span>
@@ -729,8 +763,8 @@ function RoommateMath({
               <input
                 aria-label="Base rent"
                 type="number"
-                value={rental.rent}
-                onChange={(e) => setRental((old) => ({ ...old, rent: Number(e.target.value) }))}
+                value={rental.advertisedRent}
+                readOnly
               />
             </div>
           </div>
@@ -743,8 +777,8 @@ function RoommateMath({
               <input
                 aria-label="Monthly fees"
                 type="number"
-                value={rental.fees}
-                onChange={(e) => setRental((old) => ({ ...old, fees: Number(e.target.value) }))}
+                value={rental.recurringFeeTotal}
+                readOnly
               />
             </div>
           </div>
@@ -782,9 +816,9 @@ function RoommateMath({
             <small>/ month</small>
           </div>
           <div className="equation">
-            <span>${rental.rent.toLocaleString()} rent</span>
+            <span>${rental.advertisedRent.toLocaleString()} rent</span>
             <b>+</b>
-            <span>${rental.fees.toLocaleString()} fees</span>
+            <span>${rental.recurringFeeTotal.toLocaleString()} fees</span>
             <b>÷</b>
             <span>{occupants} people</span>
           </div>
@@ -803,13 +837,24 @@ function RoommateMath({
           </small>
         </section>
       </div>
+      <div className="bottom-actions">
+        <Button secondary onClick={onBackToDecision}>
+          Back to Decision Receipt
+        </Button>
+      </div>
     </main>
   );
 }
 
 const neighborhoods = ["The Avenues", "Central City", "Sugar House", "Downtown", "9th & 9th"];
 
-function Preferences({ go }: { go: (screen: Screen) => void }) {
+function Preferences({
+  context,
+  go,
+}: {
+  context: RoommatePlanningContext;
+  go: (screen: Screen) => void;
+}) {
   const [budget, setBudget] = useState(1250);
   const [selectedAreas, setSelectedAreas] = useState(["The Avenues", "Central City"]);
   const [clean, setClean] = useState(4);
@@ -823,9 +868,9 @@ function Preferences({ go }: { go: (screen: Screen) => void }) {
     );
   return (
     <main className="app-main">
-      <Progress current="preferences" go={go} />
+      <RoommateProgress current="preferences" context={context} go={go} />
       <PageHeading
-        eyebrow="Roommate preferences · Step 4 of 5"
+        eyebrow="Roommate planning · Living preferences"
         title="What makes a place feel like home?"
       >
         We match only on housing needs and everyday living preferences—never protected
@@ -999,8 +1044,11 @@ function Preferences({ go }: { go: (screen: Screen) => void }) {
         </span>
       </div>
       <div className="bottom-actions">
-        <Button secondary onClick={() => go("math")}>
-          Back to cost split
+        <Button
+          secondary
+          onClick={() => go(context.entryPerspective === "rental-first" ? "math" : "home")}
+        >
+          {context.entryPerspective === "rental-first" ? "Back to cost split" : "Back to home"}
         </Button>
         <Button onClick={() => go("matches")}>
           Find my matches <Icon name="arrow" size={18} />
@@ -1054,35 +1102,46 @@ const profiles = [
   },
 ];
 
-function Matches({ rental, go }: { rental: RentalData; go: (screen: Screen) => void }) {
+export function Matches({
+  context,
+  go,
+}: {
+  context: RoommatePlanningContext;
+  go: (screen: Screen) => void;
+}) {
   const [open, setOpen] = useState(0);
+  const rental = context.rental;
   return (
     <main className="app-main matches-main">
-      <Progress current="matches" go={go} />
+      <RoommateProgress current="matches" context={context} go={go} />
       <div className="matches-heading">
         <div>
-          <p className="eyebrow">Roommate matches · Step 5 of 5</p>
+          <p className="eyebrow">Roommate planning · Matches</p>
           <h1>Your strongest fits</h1>
-          <p>Ranked by the housing preferences you shared. Every profile below is fictional.</p>
+          <p>
+            {rental
+              ? `Matches for ${rental.title}, ranked by the housing preferences you shared.`
+              : "Matches based on your living preferences. Every profile below is fictional."}
+          </p>
         </div>
         <span className="demo-tag">FICTIONAL PROFILES</span>
       </div>
-      <div className="context-banner">
-        <img src={APARTMENT_IMAGE} alt="Sample apartment connected to these roommate matches" />
-        <div>
-          <small>MATCHING FOR</small>
-          <h3>
-            {rental.neighborhood} · {rental.bedrooms}-bed sample
-          </h3>
-          <p>
-            ${(rental.rent + rental.fees).toLocaleString()}/mo total &nbsp;·&nbsp; $
-            {Math.round((rental.rent + rental.fees) / 2).toLocaleString()} each with two
-          </p>
+      {rental && (
+        <div className="context-banner context-banner-text-only">
+          <div>
+            <small>MATCHING FOR</small>
+            <h3>{rental.title}</h3>
+            <p>
+              {rental.neighborhood} · {rental.bedrooms}-bed · $
+              {rental.trueMonthlyCost.toLocaleString()}/mo total &nbsp;·&nbsp; $
+              {Math.round(rental.trueMonthlyCost / 2).toLocaleString()} each with two
+            </p>
+          </div>
+          <button onClick={() => go("math")}>
+            View cost split <Icon name="chevron" size={17} />
+          </button>
         </div>
-        <button onClick={() => go("math")}>
-          View apartment <Icon name="chevron" size={17} />
-        </button>
-      </div>
+      )}
       <div className="match-list">
         {profiles.map((profile, index) => (
           <article className={`match-card ${open === index ? "open" : ""}`} key={profile.name}>
@@ -1138,9 +1197,11 @@ function Matches({ rental, go }: { rental: RentalData; go: (screen: Screen) => v
                   {open === index ? "Profile selected" : "View match details"}{" "}
                   {open === index && <Icon name="check" size={17} />}
                 </Button>
-                <button className="text-button" onClick={() => go("math")}>
-                  See apartment split <Icon name="arrow" size={16} />
-                </button>
+                {rental && (
+                  <button className="text-button" onClick={() => go("math")}>
+                    See apartment split <Icon name="arrow" size={16} />
+                  </button>
+                )}
               </div>
             </div>
           </article>
@@ -1215,25 +1276,6 @@ function App() {
     setRoommateContext(createRentalFirstRoommateContext(activeDecision));
     go("math");
   };
-  const rental = useMemo<RentalData>(() => {
-    if (roommateContext.entryPerspective === "rental-first") {
-      return {
-        neighborhood: roommateContext.rental.neighborhood,
-        rent: roommateContext.rental.advertisedRent,
-        bedrooms: roommateContext.rental.bedrooms,
-        sqft:
-          activeDecision?.decisionId === roommateContext.rental.decisionId
-            ? (activeDecision.squareFootage ?? 0)
-            : 0,
-        fees: roommateContext.rental.recurringFeeTotal,
-        date:
-          activeDecision?.decisionId === roommateContext.rental.decisionId
-            ? (activeDecision.availableDate ?? "")
-            : "",
-      };
-    }
-    return { neighborhood: "", rent: 0, bedrooms: 0, sqft: 0, fees: 0, date: "" };
-  }, [activeDecision, roommateContext]);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
@@ -1373,10 +1415,14 @@ function App() {
         />
       )}
       {screen === "math" && (
-        <RoommateMath rental={rental} setRental={() => undefined} go={go} />
+        <RoommateMath
+          context={roommateContext}
+          go={go}
+          onBackToDecision={() => go("listing-details")}
+        />
       )}
-      {screen === "preferences" && <Preferences go={go} />}
-      {screen === "matches" && <Matches rental={rental} go={go} />}
+      {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
+      {screen === "matches" && <Matches context={roommateContext} go={go} />}
       {screen === "advisor" && <AdvisorHome go={go} />}
       {screen === "lease" && <LeaseAnalysis go={go} />}
       {screen === "truecost" && <TrueHousingCost go={go} />}

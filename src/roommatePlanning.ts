@@ -40,3 +40,25 @@ export function createRentalFirstRoommateContext(
 export function createRoommateFirstContext(): RoommatePlanningContext {
   return { entryPerspective: "roommate-first", rental: null };
 }
+
+export type RoommateStage = {
+  screen: "math" | "preferences" | "matches";
+  label: string;
+};
+
+export function getRoommateStages(
+  context: RoommatePlanningContext,
+): RoommateStage[] {
+  if (context.entryPerspective === "rental-first") {
+    return [
+      { screen: "math", label: "Cost split" },
+      { screen: "preferences", label: "Living preferences" },
+      { screen: "matches", label: "Matches" },
+    ];
+  }
+
+  return [
+    { screen: "preferences", label: "Living preferences" },
+    { screen: "matches", label: "Matches" },
+  ];
+}
