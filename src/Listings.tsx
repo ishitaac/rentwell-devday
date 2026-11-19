@@ -8,7 +8,6 @@ import {
   hasActiveListingFilters,
   type ListingBedroomFilter,
   type ListingFilters,
-  type ListingMoveInFilter,
   type ListingPriceFilter,
 } from "./listingFilters";
 import {
@@ -176,17 +175,12 @@ export function ListingsBrowser({
             </select>
           </label>
           <label>
-            <span>Move-in month</span>
-            <select
-              value={filters.moveInMonth}
-              onChange={(event) =>
-                updateFilter("moveInMonth", event.target.value as ListingMoveInFilter)
-              }
-            >
-              <option value="any">Any move-in date</option>
-              <option value="2026-12">December 2026</option>
-              <option value="2027-01">January 2027</option>
-            </select>
+            <span>Move in by</span>
+            <input
+              type="date"
+              value={filters.moveInBy}
+              onChange={(event) => updateFilter("moveInBy", event.target.value)}
+            />
           </label>
           <label className="listing-checkbox-filter">
             <input

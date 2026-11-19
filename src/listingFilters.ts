@@ -4,19 +4,17 @@ export type ListingPriceFilter = "any" | "under-1200" | "1200-1600" | "over-1600
 
 export type ListingBedroomFilter = "any" | "studio" | "1" | "2" | "3-plus";
 
-export type ListingMoveInFilter = "any" | "2026-12" | "2027-01";
-
 export type ListingFilters = {
   price: ListingPriceFilter;
   bedrooms: ListingBedroomFilter;
-  moveInMonth: ListingMoveInFilter;
+  moveInBy: string;
   noMandatoryFees: boolean;
 };
 
 export const DEFAULT_LISTING_FILTERS: ListingFilters = {
   price: "any",
   bedrooms: "any",
-  moveInMonth: "any",
+  moveInBy: "",
   noMandatoryFees: false,
 };
 
@@ -75,8 +73,7 @@ export function filterListings(
       (!normalizedQuery || searchableText.includes(normalizedQuery)) &&
       matchesPrice(listing, filters.price) &&
       matchesBedrooms(listing, filters.bedrooms) &&
-      (filters.moveInMonth === "any" ||
-        listing.synthetic.availableDate.startsWith(filters.moveInMonth)) &&
+      (!filters.moveInBy || listing.synthetic.availableDate <= filters.moveInBy) &&
       (!filters.noMandatoryFees || listing.synthetic.noMandatoryRecurringFees)
     );
   });
@@ -87,7 +84,7 @@ export function hasActiveListingFilters(query: string, filters: ListingFilters):
     query.trim().length > 0 ||
     filters.price !== DEFAULT_LISTING_FILTERS.price ||
     filters.bedrooms !== DEFAULT_LISTING_FILTERS.bedrooms ||
-    filters.moveInMonth !== DEFAULT_LISTING_FILTERS.moveInMonth ||
+    filters.moveInBy !== DEFAULT_LISTING_FILTERS.moveInBy ||
     filters.noMandatoryFees !== DEFAULT_LISTING_FILTERS.noMandatoryFees
   );
 }

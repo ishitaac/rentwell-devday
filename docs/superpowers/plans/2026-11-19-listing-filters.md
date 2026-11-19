@@ -24,6 +24,14 @@
 - Reset the visible limit to six when search or filter values change.
 - Run the focused test, full suite, TypeScript check, build, and data tests; commit separately.
 
+## Follow-up: Move-in calendar
+
+- Replace `moveInMonth` with a blank-or-ISO-date `moveInBy` filter value.
+- Add failing filter tests proving the selected date is inclusive and later listings are excluded.
+- Replace the fixed month select with a native `type="date"` input labeled `Move in by`.
+- Keep Clear all, active-filter detection, App-owned persistence, and visible-result reset behavior.
+- Run focused tests, the full suite, TypeScript, build, and data verification; commit separately.
+
 ## Global Constraints
 
 - Do not change committed listing fixtures or add dependencies.

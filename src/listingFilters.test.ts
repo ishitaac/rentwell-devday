@@ -41,14 +41,21 @@ describe("filterListings", () => {
     expect(titles({ bedrooms })).toEqual(expected);
   });
 
-  it("filters by move-in month and explicit no-fee disclosure", () => {
-    expect(titles({ moveInMonth: "2027-01" })).toEqual(["University View Condo"]);
+  it("includes listings available on or before the move-in deadline", () => {
+    expect(titles({ moveInBy: "2026-12-05" })).toEqual([
+      "Avenues Garden Apartment",
+      "Central City Corner One-Bedroom",
+    ]);
+    expect(titles({ moveInBy: "2026-12-01" })).toEqual(["Avenues Garden Apartment"]);
+  });
+
+  it("filters explicit no-fee disclosure", () => {
     expect(titles({ noMandatoryFees: true })).toEqual(["Library Square Studio"]);
   });
 
   it("combines search and active filters using AND logic", () => {
     expect(
-      titles({ price: "1200-1600", bedrooms: "1", moveInMonth: "2026-12" }, "Avenues"),
+      titles({ price: "1200-1600", bedrooms: "1", moveInBy: "2026-12-15" }, "Avenues"),
     ).toEqual(["Avenues Garden Apartment"]);
     expect(titles({}, "condo")).toEqual(["University View Condo"]);
   });
@@ -88,5 +95,8 @@ describe("hasActiveListingFilters", () => {
     expect(hasActiveListingFilters("", DEFAULT_LISTING_FILTERS)).toBe(false);
     expect(hasActiveListingFilters("  avenues  ", DEFAULT_LISTING_FILTERS)).toBe(true);
     expect(hasActiveListingFilters("", { ...DEFAULT_LISTING_FILTERS, bedrooms: "2" })).toBe(true);
+    expect(
+      hasActiveListingFilters("", { ...DEFAULT_LISTING_FILTERS, moveInBy: "2026-12-15" }),
+    ).toBe(true);
   });
 });

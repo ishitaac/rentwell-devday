@@ -49,7 +49,8 @@ describe("ListingsBrowser", () => {
 
     expect(html).toContain("True monthly cost");
     expect(html).toContain("Bedrooms");
-    expect(html).toContain("Move-in month");
+    expect(html).toContain("Move in by");
+    expect(html).toContain('type="date"');
     expect(html).toContain("No mandatory recurring fees");
     expect(html).toContain("Complete fee disclosure");
     expect(html).toContain("Available rentals");

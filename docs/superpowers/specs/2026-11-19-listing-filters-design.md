@@ -13,11 +13,11 @@ Replace the decorative listing filter pills with controls that visibly and accur
 
 ## Selected design
 
-- Use native select controls for true monthly cost, bedrooms, and move-in month.
+- Use native select controls for true monthly cost and bedrooms, plus a native calendar input for the move-in deadline.
 - Use a checkbox for listings with no mandatory recurring fees.
 - Price ranges use true monthly cost: under $1,200; $1,200–$1,600 inclusive; and over $1,600.
 - Bedroom choices are Any, Studio, 1, 2, and 3+.
-- Move-in choices are Any, December 2026, and January 2027, matching committed fixtures.
+- The move-in calendar means **Move in by**: a listing matches when its availability date is on or before the selected date. A blank calendar means any move-in date.
 - Keep **Complete fee disclosure** as an informational badge, not a fake control, because every demo listing already has complete disclosure.
 - Show **Clear all** only when search or a filter is active; it resets both.
 - Show a clear empty-results state when no listing matches.
@@ -39,6 +39,7 @@ Replace the decorative listing filter pills with controls that visibly and accur
 - Boundary values fall into exactly one price range.
 - Clear all restores all six listings and blank/default controls.
 - Returning from a listing preserves the visible search and filter selections.
+- The move-in deadline includes listings available on the selected day and excludes later availability.
 - Compact and desktop layouts remain readable.
 
 ## Alternatives considered
