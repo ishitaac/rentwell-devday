@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import rentSnapshotData from "./data/rentcast-slc.json";
 import type { DemoListing } from "./demoListings";
@@ -100,6 +100,7 @@ export function ListingsBrowser({
 }) {
   const [localQuery, setLocalQuery] = useState("");
   const [localFilters, setLocalFilters] = useState<ListingFilters>(DEFAULT_LISTING_FILTERS);
+  const [visibleCount, setVisibleCount] = useState(6);
   const query = controlledQuery ?? localQuery;
   const setQuery = onQueryChange ?? setLocalQuery;
   const filters = controlledFilters ?? localFilters;
@@ -108,6 +109,8 @@ export function ListingsBrowser({
     () => filterListings(listings, query, filters),
     [filters, listings, query],
   );
+  const visibleListings = filteredListings.slice(0, visibleCount);
+  const hasMoreListings = visibleCount < filteredListings.length;
   const filtersAreActive = hasActiveListingFilters(query, filters);
   const updateFilter = <Key extends keyof ListingFilters>(key: Key, value: ListingFilters[Key]) =>
     setFilters({ ...filters, [key]: value });
@@ -115,6 +118,10 @@ export function ListingsBrowser({
     setQuery("");
     setFilters({ ...DEFAULT_LISTING_FILTERS });
   };
+
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [filters, query]);
 
   return (
     <main className="listings-page">
@@ -214,7 +221,7 @@ export function ListingsBrowser({
 
       {filteredListings.length > 0 ? (
         <section className="listings-grid" aria-label="Rental listings">
-          {filteredListings.map((listing) => (
+          {visibleListings.map((listing) => (
             <ListingCard
               key={listing.synthetic.listingId}
               listing={listing}
@@ -230,6 +237,13 @@ export function ListingsBrowser({
             Clear all filters
           </button>
         </section>
+      )}
+      {hasMoreListings && (
+        <div className="listings-show-more">
+          <button type="button" onClick={() => setVisibleCount((count) => count + 6)}>
+            Show more rentals
+          </button>
+        </div>
       )}
     </main>
   );

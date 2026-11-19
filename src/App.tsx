@@ -1366,7 +1366,7 @@ function App() {
       )}
       {screen === "listings" && (
         <ListingsBrowser
-          listings={demoListings.slice(0, 6)}
+          listings={demoListings}
           onViewDetails={(listing) => openListing(listing, "listings")}
           query={listingQuery}
           onQueryChange={setListingQuery}

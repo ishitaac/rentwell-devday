@@ -23,11 +23,17 @@ Replace the decorative listing filter pills with controls that visibly and accur
 - Show a clear empty-results state when no listing matches.
 - Keep search and filter state App-owned so returning from details preserves it.
 - Label the untouched results section **Available rentals** without a number; show a numeric match count only after search or a filter is active.
+- Search and filter all 20 committed demo listings, while initially rendering six cards.
+- Show a **Show more rentals** button whenever additional matching listings remain; each click reveals up to six more.
+- Reset the visible-card limit to six whenever search or filters change so results begin at the top of the new set.
 
 ## Acceptance criteria
 
 - The initial Browse Rentals page shows all six listings.
 - The initial results heading says **Available rentals** and does not imply the six demo cards are the full market.
+- The hero accurately says **20 synthetic demo listings**.
+- A search can find a listing beyond the first six records.
+- Show more is hidden once every matching listing is visible.
 - Every visible filter changes the result set and count.
 - Multiple filters combine with search using AND logic.
 - Boundary values fall into exactly one price range.

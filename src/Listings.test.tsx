@@ -57,6 +57,31 @@ describe("ListingsBrowser", () => {
     expect(html).not.toContain("Clear all");
   });
 
+  it("searches all twenty listings while initially showing six cards", () => {
+    const listings = getDemoListings(demoListingsDataset);
+
+    const initialHtml = renderToStaticMarkup(
+      <ListingsBrowser listings={listings} onViewDetails={() => undefined} />,
+    );
+    const searchedHtml = renderToStaticMarkup(
+      <ListingsBrowser
+        listings={listings}
+        onViewDetails={() => undefined}
+        query="University District Two-Bedroom"
+        onQueryChange={() => undefined}
+      />,
+    );
+
+    expect(initialHtml).toContain("20 synthetic demo listings");
+    expect(initialHtml.match(/View details/g)).toHaveLength(6);
+    expect(initialHtml).toContain("Show more rentals");
+    expect(initialHtml).not.toContain("University District Two-Bedroom");
+
+    expect(searchedHtml).toContain("University District Two-Bedroom");
+    expect(searchedHtml).toContain("1 rental match");
+    expect(searchedHtml).not.toContain("Show more rentals");
+  });
+
   it("applies controlled filters and offers a clear action", () => {
     const listings = getDemoListings(demoListingsDataset).slice(0, 6);
 

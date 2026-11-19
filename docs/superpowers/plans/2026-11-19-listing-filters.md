@@ -16,6 +16,14 @@
 - Reuse active-filter detection so numeric match copy appears only after search or a filter is active.
 - Run the focused test, full suite, TypeScript check, build, and data tests; commit separately.
 
+## Follow-up: Full dataset with progressive disclosure
+
+- Add failing render tests proving all 20 records reach `ListingsBrowser`, only six cards appear initially, a beyond-six listing can be found by search, and Show more appears only when results remain hidden.
+- Pass the complete `demoListings` collection from `App` instead of slicing it.
+- In `ListingsBrowser`, filter the complete collection first, render a six-item visible slice, and reveal six more per Show more click.
+- Reset the visible limit to six when search or filter values change.
+- Run the focused test, full suite, TypeScript check, build, and data tests; commit separately.
+
 ## Global Constraints
 
 - Do not change committed listing fixtures or add dependencies.
