@@ -203,7 +203,9 @@ export function ListingsBrowser({
       <div className="listings-results-heading">
         <div>
           <h2>
-            {filteredListings.length} {filteredListings.length === 1 ? "rental" : "rentals"} match
+            {filtersAreActive
+              ? `${filteredListings.length} ${filteredListings.length === 1 ? "rental" : "rentals"} match`
+              : "Available rentals"}
           </h2>
           <p>Known mandatory fees are included in the displayed monthly cost.</p>
         </div>

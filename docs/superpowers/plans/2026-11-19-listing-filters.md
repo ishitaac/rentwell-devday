@@ -10,6 +10,12 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-19-listing-filters-design.md`
 
+## Follow-up: Default results heading
+
+- Add a server-rendered regression assertion that the untouched browser says `Available rentals` and not `6 rentals match`.
+- Reuse active-filter detection so numeric match copy appears only after search or a filter is active.
+- Run the focused test, full suite, TypeScript check, build, and data tests; commit separately.
+
 ## Global Constraints
 
 - Do not change committed listing fixtures or add dependencies.

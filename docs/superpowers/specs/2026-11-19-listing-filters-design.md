@@ -22,10 +22,12 @@ Replace the decorative listing filter pills with controls that visibly and accur
 - Show **Clear all** only when search or a filter is active; it resets both.
 - Show a clear empty-results state when no listing matches.
 - Keep search and filter state App-owned so returning from details preserves it.
+- Label the untouched results section **Available rentals** without a number; show a numeric match count only after search or a filter is active.
 
 ## Acceptance criteria
 
 - The initial Browse Rentals page shows all six listings.
+- The initial results heading says **Available rentals** and does not imply the six demo cards are the full market.
 - Every visible filter changes the result set and count.
 - Multiple filters combine with search using AND logic.
 - Boundary values fall into exactly one price range.
