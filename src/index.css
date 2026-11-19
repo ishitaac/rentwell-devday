@@ -93,7 +93,7 @@
 .site-header nav {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 15px;
 }
 .site-header nav > button:not(.btn-primary) {
   border: 0;
@@ -377,8 +377,8 @@
   padding: 82px 28px 90px;
 }
 .section-intro {
-  max-width: 620px;
-  text-align: center;
+  max-width: 1120px;
+  text-align: left;
   margin: 0 auto 45px;
 }
 .eyebrow {
@@ -402,6 +402,15 @@
   display: grid;
   grid-template-columns: 1fr 100px 1fr;
   align-items: center;
+}
+.journey-grid {
+  max-width: 1120px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+.journey-grid .path-card {
+  min-height: 340px;
 }
 .path-card {
   min-height: 318px;
@@ -2995,7 +3004,7 @@ footer {
   font-size: 9px;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
   .site-header {
     height: 68px;
     padding: 0 18px;

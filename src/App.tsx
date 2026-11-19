@@ -300,13 +300,15 @@ function Field({
   );
 }
 
-function Home({
+export function Home({
   go,
   onStartRoommatePlanning,
 }: {
   go: (screen: Screen) => void;
   onStartRoommatePlanning: () => void;
 }) {
+  const sampleListing = getDemoListings(demoListingsDataset)[2].synthetic;
+
   return (
     <main>
       <section className="hero">
@@ -326,12 +328,12 @@ function Home({
             spreadsheet chaos.
           </p>
           <div className="hero-actions">
-            <Button onClick={() => go("rental-entry")}>
-              Check a rental <Icon name="arrow" size={18} />
+            <Button onClick={() => go("listings")}>
+              Browse rentals <Icon name="arrow" size={18} />
             </Button>
-            <button className="text-button" onClick={() => go("rental-entry")}>
-              <Icon name="sparkle" size={18} /> Try demo
-            </button>
+            <Button secondary onClick={() => go("rental-entry")}>
+              Check a rental you found
+            </Button>
           </div>
           <p className="micro">
             <Icon name="check" size={15} /> No sign-up needed &nbsp;·&nbsp; Cached market snapshot
@@ -339,16 +341,16 @@ function Home({
         </div>
         <div className="hero-visual">
           <div className="hero-image">
-            <img src={HERO_IMAGE} alt="Warm, light-filled apartment living room" />
+            <img src={sampleListing.images[0]} alt={`${sampleListing.title} demo property`} />
             <div className="price-float">
               <span className="icon-tile mint">
                 <Icon name="building" size={19} />
               </span>
               <div>
-                <small>Sample listing</small>
-                <strong>$2,100 / mo</strong>
+                <small>{sampleListing.title}</small>
+                <strong>${sampleListing.trueMonthlyCost.toLocaleString()} / mo true cost</strong>
               </div>
-              <span className="fair-pill">Fair-ish</span>
+              <span className="fair-pill">Fees included</span>
             </div>
           </div>
           <div className="people-float">
@@ -368,50 +370,53 @@ function Home({
 
       <section className="path-section">
         <div className="section-intro">
-          <p className="eyebrow">One decision, two sides</p>
+          <p className="eyebrow">One connected decision journey</p>
           <h2>A good rental is more than a rent number.</h2>
           <p>
-            Check the place, understand the split, then find people whose housing priorities fit
-            yours.
+            Start with a RentWell listing or bring your own, understand the real cost, then decide
+            whether to continue solo or with roommates.
           </p>
         </div>
-        <div className="path-grid">
-          <button className="path-card" onClick={() => go("rental-entry")}>
+        <div className="path-grid journey-grid">
+          <button className="path-card" onClick={() => go("listings")}>
             <span className="number">01</span>
             <span className="icon-tile coral">
               <Icon name="building" size={26} />
             </span>
-            <h3>Check a Rental</h3>
+            <h3>Find or bring a rental</h3>
             <p>
-              See how the rent compares to a dated Salt Lake City rental snapshot, then calculate
-              the real cost with fees.
+              Browse RentWell’s synthetic demo listings or check a rental you found somewhere else.
             </p>
             <span className="card-link">
-              Analyze a place <Icon name="arrow" size={17} />
+              Browse rentals <Icon name="arrow" size={17} />
             </span>
           </button>
-          <div className="path-connector">
-            <span>
-              <Icon name="arrow" />
-            </span>
-            <small>
-              Use your rental
-              <br />
-              in roommate search
-            </small>
-          </div>
-          <button className="path-card" onClick={onStartRoommatePlanning}>
+          <button className="path-card" onClick={() => go("rental-entry")}>
             <span className="number">02</span>
+            <span className="icon-tile coral">
+              <Icon name="dollar" size={26} />
+            </span>
+            <h3>Understand the real cost</h3>
+            <p>
+              See advertised rent, mandatory fees, true monthly cost, and Fair Rent evidence in one
+              Decision Receipt.
+            </p>
+            <span className="card-link">
+              Check your rental <Icon name="arrow" size={17} />
+            </span>
+          </button>
+          <button className="path-card" onClick={onStartRoommatePlanning}>
+            <span className="number">03</span>
             <span className="icon-tile mint">
               <Icon name="people" size={26} />
             </span>
-            <h3>Find a Roommate</h3>
+            <h3>Decide solo or shared</h3>
             <p>
-              Match on budgets, neighborhoods, schedules, and the everyday habits that make a home
-              work.
+              Finish your rental decision or continue into cost sharing and preference-based
+              roommate planning.
             </p>
             <span className="card-link">
-              Set your preferences <Icon name="arrow" size={17} />
+              Roommate Planning <Icon name="arrow" size={17} />
             </span>
           </button>
         </div>
