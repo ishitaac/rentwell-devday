@@ -2,7 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { demoListingsDataset, getDemoListings } from "./demoListings";
-import { ManagerDashboard } from "./ManagerWorkspace";
+import { ManagerDashboard, ManagerEditor, ManagerRenterPreview } from "./ManagerWorkspace";
+import { createManagerListingDraft } from "./managerListings";
 
 const callbacks = {
   onQueryChange: () => undefined,
@@ -58,5 +59,99 @@ describe("ManagerDashboard", () => {
     expect(html).toContain("No listings match your search");
     expect(html).toContain("Clear search");
     expect(html).toContain("0 demo listings");
+  });
+});
+
+describe("ManagerEditor", () => {
+  it("shows every editable section, derived monthly cost, and editor actions", () => {
+    const listing = getDemoListings(demoListingsDataset)[1];
+    const draft = createManagerListingDraft(listing);
+
+    const html = renderToStaticMarkup(
+      <ManagerEditor
+        draft={draft}
+        errors={{}}
+        saveState="unsaved"
+        onChange={() => undefined}
+        onSave={() => undefined}
+        onCancel={() => undefined}
+        onPreview={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Edit listing");
+    expect(html).toContain("Unsaved changes");
+    expect(html).toContain("Property");
+    expect(html).toContain("Costs");
+    expect(html).toContain("Availability");
+    expect(html).toContain("Presentation");
+    expect(html).toContain("Base monthly rent");
+    expect(html).toContain("Technology fee");
+    expect(html).toContain("Trash service");
+    expect(html).toContain("Estimated true monthly cost");
+    expect(html).toContain("$1,364");
+    expect(html).toContain("Add fee");
+    expect(html).toContain("Save changes");
+    expect(html).toContain("Cancel");
+    expect(html).toContain("Preview as renter");
+  });
+
+  it("shows field errors and saved confirmation without hiding the draft", () => {
+    const listing = getDemoListings(demoListingsDataset)[1];
+    const draft = { ...createManagerListingDraft(listing), askingRent: -1 };
+
+    const html = renderToStaticMarkup(
+      <ManagerEditor
+        draft={draft}
+        errors={{ askingRent: "Base rent must be greater than zero." }}
+        saveState="saved"
+        onChange={() => undefined}
+        onSave={() => undefined}
+        onCancel={() => undefined}
+        onPreview={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Changes saved locally");
+    expect(html).toContain("Base rent must be greater than zero.");
+    expect(html).toContain("Avenues Garden Apartment");
+  });
+
+  it("labels an explicit no-fee draft as known zero fees", () => {
+    const listing = getDemoListings(demoListingsDataset).find(
+      (candidate) => candidate.synthetic.noMandatoryRecurringFees,
+    );
+    expect(listing).toBeDefined();
+    const draft = createManagerListingDraft(listing!);
+
+    const html = renderToStaticMarkup(
+      <ManagerEditor
+        draft={draft}
+        errors={{}}
+        saveState="unsaved"
+        onChange={() => undefined}
+        onSave={() => undefined}
+        onCancel={() => undefined}
+        onPreview={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("No mandatory recurring fees");
+    expect(html).toContain("Mandatory fee total");
+    expect(html).toContain("$0");
+  });
+});
+
+describe("ManagerRenterPreview", () => {
+  it("reuses the renter card values for title, photo, and true monthly cost", () => {
+    const listing = getDemoListings(demoListingsDataset)[1];
+
+    const html = renderToStaticMarkup(<ManagerRenterPreview listing={listing} />);
+
+    expect(html).toContain("Renter preview");
+    expect(html).toContain("Avenues Garden Apartment");
+    expect(html).toContain("/listings/interior-blue.jpg");
+    expect(html).toContain("$1,364");
+    expect(html).toContain("True monthly cost");
   });
 });
