@@ -86,6 +86,15 @@ describe("RentalPlanSummary", () => {
     expect(html).not.toContain("Advisor review complete");
   });
 
+  it("adds the reviewed decision to My Rental Plan", () => {
+    const reviewed = render({ advisorStatus: "reviewed" });
+    const notStarted = render({ advisorStatus: "not-started" });
+
+    expect(reviewed).toContain("Advisor review complete");
+    expect(reviewed).toContain("View Advisor findings");
+    expect(notStarted).not.toContain("Advisor review complete");
+  });
+
   it("keeps an unknown external deposit unconfirmed", () => {
     const externalDecision = createExternalRentalDecision({
       label: "Campus apartment",

@@ -83,6 +83,17 @@ export function getAdvisorEntryScreen(
   return decision ? "advisor" : "rental-entry";
 }
 
+export function getAdvisorPlanStatus(
+  activeDecisionId: string | null,
+  reviewedDecisionId: string | null,
+  skippedDecisionId: string | null,
+): "not-started" | "reviewed" | "skipped" {
+  if (!activeDecisionId) return "not-started";
+  if (reviewedDecisionId === activeDecisionId) return "reviewed";
+  if (skippedDecisionId === activeDecisionId) return "skipped";
+  return "not-started";
+}
+
 export function refreshActiveDecisionFromListings(
   decision: RentalDecisionRecord | null,
   listings: DemoListing[],
@@ -1268,6 +1279,8 @@ function App() {
     "not-started",
   );
   const [journeyNotice, setJourneyNotice] = useState<string | null>(null);
+  const [advisorReviewedDecisionId, setAdvisorReviewedDecisionId] = useState<string | null>(null);
+  const [advisorSkippedDecisionId, setAdvisorSkippedDecisionId] = useState<string | null>(null);
   const [savedDecisionIds, setSavedDecisionIds] = useState<string[]>([]);
   const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
   const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
@@ -1326,6 +1339,11 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
   const navActive = useMemo(() => getNavSection(screen, decisionOrigin), [decisionOrigin, screen]);
+  const advisorStatus = getAdvisorPlanStatus(
+    activeDecision?.decisionId ?? null,
+    advisorReviewedDecisionId,
+    advisorSkippedDecisionId,
+  );
 
   return (
     <div className="site-shell">
@@ -1467,7 +1485,7 @@ function App() {
           decision={activeDecision}
           roommate={selectedRoommate}
           roommateStatus={roommateStatus}
-          advisorStatus="not-started"
+          advisorStatus={advisorStatus}
           savedAt={null}
           saveState="idle"
           onViewReceipt={() => go("listing-details")}
@@ -1480,7 +1498,11 @@ function App() {
             setSelectedRoommate(null);
             setRoommateStatus("skipped");
           }}
-          onSkipAdvisor={() => undefined}
+          onSkipAdvisor={() => {
+            if (!activeDecision) return;
+            setAdvisorSkippedDecisionId(activeDecision.decisionId);
+            setAdvisorReviewedDecisionId(null);
+          }}
           onSave={() => undefined}
           onContinueWithoutSaving={() => go("home")}
         />
@@ -1488,7 +1510,14 @@ function App() {
       {screen === "advisor" && activeDecision && <AdvisorHome decision={activeDecision} go={go} />}
       {screen === "lease" && activeDecision && <LeaseAnalysis decision={activeDecision} go={go} />}
       {screen === "truecost" && activeDecision && (
-        <TrueHousingCost decision={activeDecision} go={go} />
+        <TrueHousingCost
+          decision={activeDecision}
+          go={go}
+          onCompleteReview={() => {
+            setAdvisorReviewedDecisionId(activeDecision.decisionId);
+            setAdvisorSkippedDecisionId(null);
+          }}
+        />
       )}
       {screen === "decision" && activeDecision && (
         <DecisionSummary
@@ -1496,6 +1525,11 @@ function App() {
           go={go}
           onBackToDecision={() => go("listing-details")}
           onPlanWithRoommates={planWithRoommates}
+          onAddToPlan={() => {
+            setAdvisorReviewedDecisionId(activeDecision.decisionId);
+            setAdvisorSkippedDecisionId(null);
+            go("plan-summary");
+          }}
         />
       )}
       <footer>

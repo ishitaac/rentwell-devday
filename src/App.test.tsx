@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import App, {
   getAdvisorEntryScreen,
+  getAdvisorPlanStatus,
   getDecisionBackScreen,
   getNavSection,
   refreshActiveDecisionFromListings,
@@ -50,5 +51,11 @@ describe("unified App navigation", () => {
     expect(getNavSection("math", "listings")).toBe("roommates");
     expect(getNavSection("preferences", "rental-entry")).toBe("roommates");
     expect(getNavSection("matches", "manager")).toBe("roommates");
+  });
+
+  it("clears reviewed status when the active rental changes", () => {
+    expect(getAdvisorPlanStatus("rental-one", "rental-one", null)).toBe("reviewed");
+    expect(getAdvisorPlanStatus("rental-two", "rental-one", null)).toBe("not-started");
+    expect(getAdvisorPlanStatus("rental-two", null, "rental-two")).toBe("skipped");
   });
 });

@@ -631,9 +631,11 @@ export function LeaseAnalysis({
 export function TrueHousingCost({
   decision,
   go,
+  onCompleteReview,
 }: {
   decision: RentalDecisionRecord;
   go: (screen: AdvisorScreen) => void;
+  onCompleteReview: () => void;
 }) {
   const [panel, setPanel] = useState<"document" | "assistant">("assistant");
   const [occupants, setOccupants] = useState(2);
@@ -793,8 +795,13 @@ export function TrueHousingCost({
             <AdvisorButton secondary onClick={() => go("lease")}>
               Back to lease
             </AdvisorButton>
-            <AdvisorButton onClick={() => go("decision")}>
-              View decision summary <AdvisorIcon name="arrow" size={16} />
+            <AdvisorButton
+              onClick={() => {
+                onCompleteReview();
+                go("decision");
+              }}
+            >
+              Complete review and view summary <AdvisorIcon name="arrow" size={16} />
             </AdvisorButton>
           </div>
         </section>
@@ -861,11 +868,13 @@ export function DecisionSummary({
   go,
   onBackToDecision,
   onPlanWithRoommates,
+  onAddToPlan,
 }: {
   decision: RentalDecisionRecord;
   go: DecisionGo;
   onBackToDecision: () => void;
   onPlanWithRoommates: () => void;
+  onAddToPlan: () => void;
 }) {
   const [panel, setPanel] = useState<"document" | "assistant">("assistant");
   const model = buildAdvisorDecisionModel(decision, RENT_SNAPSHOT);
@@ -996,6 +1005,9 @@ export function DecisionSummary({
           <div className="advisor-actions decision-actions">
             <AdvisorButton secondary onClick={onBackToDecision}>
               Back to Decision Receipt
+            </AdvisorButton>
+            <AdvisorButton secondary onClick={onAddToPlan}>
+              Add Advisor findings to My Rental Plan
             </AdvisorButton>
             <AdvisorButton onClick={onPlanWithRoommates}>
               Plan with roommates <AdvisorIcon name="arrow" size={16} />
