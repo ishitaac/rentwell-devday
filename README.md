@@ -99,3 +99,10 @@ The committed snapshot contains only the fields needed for market comparison. It
 The command makes one API request and replaces `src/data/rentcast-slc.json` only after receiving and sanitizing a valid response. RentCast keys are secrets: never commit `.env.local`, place a key in frontend code, or paste it into a pull request.
 
 A refreshed snapshot may contain a different set or order of records. After refreshing, update `src/data/demo-listing-enrichment.json` so each source key still matches exactly once, then run `pnpm data:demo` and `pnpm test:data`. A mismatch fails without replacing the last valid generated dataset.
+
+## Property-manager app (separate site)
+
+The property-manager workspace is a second app in this repo with its own URL. Renters
+reach it from **For property managers** in the header; managers sign in (demo account) and
+see the dashboard. Run it with `pnpm dev:manager` and build it with `pnpm build:manager`.
+Setup and the demo credentials are in [docs/two-apps-deployment.md](docs/two-apps-deployment.md).
