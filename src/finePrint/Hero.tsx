@@ -8,6 +8,7 @@ interface Props {
   scenario: CostScenario;
   onScenario: (s: CostScenario) => void;
   onOpenClause: (clauseId: string, refs: QuoteRef[]) => void;
+  children?: React.ReactNode; // the stacked bar
 }
 
 function sharesText(shares: number[]): string {
@@ -18,7 +19,7 @@ function sharesText(shares: number[]): string {
 }
 
 /** Hero: real monthly cost vs advertised rent, occupants, estimates toggle, rent-step line. */
-export function Hero({ analysis, scenario, onScenario, onOpenClause }: Props) {
+export function Hero({ analysis, scenario, onScenario, onOpenClause, children }: Props) {
   const { costs, clauses } = analysis;
   const displayed = costs.displayedMonthlyCents;
   const animated = useCountUp(displayed === null ? 0 : roundHalfUpDollars(displayed));
@@ -48,6 +49,7 @@ export function Hero({ analysis, scenario, onScenario, onOpenClause }: Props) {
       <span className="fp-sr-only" aria-live="polite">
         Real monthly cost {formatDollars(displayed)}
       </span>
+      {children}
 
       <div className="fp-occupants">
         <span id="fp-occ-label">People sharing</span>

@@ -13,7 +13,8 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "eval": "tsx eval/run.ts",
     "cache:sample": "tsx scripts/cache-sample.ts",
-    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle"
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",

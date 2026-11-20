@@ -1,4 +1,7 @@
+import { useCallback } from "react";
 import { AskPanel } from "./AskPanel";
+import { ClauseDrawer } from "./ClauseDrawer";
+import { CostBar } from "./CostBar";
 import type { DrawerState } from "./FinePrint";
 import { Breakdown } from "./Breakdown";
 import { Hero } from "./Hero";
@@ -24,6 +27,8 @@ export function Results(props: ResultsProps) {
   const { analysis } = props;
   const chargeCount = analysis.findings.filter((f) => f.verified).length;
   const openClause = (clauseId: string, refs: QuoteRef[]) => props.onDrawer({ clauseId, refs });
+  const { onDrawer } = props;
+  const closeDrawer = useCallback(() => onDrawer(null), [onDrawer]);
 
   return (
     <main className="fp-main">
@@ -42,7 +47,9 @@ export function Results(props: ResultsProps) {
             )}
           </p>
           {props.notice && <p className="fp-alert fp-alert-soft" role="status">{props.notice}</p>}
-          <Hero analysis={analysis} scenario={props.scenario} onScenario={props.onScenario} onOpenClause={openClause} />
+          <Hero analysis={analysis} scenario={props.scenario} onScenario={props.onScenario} onOpenClause={openClause}>
+            <CostBar analysis={analysis} highlightKey={props.highlightKey} onHighlight={props.onHighlight} />
+          </Hero>
           <Breakdown
             analysis={analysis}
             highlightKey={props.highlightKey}
@@ -59,6 +66,7 @@ export function Results(props: ResultsProps) {
           onAddQuestion={props.onAddQuestion}
         />
       </div>
+      {props.drawer && <ClauseDrawer clauses={analysis.clauses} state={props.drawer} onClose={closeDrawer} />}
     </main>
   );
 }
