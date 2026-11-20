@@ -437,43 +437,65 @@ function ConfirmStep({ profile, setProfile, onDelete, next, back }: { profile: R
 function ResultsStep({ profile, select, back }: { profile: RoommateProfile; select: (id: string, to: "simulator" | "negotiator") => void; back: () => void }) {
   const results = useMemo(() => rankCandidates(profile, DEMO_CANDIDATES.map((c) => c.profile)), [profile]);
   return (
-    <section className="rai-panel">
+    <section className="rai-results">
       <StepHead icon="people" title="Your matches" hint="Fictional demo profiles. A high score never hides a missed requirement." />
-      <div className="rai-matches">
-        {results.map((r) => <MatchCard key={r.candidateId} result={r} candidate={DEMO_CANDIDATES.find((c) => c.profile.profileId === r.candidateId)!} select={select} />)}
+      <div className="match-list">
+        {results.map((r, i) => <MatchCard key={r.candidateId} index={i} result={r} candidate={DEMO_CANDIDATES.find((c) => c.profile.profileId === r.candidateId)!} select={select} />)}
       </div>
       <div className="bottom-actions"><Btn secondary onClick={back}>Edit my profile</Btn></div>
     </section>
   );
 }
 
-function MatchCard({ result, candidate, select }: { result: MatchResult; candidate: DemoCandidate; select: (id: string, to: "simulator" | "negotiator") => void }) {
+const AVATARS = ["", "mint-avatar", "blue-avatar"];
+
+function initials(name: string): string {
+  return name.replace(/\(.*?\)/g, "").trim().split(/\s+/).slice(0, 2).map((t) => t[0]).join("").toUpperCase();
+}
+
+function MatchCard({ result, candidate, select, index }: { result: MatchResult; candidate: DemoCandidate; select: (id: string, to: "simulator" | "negotiator") => void; index: number }) {
   const blocked = result.category === "requirement-conflict";
+  const budget = candidate.profile.fields.budgetMax?.value;
+  const housing = result.breakdown.find((b) => b.group === "housing");
+  const worth = [...result.friction.slice(0, 2), ...result.unknowns.slice(0, Math.max(0, 2 - result.friction.length))];
   return (
-    <article className={`rai-match ${result.category}`}>
-      <header>
-        <div className="rai-avatar" aria-hidden="true">{candidate.profile.displayName[0]}</div>
-        <div><h3>{candidate.profile.displayName}</h3><small>{candidate.tagline}</small></div>
-        <div className="rai-score">
-          {result.score !== null ? <><strong>{result.score}</strong><span>overlap</span></> : <span className="rai-chip warn">—</span>}
+    <article className={`rai-match match-card ${result.category}`}>
+      <div className="profile-core">
+        <div className={`profile-avatar ${AVATARS[index % AVATARS.length]}`} aria-hidden="true">{initials(candidate.profile.displayName)}</div>
+        <div className="profile-name">
+          <h2>{candidate.profile.displayName}</h2>
+          <p>{candidate.tagline}</p>
         </div>
-      </header>
-      <p className={`rai-category ${result.category}`}>{CATEGORY_LABEL[result.category]}</p>
-      {result.score !== null && <div className="rai-meter" role="img" aria-label={`Overlap ${result.score} out of 100`}><i style={{ width: `${result.score}%` }} /></div>}
-      {result.hardConflicts.map((c) => <p className="rai-warn" key={c.key}>{c.reason}</p>)}
-      <div className="rai-cols">
-        <div><h4>Shared strengths</h4>{result.strengths.length ? <ul>{result.strengths.slice(0, 4).map((s) => <li key={s}>{s}</li>)}</ul> : <p className="rai-muted">None confirmed on both sides yet.</p>}</div>
-        <div><h4>Potential friction</h4>{result.friction.length ? <ul>{result.friction.slice(0, 4).map((s) => <li key={s}>{s}</li>)}</ul> : <p className="rai-muted">None found in what's shared.</p>}</div>
+        <div className="score" role="img" aria-label={result.score !== null ? `Overlap ${result.score} out of 100` : "Overlap not scored"}>
+          {result.score !== null ? <><strong>{result.score}%</strong><span>overlap</span></> : <span className="rai-chip warn">Not scored</span>}
+        </div>
       </div>
-      <details className="rai-more">
-        <summary>More detail</summary>
-        <div className="rai-cols"><div><h4>Worth asking</h4>{result.unknowns.length ? <ul>{result.unknowns.slice(0, 3).map((s) => <li key={s}>{s}</li>)}</ul> : <p className="rai-muted">Nothing outstanding.</p>}</div></div>
-        <div className="rai-breakdown">{result.breakdown.map((b) => <span key={b.group}>{b.group}: {b.score === null ? "unknown" : `${Math.round(b.score * 100)}%`} <small>({b.knownKeys}/{b.totalKeys} known)</small></span>)}</div>
-        <small className="rai-muted">{result.disclaimer}</small>
-      </details>
-      <div className="rai-actions">
-        <Btn disabled={blocked} onClick={() => select(candidate.profile.profileId, "simulator")}>Try a day together</Btn>
-        <Btn secondary disabled={blocked} onClick={() => select(candidate.profile.profileId, "negotiator")}>Draft an agreement (demo)</Btn>
+      <div className="match-body">
+        <p className={`rai-category ${result.category}`}>{CATEGORY_LABEL[result.category]}</p>
+        <div className="profile-meta">
+          <span><small>BUDGET</small><b>{budget !== undefined ? valueText("budgetMax", budget) : "Not shared"}</b></span>
+          <span><small>HOUSING FIT</small><b>{housing && housing.score !== null ? `${Math.round(housing.score * 100)}%` : "Unknown"}</b></span>
+        </div>
+        {result.hardConflicts.map((c) => <p className="rai-warn" key={c.key}>{c.reason}</p>)}
+        <div className="reasons">
+          <div>
+            <h4>Why you match</h4>
+            {result.strengths.length ? result.strengths.slice(0, 4).map((x) => <p key={x}><RIcon name="check" size={14} />{x}</p>) : <p className="rai-muted">Nothing confirmed on both sides yet.</p>}
+          </div>
+          <div className="difference-box">
+            <h4>Worth talking about</h4>
+            {worth.length ? worth.map((x) => <p key={x}>{x}</p>) : <p className="rai-muted">Nothing found in what's shared.</p>}
+          </div>
+        </div>
+        <details className="rai-fine">
+          <summary>More detail</summary>
+          <div className="rai-breakdown">{result.breakdown.map((b) => <span key={b.group}>{b.group}: {b.score === null ? "unknown" : `${Math.round(b.score * 100)}%`} <small>({b.knownKeys}/{b.totalKeys} known)</small></span>)}</div>
+          <small className="rai-muted">{result.disclaimer}</small>
+        </details>
+        <div className="match-actions">
+          <Btn disabled={blocked} onClick={() => select(candidate.profile.profileId, "simulator")}>Try a day together</Btn>
+          <button type="button" className="text-button" disabled={blocked} onClick={() => select(candidate.profile.profileId, "negotiator")}>Draft an agreement (demo)</button>
+        </div>
       </div>
     </article>
   );
