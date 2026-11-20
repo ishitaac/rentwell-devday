@@ -34,6 +34,7 @@ import {
   type StorageWriteResult,
 } from "./demoAccount";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
+import { fetchRemoteListings } from "./listingsSource";
 import {
   createDemoRentalDecision,
   createExternalRentalDecision,
@@ -1349,7 +1350,16 @@ export function Matches({
 }
 
 function App() {
-  const [demoListings] = useState<DemoListing[]>(() => getDemoListings(demoListingsDataset));
+  const [demoListings, setDemoListings] = useState<DemoListing[]>(() =>
+    getDemoListings(demoListingsDataset),
+  );
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchRemoteListings(controller.signal).then((remote) => {
+      if (remote) setDemoListings(remote);
+    });
+    return () => controller.abort();
+  }, []);
   const [screen, setScreen] = useState<Screen>("home");
   const [menu, setMenu] = useState(false);
   const [listingQuery, setListingQuery] = useState("");

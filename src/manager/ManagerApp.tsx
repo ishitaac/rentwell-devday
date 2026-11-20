@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { demoListingsDataset, getDemoListings, type DemoListing } from "../demoListings";
 import { RentalDecisionDetails } from "../Listings";
+import { fetchRemoteListings } from "../listingsSource";
 import { ManagerPilot } from "../ManagerPilot";
 import { ManagerWorkspace } from "../ManagerWorkspace";
 import { loadManagerPilot, saveManagerPilot, type ManagerPilotChoice } from "../demoAccount";
@@ -88,6 +89,13 @@ export function ManagerApp() {
     getDemoListings(demoListingsDataset),
   );
   const [previewId, setPreviewId] = useState<string | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchRemoteListings(controller.signal).then((remote) => {
+      if (remote) setListings(remote);
+    });
+    return () => controller.abort();
+  }, []);
   const renterUrl = getRenterUrl();
   const previewListing = previewId
     ? (listings.find((listing) => listing.synthetic.listingId === previewId) ?? null)

@@ -5,4 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_MANAGER_URL?: string;
   /** Address of the renter app (set on the manager project, for the "Back to RentWell" link). */
   readonly VITE_RENTER_URL?: string;
+  /** Supabase project URL and public anon key (read-only listings). Safe to expose; never the service key. */
+  readonly VITE_SUPABASE_URL?: string;
+  readonly VITE_SUPABASE_ANON_KEY?: string;
 }
