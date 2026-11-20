@@ -103,9 +103,7 @@ export const MANAGER_APP_URL: string =
   import.meta.env.VITE_MANAGER_URL ||
   (import.meta.env.DEV ? "http://localhost:5174/manager.html" : DEFAULT_MANAGER_APP_URL);
 
-export function getDecisionBackScreen(
-  origin: DecisionOrigin,
-): "listings" | "rental-entry" {
+export function getDecisionBackScreen(origin: DecisionOrigin): "listings" | "rental-entry" {
   return origin === "manager" ? "listings" : origin;
 }
 
@@ -176,7 +174,7 @@ export function getNavSection(
   if (screen === "listings" || (screen === "listing-details" && decisionOrigin === "listings")) {
     return "listings";
   }
-  if (screen === "home") return "";
+  if (["home", "plan-summary", "renter-account"].includes(screen)) return "";
   return "rental";
 }
 

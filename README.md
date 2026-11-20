@@ -1,6 +1,6 @@
 # RentWell
 
-RentWell is a React and Vite prototype for exploring rental affordability and roommate decisions. It includes a fair-rent comparison, roommate cost planning, preference-based roommate matching, and a simulated AI rental advisor.
+RentWell is a React and Vite prototype for exploring rental affordability and roommate decisions. It includes a fair-rent comparison, roommate cost planning, preference-based roommate matching, a simulated AI rental advisor, and a unified **My Rental Plan** summary.
 
 ## Requirements
 
@@ -43,17 +43,24 @@ The compiled site is written to `dist/`.
 - Fair Rent compares advertised base rent with the dated snapshot range. Mandatory recurring fees are shown separately and included in true monthly cost.
 - Listing-link extraction remains simulated; users can edit the extracted fields.
 - AI rental advisor responses and the sample lease are simulated. The Advisor uses the active rental's shared Decision Receipt for costs and market evidence; selected local files are not transmitted or analyzed.
+- Renter and property-manager accounts are browser-local demo profiles, not real authentication. Password fields are never submitted or stored. Saved renter plans are scoped to the matching demo email and preserve the exact approved decision snapshot.
+- **Start free pilot** and **Request a demo** are local property-manager prototype choices. No payment is collected, and subscription pricing has not been finalized.
 - The project runs as a standalone Vite application and does not require Figma Make files or plugins.
 
 ## Recommended demo path
 
 1. Select **Browse rentals** or **Check a rental you found**.
 2. Open the shared **Decision Receipt** to explain advertised rent, mandatory fees, true monthly cost, and the dated Fair Rent comparison.
-3. Select **Review sample lease with Advisor** to demonstrate clause questions without creating a second rental calculation.
-4. Return to the Decision Receipt, then optionally select **Plan costs with roommates**.
-5. Use **For property managers** to edit a synthetic listing and preview the same renter-facing Decision Receipt.
+3. Select **Review sample lease with Advisor**, complete the guided summary, and add the findings to **My Rental Plan**.
+4. Optionally select **Plan costs with roommates**, choose a fictional profile, and show the receipt-derived per-person share in **My Rental Plan**.
+5. Select **Save my plan**, create a renter demo profile, and reopen the exact plan from **My Plan** in the header.
+6. Use **For property managers**, sign in to the separate manager demo app, choose **Start free pilot** or **Request a demo**, then edit a synthetic listing and preview the same renter-facing Decision Receipt.
 
 The app initially displays six cards for readability, but search and filters operate across all 20 committed demo listings. **Show more rentals** progressively reveals the remaining results.
+
+## Demo accounts and local reset
+
+Demo sessions, saved plans, and manager pilot choices use the browser's local storage so every teammate can present the complete flow without configuring a backend. Data does not sync between browsers or devices. Signing out hides plan details but keeps that email's saved plan; **Reset demo data** removes only RentWell's local demo keys after confirmation.
 
 ## Demo listing data
 
@@ -103,6 +110,7 @@ A refreshed snapshot may contain a different set or order of records. After refr
 ## Property-manager app (separate site)
 
 The property-manager workspace is a second app in this repo with its own URL. Renters
-reach it from **For property managers** in the header; managers sign in (demo account) and
-see the dashboard. Run it with `pnpm dev:manager` and build it with `pnpm build:manager`.
+reach it from **For property managers** in the header; managers sign in with the demo account,
+choose a local no-payment pilot action, and then see the dashboard. Run it with
+`pnpm dev:manager` and build it with `pnpm build:manager`.
 Setup and the demo credentials are in [docs/two-apps-deployment.md](docs/two-apps-deployment.md).

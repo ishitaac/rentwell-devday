@@ -64,6 +64,10 @@ describe("unified App navigation", () => {
     expect(getNavSection("matches", "listings")).toBe("roommates");
   });
 
+  it("does not highlight a second renter section on My Plan", () => {
+    expect(getNavSection("plan-summary", "listings")).toBe("");
+  });
+
   it("clears reviewed status when the active rental changes", () => {
     expect(getAdvisorPlanStatus("rental-one", "rental-one", null)).toBe("reviewed");
     expect(getAdvisorPlanStatus("rental-two", "rental-one", null)).toBe("not-started");

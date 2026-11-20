@@ -143,8 +143,7 @@
 
 - Create: `src/ManagerPilot.tsx`
 - Create: `src/ManagerPilot.test.tsx`
-- Modify: `src/App.tsx`
-- Modify: `src/App.test.tsx`
+- Modify: `src/manager/ManagerApp.tsx`
 - Modify: `src/ManagerWorkspace.test.tsx`
 - Modify: `src/index.css`
 - Modify: `README.md`
@@ -152,13 +151,13 @@
 
 **Interfaces:**
 
-- Consumes: `DemoAccountAccess`, manager session/pilot persistence helpers, and existing `ManagerWorkspace`.
-- Produces: `ManagerPilot` with `onStartPilot`, `onRequestDemo`, and `onSignOut`; App screens `manager-account` and `manager-pilot`; guarded manager workspace entry.
+- Consumes: the merged separate manager app, its demo sign-in, manager-pilot persistence helpers, and existing `ManagerWorkspace`.
+- Produces: `ManagerPilot` with `onStartPilot`, `onRequestDemo`, and `onSignOut`; `ManagerApp.getManagerStage`; and a guarded manager workspace entry that remains separate from the renter app.
 
 - [ ] **Step 1: Write failing component tests** named `shows a no-payment free-pilot offer without invented pricing` and `records start-pilot and request-demo as separate local choices`.
-- [ ] **Step 2: Write failing App/navigation tests** proving property-manager navigation opens manager access while signed out, renter session does not unlock the workspace, manager access leads to pilot onboarding, and a manager pilot choice opens the workspace.
+- [ ] **Step 2: Write failing manager-stage/navigation tests** proving the renter app opens the separate manager site, manager access leads to pilot onboarding, and a manager pilot choice opens the workspace.
 - [ ] **Step 3: Run `CI=true pnpm test`** and verify the new tests fail for missing manager guards and pilot screen.
-- [ ] **Step 4: Implement `ManagerPilot` and role-guarded App navigation.** Keep `For property managers` visually separate; show `No payment collected in this prototype` and `Subscription pricing ... has not been finalized.`
+- [ ] **Step 4: Implement `ManagerPilot` inside the separate manager app.** Preserve the merged `For property managers` external CTA and demo sign-in; show `No payment collected in this prototype` and `Subscription pricing ... has not been finalized.`
 - [ ] **Step 5: Update README and the unified master spec** with the complete renter plan, demo-account limitations, manager pilot flow, and presentation path.
 - [ ] **Step 6: Run `CI=true pnpm exec oxfmt` only on files changed by this plan, then run `CI=true pnpm test`, `CI=true pnpm exec tsc --noEmit`, `CI=true pnpm run test:data`, and `CI=true pnpm run build`;** expect 0 failures and a successful production build.
 - [ ] **Step 7: Commit** with `feat: complete demo account and manager pilot journeys`.

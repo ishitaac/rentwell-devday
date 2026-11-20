@@ -312,6 +312,78 @@ a.btn-secondary:focus-visible {
   font-size: 12px;
   line-height: 1.45;
 }
+.manager-pilot-main {
+  min-height: calc(100vh - 76px);
+  padding: 58px 28px 72px;
+  background: var(--cream);
+}
+.manager-pilot-card {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 46px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 20px 60px rgba(23, 44, 43, 0.08);
+}
+.manager-pilot-heading {
+  max-width: 720px;
+}
+.manager-pilot-heading h1 {
+  margin: 8px 0 14px;
+  font-size: clamp(34px, 4.5vw, 52px);
+  line-height: 1.08;
+}
+.manager-pilot-heading > p:last-child {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.manager-pilot-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 34px 0;
+}
+.manager-pilot-benefits article {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--cream);
+}
+.manager-pilot-benefits article > span {
+  color: var(--teal);
+  font-size: 10px;
+  font-weight: 800;
+}
+.manager-pilot-benefits strong {
+  display: block;
+  margin: 10px 0 7px;
+  font: 700 15px "Manrope";
+}
+.manager-pilot-benefits p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.manager-pilot-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.manager-pilot-disclosure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+.manager-pilot-disclosure strong {
+  color: var(--ink);
+}
 
 .rental-plan-main {
   width: min(1200px, 100%);
@@ -530,6 +602,9 @@ a.btn-secondary:focus-visible {
     gap: 34px;
     padding: 34px;
   }
+  .manager-pilot-benefits {
+    grid-template-columns: 1fr;
+  }
   .rental-plan-heading,
   .rental-plan-final-actions {
     align-items: stretch;
@@ -557,6 +632,17 @@ a.btn-secondary:focus-visible {
   }
   .demo-access-card {
     padding: 24px 19px;
+  }
+  .manager-pilot-main {
+    padding: 28px 16px;
+  }
+  .manager-pilot-card {
+    padding: 26px 19px;
+  }
+  .manager-pilot-actions,
+  .manager-pilot-disclosure {
+    align-items: stretch;
+    flex-direction: column;
   }
   .rental-plan-main {
     padding: 34px 16px 54px;

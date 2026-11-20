@@ -1,7 +1,7 @@
 # RentWell Unified Renter Journey
 
 **Date:** November 19, 2026
-**Status:** Approved for implementation
+**Status:** Implemented and extended with My Rental Plan demo access
 **Audience:** RentWell hackathon team, designers, and implementers
 
 ## Intent
@@ -94,8 +94,9 @@ Primary renter navigation becomes:
 - **Roommate Planning**
 - **AI Advisor** — opens the active rental context; before a rental is selected, it routes through **Check Your Rental** rather than fabricating a sample decision
 - **How It Works**
+- **My Plan** — opens a matching renter's browser-local saved decision, or renter demo access when signed out
 
-**Manager Workspace** moves out of the renter navigation and becomes a visually distinct **For property managers** role entry. It may remain in the same prototype but must not look like the next renter task.
+**Manager Workspace** moves out of the renter navigation and becomes a visually distinct **For property managers** role entry. A separate browser-local manager demo profile and no-payment pilot screen guard the workspace; a renter demo profile never unlocks it.
 
 Roommate planning supports two valid perspectives:
 
@@ -185,6 +186,8 @@ This branch gets its own three-stage progress indicator. It must not describe it
 
 The renter can exit back to the Decision Receipt at any point. Matches remain fictional and preference-based, with the existing fair-housing guardrails.
 
+A chosen fictional roommate is a real plan state rather than a visual dead end. Rental-first selection returns to **My Rental Plan** with a receipt-derived equal share. Roommate-first selection remains pending until the renter chooses a rental; it never fabricates a rent or monthly share.
+
 Direct **Roommate Planning** navigation may continue to open the roommate-first experience without a selected rental. The roommate feature must distinguish the two entry contexts rather than silently attaching the disconnected `$2,100` sample to every user.
 
 ### Roommate handoff boundary
@@ -213,6 +216,10 @@ The colleague-owned roommate feature owns its landing experience, preferences, m
 - The active decision record also feeds the Advisor so its costs and market evidence cannot diverge from the Decision Receipt.
 - The roommate handoff context remains small and typed so the colleague-owned implementation can consume it without depending on the full listing UI.
 - Returning to Browse Rentals preserves the existing query.
+- **My Rental Plan** combines one active rental snapshot, optional roommate state, and optional Advisor state. Optional steps distinguish not started, completed, and explicitly skipped.
+- Browser-local renter plans are scoped by normalized demo email and preserve the exact `RentalDecisionRecord` snapshot approved at save time. Signing out hides the details without deleting the plan.
+- Password values, selected file contents, and lease text are never persisted. Malformed or unavailable browser storage does not crash the in-memory journey.
+- Renter and manager sessions use separate storage keys and role guards. The manager pilot records only `started` or `requested`; it has no payment or invented price.
 
 ## Visual consistency
 
@@ -235,15 +242,19 @@ Home → Check a rental you found → Enter/extract details → Decision Receipt
 
 ### Advisor path
 
-Decision Receipt → Review sample lease with Advisor → Lease findings → Shared costs → Advisor summary → Return to Decision Receipt or plan with roommates.
+Decision Receipt → Review sample lease with Advisor → Lease findings → Shared costs → Advisor summary → Add findings to My Rental Plan.
 
 ### Roommate-first path
 
-Home or navigation → Roommate Planning → colleague-owned roommate journey, with no fabricated selected rental.
+Home or navigation → Roommate Planning → Choose a fictional roommate → Choose a rental → My Rental Plan, with no fabricated selected rental or cost.
 
 ### Manager path
 
-For property managers → Edit listing → Save → Preview renter view → Decision Receipt → Back to manager workspace.
+For property managers → Manager demo access → Start free pilot or Request a demo → Edit listing → Save → Preview renter view → Decision Receipt → Back to manager workspace.
+
+### Saved-plan path
+
+Decision Receipt → optional roommate and Advisor branches → My Rental Plan → renter demo access → Save → My Plan. A different demo email cannot open another renter's saved plan.
 
 ## Validation and acceptance criteria
 
@@ -260,6 +271,9 @@ For property managers → Edit listing → Save → Preview renter view → Deci
 - Desktop and compact/mobile layouts have no horizontal overflow or dead-end actions.
 - Automated tests cover both entry paths, receipt parity, source-specific actions, roommate handoff, and back destinations.
 - Tests verify both `rental-first` and `roommate-first` handoff contexts without asserting the colleague-owned roommate UI details.
+- Matching renter demo emails restore their exact saved snapshot; signed-out and different-email states do not reveal saved details.
+- Renter and manager demo sessions remain role-separated, and manager access requires a local pilot choice.
+- Account and pilot screens disclose browser-only storage, no real authentication, and no payment collection.
 
 ## Implementation boundary
 

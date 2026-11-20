@@ -18,6 +18,15 @@ const callbacks = {
 };
 
 describe("ManagerDashboard", () => {
+  it("keeps the manager workspace behind its separate role journey", () => {
+    const listings = getDemoListings(demoListingsDataset).slice(0, 1);
+    const html = renderToStaticMarkup(
+      <ManagerDashboard listings={listings} query="" {...callbacks} />,
+    );
+
+    expect(html).toContain("Manager workspace");
+    expect(html).not.toContain("Create renter account");
+  });
   it("shows transparent renter-facing costs and manager actions", () => {
     const listings = getDemoListings(demoListingsDataset).slice(0, 3);
 
