@@ -115,6 +115,31 @@
   border-radius: 9px;
   background: var(--cream);
 }
+/* The manager entry is a link to the separate property-manager app. */
+.site-header nav > a.manager-role-entry,
+.site-header nav > span.manager-role-entry {
+  display: inline-block;
+  padding: 26px 12px 23px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--cream);
+  color: #425653;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.site-header nav > a.manager-role-entry:hover {
+  color: var(--teal);
+  border-color: var(--teal);
+}
+.site-header nav > a.manager-role-entry:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+.site-header nav > span.manager-role-entry.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 .btn-primary,
 .btn-secondary {
   border: 1px solid var(--teal);
@@ -3112,6 +3137,11 @@ footer {
     padding: 13px 12px;
     text-align: left;
     border-bottom: 0;
+  }
+  .site-header nav > a.manager-role-entry,
+  .site-header nav > span.manager-role-entry {
+    padding: 13px 12px;
+    text-align: left;
   }
   .hero {
     padding: 48px 20px 65px;
