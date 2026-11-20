@@ -93,7 +93,7 @@
 .site-header nav {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 15px;
 }
 .site-header nav > button:not(.btn-primary) {
   border: 0;
@@ -107,6 +107,13 @@
 .site-header nav > button.active:not(.btn-primary) {
   color: var(--teal);
   border-color: var(--teal);
+}
+.site-header nav > .manager-role-entry:not(.btn-primary) {
+  padding-right: 12px;
+  padding-left: 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--cream);
 }
 .btn-primary,
 .btn-secondary {
@@ -370,8 +377,8 @@
   padding: 82px 28px 90px;
 }
 .section-intro {
-  max-width: 620px;
-  text-align: center;
+  max-width: 1120px;
+  text-align: left;
   margin: 0 auto 45px;
 }
 .eyebrow {
@@ -395,6 +402,15 @@
   display: grid;
   grid-template-columns: 1fr 100px 1fr;
   align-items: center;
+}
+.journey-grid {
+  max-width: 1120px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+.journey-grid .path-card {
+  min-height: 340px;
 }
 .path-card {
   min-height: 318px;
@@ -546,7 +562,9 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.listings-controls input {
+.listings-controls input[type="search"],
+.listings-controls input[type="date"],
+.listings-controls select {
   width: 100%;
   height: 48px;
   padding: 0 15px;
@@ -556,23 +574,62 @@
   color: var(--ink);
   background: white;
 }
-.listings-controls input:focus {
+.listings-controls input[type="search"]:focus,
+.listings-controls input[type="date"]:focus,
+.listings-controls select:focus {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.1);
 }
-.listing-filter-pills {
+.listing-filter-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.listing-checkbox-filter {
+  grid-column: 1 / -1;
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  min-height: 28px;
+  cursor: pointer;
+}
+.listing-checkbox-filter input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--teal);
+}
+.listing-checkbox-filter > span {
+  margin: 0 !important;
+  color: var(--ink) !important;
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.listing-filter-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 13px;
 }
-.listing-filter-pills span {
+.listing-disclosure-badge {
   padding: 8px 11px;
   border: 1px solid var(--line);
   border-radius: 99px;
   color: #425653;
   font-size: 11px;
   font-weight: 600;
+}
+.listing-filter-meta button,
+.listings-empty-state button {
+  border: 0;
+  color: var(--teal);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
 }
 .listings-results-heading {
   display: flex;
@@ -593,6 +650,40 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
   align-items: stretch;
+}
+.listings-empty-state {
+  padding: 58px 24px;
+  border: 1px dashed #b9cbc6;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+.listings-empty-state h2 {
+  font-size: 22px;
+}
+.listings-empty-state p {
+  margin: 8px 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.listings-show-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+.listings-show-more button {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--teal);
+  border-radius: 10px;
+  color: var(--teal);
+  background: white;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.listings-show-more button:hover {
+  background: rgba(8, 127, 115, 0.06);
 }
 .listing-card {
   display: grid;
@@ -727,6 +818,30 @@
   width: 100%;
   height: clamp(310px, 40vw, 480px);
   object-fit: cover;
+}
+.entered-rental-summary {
+  display: flex;
+  min-height: 220px;
+  justify-content: center;
+  flex-direction: column;
+  padding: 40px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(135deg, var(--cream), #eef8f4);
+}
+.entered-rental-summary span {
+  color: var(--teal-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.entered-rental-summary strong {
+  margin: 10px 0 5px;
+  font: 800 25px "Manrope";
+}
+.entered-rental-summary p {
+  color: var(--muted);
+  font-size: 12px;
 }
 .listing-overview {
   padding: 30px;
@@ -974,6 +1089,12 @@
   grid-column: 1 / -1;
   color: white;
   background: var(--teal);
+}
+.listing-detail-actions .roommate-plan-action {
+  grid-column: 1 / -1;
+  border-color: var(--teal-dark);
+  color: white;
+  background: var(--teal-dark);
 }
 .tour-feedback {
   margin-top: 9px;
@@ -1746,6 +1867,9 @@
   .listings-grid {
     grid-template-columns: 1fr;
   }
+  .listing-filter-fields {
+    grid-template-columns: 1fr;
+  }
   .listing-details-page {
     width: calc(100% - 32px);
     padding-top: 22px;
@@ -1753,6 +1877,10 @@
   .listing-overview,
   .decision-receipt {
     padding: 20px;
+  }
+  .entered-rental-summary {
+    min-height: 180px;
+    padding: 28px 20px;
   }
   .listing-title-row {
     flex-direction: column;
@@ -1762,6 +1890,137 @@
   }
   .listing-info-grid {
     grid-template-columns: 1fr;
+  }
+}
+.rental-entry-page {
+  width: min(900px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 54px 0 80px;
+}
+.rental-entry-heading {
+  max-width: 700px;
+  margin-bottom: 26px;
+}
+.rental-entry-heading h1 {
+  margin: 7px 0 10px;
+  font-size: clamp(32px, 5vw, 48px);
+}
+.rental-entry-heading > p:last-child {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.rental-entry-form {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: white;
+  box-shadow: 0 12px 36px rgba(30, 66, 57, 0.07);
+}
+.rental-entry-extract {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--cream);
+}
+.rental-entry-extract h2 {
+  margin: 5px 0 3px;
+  font-size: 20px;
+}
+.rental-entry-extract p,
+.rental-entry-success {
+  color: var(--muted);
+  font-size: 12px;
+}
+.rental-entry-extract button,
+.rental-entry-submit {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--teal);
+  border-radius: 10px;
+  color: white;
+  background: var(--teal);
+  font-weight: 800;
+}
+.rental-entry-success {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 9px;
+  color: var(--teal-dark);
+  background: var(--mint-soft);
+  font-weight: 700;
+}
+.rental-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+.rental-entry-grid label > span:first-child {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+.rental-entry-grid input:not([type="checkbox"]) {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1px solid #cfddd8;
+  border-radius: 9px;
+  outline: none;
+}
+.rental-entry-grid input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.1);
+}
+.rental-entry-grid label > small {
+  display: block;
+  margin-top: 5px;
+  color: #a13d32;
+  font-size: 10px;
+  font-weight: 700;
+}
+.rental-entry-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-top: 27px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.rental-entry-checkbox input {
+  accent-color: var(--teal);
+}
+.rental-entry-checkbox > span {
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+}
+.rental-entry-submit {
+  width: 100%;
+  margin-top: 24px;
+}
+@media (max-width: 680px) {
+  .rental-entry-page {
+    width: calc(100% - 32px);
+    padding: 34px 0 64px;
+  }
+  .rental-entry-form {
+    padding: 20px;
+  }
+  .rental-entry-extract {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .rental-entry-grid {
+    grid-template-columns: 1fr;
+  }
+  .rental-entry-checkbox {
+    padding-top: 0;
   }
 }
 .app-main > * {
@@ -1830,6 +2089,12 @@
 }
 .progress-step:disabled {
   cursor: default;
+}
+.roommate-progress.stages-3 {
+  max-width: 520px;
+}
+.roommate-progress.stages-2 {
+  max-width: 360px;
 }
 .page-heading {
   text-align: center;
@@ -2624,6 +2889,10 @@
   font-size: 11px;
   font-weight: 700;
 }
+.context-banner.context-banner-text-only {
+  grid-template-columns: 1fr auto;
+  padding: 18px 20px;
+}
 .match-list {
   display: flex;
   flex-direction: column;
@@ -2813,7 +3082,7 @@ footer {
   font-size: 9px;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
   .site-header {
     height: 68px;
     padding: 0 18px;
@@ -2959,6 +3228,9 @@ footer {
   }
   .context-banner {
     grid-template-columns: 70px 1fr;
+  }
+  .context-banner.context-banner-text-only {
+    grid-template-columns: 1fr;
   }
   .context-banner img {
     width: 70px;

@@ -1,6 +1,17 @@
 import { useState } from "react";
 
+import { buildAdvisorDecisionModel, type AdvisorDecisionModel } from "./advisorDecision";
+import rentSnapshotData from "./data/rentcast-slc.json";
+import type { RentalDecisionRecord } from "./rentalDecision";
+import type { RentSnapshot } from "./rentMarket";
+
 export type AdvisorScreen = "advisor" | "lease" | "truecost" | "decision";
+
+const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
+
+function formatMoney(value: number): string {
+  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+}
 
 type AdvisorIconName =
   | "alert"
@@ -174,7 +185,16 @@ function MobilePanelTabs({
   );
 }
 
-function LeasePaper({ focus = "" }: { focus?: string }) {
+function LeasePaper({ model, focus = "" }: { model: AdvisorDecisionModel; focus?: string }) {
+  const depositText =
+    model.securityDeposit === null
+      ? "The security deposit amount is not stated in the selected rental facts."
+      : `Tenant shall pay a ${formatMoney(model.securityDeposit)} refundable security deposit, subject to lawful deductions for damage beyond ordinary wear.`;
+  const feeText =
+    model.recurringFees.length === 0
+      ? "No mandatory recurring fees are stated in the selected rental facts."
+      : `Mandatory recurring charges total ${formatMoney(model.recurringFeeTotal)} per month: ${model.recurringFees.map((fee) => `${fee.label} ${formatMoney(fee.amount)}`).join(", ")}.`;
+
   return (
     <div className="lease-paper">
       <div className="lease-paper-heading">
@@ -182,7 +202,7 @@ function LeasePaper({ focus = "" }: { focus?: string }) {
         <div>
           <small>FICTIONAL SAMPLE DOCUMENT</small>
           <h2>Residential Lease Agreement</h2>
-          <p>Wasatch View Apartments · Salt Lake City, Utah</p>
+          <p>{model.title} · Salt Lake City, Utah</p>
         </div>
       </div>
       <div className="lease-parties">
@@ -196,29 +216,26 @@ function LeasePaper({ focus = "" }: { focus?: string }) {
         </span>
         <span>
           PREMISES
-          <b>742 E 3rd Ave, Unit 4B</b>
+          <b>{model.title}</b>
         </span>
       </div>
       <div className={`lease-clause ${focus === "2.1" ? "focused" : ""}`}>
         <b>§ 2.1 TERM & RENT</b>
         <p>
-          The lease begins August 15, 2025 and ends August 14, 2026. Tenant shall pay monthly rent
-          of <mark>$2,100.00</mark>, due on the first day of each month.
+          The lease begins Jan 1, 2027 and ends Dec 31, 2027. Tenant shall pay monthly rent of{" "}
+          <mark>{formatMoney(model.advertisedRent)}</mark>, due on the first day of each month.
         </p>
       </div>
       <div className={`lease-clause ${focus === "3.2" ? "focused" : ""}`}>
         <b>§ 3.2 SECURITY DEPOSIT</b>
         <p>
-          Tenant shall pay a <mark>$1,000.00 refundable security deposit</mark>, subject to lawful
-          deductions for damage beyond ordinary wear.
+          <mark>{depositText}</mark>
         </p>
       </div>
       <div className={`lease-clause ${focus === "4.1" ? "focused" : ""}`}>
         <b>§ 4.1 FEES & UTILITIES</b>
         <p>
-          Monthly charges include water/sewer $65, parking $75, utility administration $35, and
-          required renter’s insurance estimated at $25. A <mark>$250 nonrefundable admin fee</mark>{" "}
-          is due at signing.
+          <mark>{feeText}</mark> Variable usage costs are excluded unless separately stated.
         </p>
       </div>
       <div className={`lease-clause ${focus === "6.3" ? "focused" : ""}`}>
@@ -257,29 +274,38 @@ const suggestedQuestions = [
   "What will this apartment actually cost me?",
 ];
 
-const simulatedAnswers: Record<string, string> = {
-  "Are there hidden fees in this lease?":
-    "The sample lease explicitly lists $200 in estimated monthly charges and a $250 nonrefundable admin fee. It does not state application, renewal, or move-out cleaning fees, so those need clarification.",
-  "Can I have roommates?":
-    "Yes, but §12.4 says additional occupants and replacement roommates need prior written landlord approval. The approval criteria are not stated.",
-  "What HOA rules should I know?":
-    "I can’t confirm any HOA rules because no HOA addendum is included in this sample. Ask whether an HOA governs the unit and request its rules before signing.",
-  "What will this apartment actually cost me?":
-    "Based only on stated sample terms: $3,550 at move-in, including a $1,000 refundable deposit, then about $2,300 per month before variable usage costs.",
-};
+function getSimulatedAnswer(text: string, model: AdvisorDecisionModel): string {
+  if (text === "Are there hidden fees in this lease?") {
+    return `The selected rental facts include ${formatMoney(model.recurringFeeTotal)} in mandatory recurring charges. Application, renewal, and move-out fees still need written clarification.`;
+  }
+  if (text === "Can I have roommates?") {
+    return "The fictional sample clause requires prior written landlord approval, but it does not state the approval criteria.";
+  }
+  if (text === "What HOA rules should I know?") {
+    return "I can’t confirm any HOA rules because no HOA addendum is included in this fictional sample. Ask whether an HOA governs the unit and request its rules before signing.";
+  }
+  if (text === "What will this apartment actually cost me?") {
+    return `The shared Decision Receipt shows ${formatMoney(model.trueMonthlyCost)} per month${model.estimatedMoveInCost === null ? "; the deposit is still unknown" : ` and ${formatMoney(model.estimatedMoveInCost)} estimated at move-in`}.`;
+  }
+  return "I can help explain that, but I would need an explicit clause in the fictional sample document to answer with confidence. I’ll label anything unsupported as needing clarification.";
+}
 
-export function AdvisorHome({ go }: { go: (screen: AdvisorScreen) => void }) {
+export function AdvisorHome({
+  decision,
+  go,
+}: {
+  decision: RentalDecisionRecord;
+  go: (screen: AdvisorScreen) => void;
+}) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [uploaded, setUploaded] = useState(false);
+  const model = buildAdvisorDecisionModel(decision, RENT_SNAPSHOT);
 
   const ask = (text: string) => {
     if (!text.trim()) return;
     setQuestion(text);
-    setAnswer(
-      simulatedAnswers[text] ??
-        "I can help explain that, but I would need an explicit clause in the sample document to answer with confidence. I’ll label anything unsupported as needing clarification.",
-    );
+    setAnswer(getSimulatedAnswer(text, model));
   };
 
   return (
@@ -298,8 +324,12 @@ export function AdvisorHome({ go }: { go: (screen: AdvisorScreen) => void }) {
             <i>Decide with confidence.</i>
           </h1>
           <p>
-            Clear, evidence-backed explanations for complicated rental decisions—grounded only in
-            the document you provide.
+            This guided prototype combines a fictional sample lease and the active Decision Receipt.
+            It does not process an uploaded document.
+          </p>
+          <p className="advisor-decision-context">
+            Decision Receipt: <b>{model.title}</b> · {formatMoney(model.trueMonthlyCost)} true
+            monthly cost
           </p>
         </div>
         <div className="advisor-trust">
@@ -394,10 +424,10 @@ export function AdvisorHome({ go }: { go: (screen: AdvisorScreen) => void }) {
             <span>
               <AdvisorIcon name={uploaded ? "check" : "upload"} size={25} />
             </span>
-            <b>{uploaded ? "Document ready for demo" : "Drop a document here"}</b>
+            <b>{uploaded ? "File selected—not analyzed" : "Drop a document here"}</b>
             <p>
               {uploaded
-                ? "No file was transmitted or processed."
+                ? "The guided review still uses the fictional sample lease."
                 : "or click to choose a PDF or DOC"}
             </p>
             <small>PROTOTYPE · NO EXTERNAL UPLOAD OCCURS</small>
@@ -430,57 +460,62 @@ type Finding = {
   detail: string;
 };
 
-const findings: Finding[] = [
-  {
-    label: "Base rent",
-    value: "$2,100 / month",
-    citation: "§ 2.1",
-    status: "stated",
-    detail: "Due on the first of each month.",
-  },
-  {
-    label: "Security deposit",
-    value: "$1,000 refundable",
-    citation: "§ 3.2",
-    status: "stated",
-    detail: "Subject to lawful damage deductions.",
-  },
-  {
-    label: "Recurring fees",
-    value: "$200 estimated",
-    citation: "§ 4.1",
-    status: "stated",
-    detail: "Water, parking, admin, and insurance.",
-  },
-  {
-    label: "Late fees",
-    value: "$75 + $10 / day",
-    citation: "§ 6.3",
-    status: "stated",
-    detail: "Applies after the fifth calendar day.",
-  },
-  {
-    label: "Lease duration",
-    value: "12 months",
-    citation: "§ 2.1",
-    status: "stated",
-    detail: "Aug 15, 2025 through Aug 14, 2026.",
-  },
-  {
-    label: "Early termination",
-    value: "60 days + $4,200",
-    citation: "§ 9.2",
-    status: "stated",
-    detail: "Request only; approval is not guaranteed.",
-  },
-  {
-    label: "Roommates / subletting",
-    value: "Written approval required",
-    citation: "§ 12.4",
-    status: "ambiguous",
-    detail: "Approval criteria are not defined.",
-  },
-];
+function getFindings(model: AdvisorDecisionModel): Finding[] {
+  return [
+    {
+      label: "Base rent",
+      value: `${formatMoney(model.advertisedRent)} / month`,
+      citation: "§ 2.1",
+      status: "stated",
+      detail: "Due on the first of each month.",
+    },
+    {
+      label: "Security deposit",
+      value:
+        model.securityDeposit === null
+          ? "Amount needs clarification"
+          : `${formatMoney(model.securityDeposit)} refundable`,
+      citation: "§ 3.2",
+      status: model.securityDeposit === null ? "ambiguous" : "stated",
+      detail: "Subject to lawful damage deductions.",
+    },
+    {
+      label: "Recurring fees",
+      value: `${formatMoney(model.recurringFeeTotal)} stated`,
+      citation: "§ 4.1",
+      status: "stated",
+      detail: "Uses the same mandatory fees as the Decision Receipt.",
+    },
+    {
+      label: "Late fees",
+      value: "$75 + $10 / day",
+      citation: "§ 6.3",
+      status: "stated",
+      detail: "Applies after the fifth calendar day.",
+    },
+    {
+      label: "Lease duration",
+      value: "12 months",
+      citation: "§ 2.1",
+      status: "stated",
+      detail: "Jan 1, 2027 through Dec 31, 2027.",
+    },
+    {
+      label: "Early termination",
+      value: `60 days + ${formatMoney(model.advertisedRent * 2)}`,
+      citation: "§ 9.2",
+      status: "stated",
+      detail: "Request only; approval is not guaranteed.",
+    },
+    {
+      label: "Roommates / subletting",
+      value: "Written approval required",
+      citation: "§ 12.4",
+      status: "ambiguous",
+      detail: "Approval criteria are not defined.",
+    },
+  ];
+}
 
 function FindingCard({
   finding,
@@ -505,9 +540,17 @@ function FindingCard({
   );
 }
 
-export function LeaseAnalysis({ go }: { go: (screen: AdvisorScreen) => void }) {
+export function LeaseAnalysis({
+  decision,
+  go,
+}: {
+  decision: RentalDecisionRecord;
+  go: (screen: AdvisorScreen) => void;
+}) {
   const [panel, setPanel] = useState<"document" | "assistant">("assistant");
   const [focus, setFocus] = useState("2.1");
+  const model = buildAdvisorDecisionModel(decision, RENT_SNAPSHOT);
+  const findings = getFindings(model);
   const showCitation = (citation: string) => {
     setFocus(citation.replace("§ ", ""));
     setPanel("document");
@@ -535,7 +578,7 @@ export function LeaseAnalysis({ go }: { go: (screen: AdvisorScreen) => void }) {
             <em>1 of 1</em>
           </div>
           <div className="paper-scroll">
-            <LeasePaper focus={focus} />
+            <LeasePaper model={model} focus={focus} />
           </div>
         </section>
         <section className={`explanation-panel ${panel === "assistant" ? "mobile-active" : ""}`}>
@@ -585,21 +628,17 @@ export function LeaseAnalysis({ go }: { go: (screen: AdvisorScreen) => void }) {
   );
 }
 
-const costRows = [
-  { name: "Base rent", amount: 2100, type: "Monthly", citation: "§ 2.1" },
-  { name: "Water / sewer", amount: 65, type: "Monthly", citation: "§ 4.1" },
-  { name: "Parking", amount: 75, type: "Monthly", citation: "§ 4.1" },
-  { name: "Utility admin", amount: 35, type: "Monthly", citation: "§ 4.1" },
-  { name: "Renter’s insurance", amount: 25, type: "Monthly estimate", citation: "§ 4.1" },
-];
-
-export function TrueHousingCost({ go }: { go: (screen: AdvisorScreen) => void }) {
+export function TrueHousingCost({
+  decision,
+  go,
+}: {
+  decision: RentalDecisionRecord;
+  go: (screen: AdvisorScreen) => void;
+}) {
   const [panel, setPanel] = useState<"document" | "assistant">("assistant");
   const [occupants, setOccupants] = useState(2);
-  const ongoing = 2300;
-  const adminFee = 250;
-  const deposit = 1000;
-  const firstMonth = ongoing + adminFee + deposit;
+  const model = buildAdvisorDecisionModel(decision, RENT_SNAPSHOT);
+  const firstMonth = model.estimatedMoveInCost;
 
   return (
     <main className="advisor-main advisor-workspace cost-workspace">
@@ -627,39 +666,37 @@ export function TrueHousingCost({ go }: { go: (screen: AdvisorScreen) => void })
           <div className="cost-evidence">
             <div className="evidence-total">
               <small>STATED BASE RENT</small>
-              <strong>$2,100</strong>
+              <strong>{formatMoney(model.advertisedRent)}</strong>
               <span>/ month</span>
-              <button>§ 2.1</button>
+              <em>§ 2.1</em>
             </div>
             <h3>Monthly recurring charges</h3>
-            {costRows.slice(1).map((row) => (
-              <div className="evidence-row" key={row.name}>
+            {model.recurringFees.map((fee) => (
+              <div className="evidence-row" key={fee.id}>
                 <span>
-                  <b>{row.name}</b>
-                  <small>{row.type}</small>
+                  <b>{fee.label}</b>
+                  <small>Mandatory monthly fee</small>
                 </span>
-                <strong>${row.amount}</strong>
-                <em>{row.citation}</em>
+                <strong>{formatMoney(fee.amount)}</strong>
+                <em>Receipt</em>
               </div>
             ))}
+            {model.recurringFees.length === 0 && <p>No mandatory recurring fees stated.</p>}
             <h3>Move-in charges</h3>
             <div className="movein-evidence refundable">
               <span>
                 <AdvisorIcon name="check" />
                 <b>Security deposit</b>
-                <small>Refundable, less lawful deductions</small>
+                <small>
+                  {model.securityDeposit === null
+                    ? "Not provided—confirm before signing"
+                    : "Refundable, less lawful deductions"}
+                </small>
               </span>
-              <strong>$1,000</strong>
+              <strong>
+                {model.securityDeposit === null ? "Unknown" : formatMoney(model.securityDeposit)}
+              </strong>
               <em>§ 3.2</em>
-            </div>
-            <div className="movein-evidence nonrefundable">
-              <span>
-                <AdvisorIcon name="alert" />
-                <b>Administration fee</b>
-                <small>Nonrefundable</small>
-              </span>
-              <strong>$250</strong>
-              <em>§ 4.1</em>
             </div>
             <div className="variable-cost-note">
               <AdvisorIcon name="info" />
@@ -685,37 +722,36 @@ export function TrueHousingCost({ go }: { go: (screen: AdvisorScreen) => void })
           <div className="cost-hero-grid">
             <div className="first-month">
               <small>ESTIMATED FIRST-MONTH PAYMENT</small>
-              <strong>${firstMonth.toLocaleString()}</strong>
-              <p>Includes $1,000 refundable deposit</p>
+              <strong>{firstMonth === null ? "Unavailable" : formatMoney(firstMonth)}</strong>
+              <p>
+                {model.securityDeposit === null
+                  ? "Confirm the deposit to complete this estimate"
+                  : `Includes ${formatMoney(model.securityDeposit)} refundable deposit`}
+              </p>
             </div>
             <div className="ongoing-month">
               <small>ONGOING MONTHLY PAYMENT</small>
-              <strong>${ongoing.toLocaleString()}</strong>
+              <strong>{formatMoney(model.trueMonthlyCost)}</strong>
               <p>Before variable electricity and gas</p>
             </div>
           </div>
           <div className="cost-breakdown">
             <div>
               <span>Base rent</span>
-              <b>$2,100</b>
+              <b>{formatMoney(model.advertisedRent)}</b>
             </div>
             <div>
               <span>Recurring monthly fees</span>
-              <b>$200</b>
+              <b>{formatMoney(model.recurringFeeTotal)}</b>
             </div>
             <div className="refund-line">
               <span>
                 <i />
                 Refundable deposit
               </span>
-              <b>$1,000</b>
-            </div>
-            <div className="nonrefund-line">
-              <span>
-                <i />
-                Nonrefundable move-in fee
-              </span>
-              <b>$250</b>
+              <b>
+                {model.securityDeposit === null ? "Unknown" : formatMoney(model.securityDeposit)}
+              </b>
             </div>
           </div>
           <section className="roommate-calculator">
@@ -739,12 +775,14 @@ export function TrueHousingCost({ go }: { go: (screen: AdvisorScreen) => void })
             <div className="per-person-cost">
               <span>
                 <small>ONGOING PER PERSON</small>
-                <strong>${Math.round(ongoing / occupants).toLocaleString()}</strong>
+                <strong>{formatMoney(Math.round(model.trueMonthlyCost / occupants))}</strong>
                 <em>/ month</em>
               </span>
               <span>
                 <small>FIRST MONTH PER PERSON</small>
-                <strong>${Math.round(firstMonth / occupants).toLocaleString()}</strong>
+                <strong>
+                  {firstMonth === null ? "—" : formatMoney(Math.round(firstMonth / occupants))}
+                </strong>
                 <em>estimated</em>
               </span>
             </div>
@@ -765,60 +803,91 @@ export function TrueHousingCost({ go }: { go: (screen: AdvisorScreen) => void })
   );
 }
 
-type DecisionGo = (screen: AdvisorScreen | "matches") => void;
+type DecisionGo = (screen: AdvisorScreen) => void;
 
-const decisionSections = [
-  {
-    title: "Price Assessment",
-    status: "Caution",
-    tone: "caution",
-    summary: "$2,100 is 7.7% above the fictional comparable median of $1,950.",
-    evidence: "RentWell demo comparison · 24 sample listings",
-    recommendation: "Ask what amenities or unit upgrades explain the difference.",
-  },
-  {
-    title: "Total Cost",
-    status: "Evidence found",
-    tone: "good",
-    summary: "$3,550 estimated at move-in, then $2,300 monthly before variable utilities.",
-    evidence: "Sample lease §§ 2.1, 3.2, 4.1",
-    recommendation: "Budget separately for electricity and gas because amounts are not stated.",
-  },
-  {
-    title: "Lease Questions",
-    status: "Needs clarification",
-    tone: "unknown",
-    summary: "Renewal terms, move-out cleaning charges, and application fees are not included.",
-    evidence: "No supporting clause found in sample",
-    recommendation: "Get written answers and request every applicable addendum before signing.",
-  },
-  {
-    title: "HOA Restrictions",
-    status: "Needs clarification",
-    tone: "unknown",
-    summary: "No HOA addendum or community rules were included in the sample document.",
-    evidence: "No HOA evidence found",
-    recommendation: "Ask whether an HOA governs the unit and request its current rules.",
-  },
-  {
-    title: "Roommate Considerations",
-    status: "Approval required",
-    tone: "caution",
-    summary: "Roommates and sublets require prior written approval; criteria are not defined.",
-    evidence: "Sample lease § 12.4",
-    recommendation: "Ask how approval works, how long it takes, and whether fees apply.",
-  },
-];
+function getDecisionSections(model: AdvisorDecisionModel) {
+  return [
+    {
+      title: "Price Assessment",
+      status: "Snapshot evidence",
+      tone: "caution",
+      summary:
+        model.comparableMedian === null
+          ? "A comparable market median is unavailable for this rental."
+          : `${formatMoney(model.advertisedRent)} advertised rent is ${model.comparisonSummary}; the snapshot median is ${formatMoney(model.comparableMedian)}.`,
+      evidence:
+        model.comparableCount === null
+          ? "Dated RentCast snapshot · comparison unavailable"
+          : `Dated RentCast snapshot · ${model.comparableCount} comparable rentals`,
+      recommendation: "Ask what amenities or unit upgrades explain any difference.",
+    },
+    {
+      title: "Total Cost",
+      status: "Receipt verified",
+      tone: "good",
+      summary: `${model.estimatedMoveInCost === null ? "Move-in cost needs a deposit" : `${formatMoney(model.estimatedMoveInCost)} estimated at move-in`}, then ${formatMoney(model.trueMonthlyCost)} monthly before variable utilities.`,
+      evidence: "Shared RentWell Decision Receipt",
+      recommendation: "Budget separately for variable utilities that are not stated.",
+    },
+    {
+      title: "Lease Questions",
+      status: "Needs clarification",
+      tone: "unknown",
+      summary: "Renewal terms, move-out cleaning charges, and application fees are not included.",
+      evidence: "No supporting clause found in sample",
+      recommendation: "Get written answers and request every applicable addendum before signing.",
+    },
+    {
+      title: "HOA Restrictions",
+      status: "Needs clarification",
+      tone: "unknown",
+      summary: "No HOA addendum or community rules were included in the sample document.",
+      evidence: "No HOA evidence found",
+      recommendation: "Ask whether an HOA governs the unit and request its current rules.",
+    },
+    {
+      title: "Roommate Considerations",
+      status: "Approval required",
+      tone: "caution",
+      summary: "Roommates and sublets require prior written approval; criteria are not defined.",
+      evidence: "Sample lease § 12.4",
+      recommendation: "Ask how approval works, how long it takes, and whether fees apply.",
+    },
+  ];
+}
 
-export function DecisionSummary({ go }: { go: DecisionGo }) {
+export function DecisionSummary({
+  decision,
+  go,
+  onBackToDecision,
+  onPlanWithRoommates,
+}: {
+  decision: RentalDecisionRecord;
+  go: DecisionGo;
+  onBackToDecision: () => void;
+  onPlanWithRoommates: () => void;
+}) {
   const [panel, setPanel] = useState<"document" | "assistant">("assistant");
+  const model = buildAdvisorDecisionModel(decision, RENT_SNAPSHOT);
+  const decisionSections = getDecisionSections(model);
+  const evidenceRows = [
+    ["§ 2.1", "Rent and 12-month term", "Used"],
+    ["§ 3.2", "Refundable deposit", model.securityDeposit === null ? "Missing" : "Used"],
+    ["§ 4.1", "Recurring mandatory fees", "Used"],
+    ["§ 6.3", "Late payment fees", "Used"],
+    ["§ 9.2", "Early termination", "Used"],
+    ["§ 12.4", "Roommates and subletting", "Used"],
+    ["—", "HOA / community rules", "Missing"],
+    ["—", "Renewal and move-out terms", "Missing"],
+  ];
+  const supportedEvidenceCount = evidenceRows.filter(([, , status]) => status === "Used").length;
   return (
     <main className="advisor-main advisor-workspace decision-workspace">
       <AdvisorProgress current="decision" go={(screen) => go(screen)} />
       <div className="workspace-heading">
         <div>
-          <p>RENTAL DECISION SUMMARY · FICTIONAL SAMPLE</p>
-          <h1>A clear view of what you know—and what you still need to ask.</h1>
+          <p>ADVISOR EXTENSION · {model.title}</p>
+          <h1>A clear view of what the receipt supports—and what you still need to ask.</h1>
         </div>
         <span className="analysis-complete">
           <AdvisorIcon name="sparkle" size={14} /> PREMIUM SUMMARY
@@ -842,21 +911,14 @@ export function DecisionSummary({ go }: { go: DecisionGo }) {
               </span>
               <div>
                 <small>EVIDENCE COVERAGE</small>
-                <strong>4 of 7 topics supported</strong>
-                <p>Three topics still need written clarification.</p>
+                <strong>
+                  {supportedEvidenceCount} of {evidenceRows.length} evidence topics supported
+                </strong>
+                <p>Unknown terms stay marked as missing rather than being assumed.</p>
               </div>
             </div>
             <h3>Source index</h3>
-            {[
-              ["§ 2.1", "Rent and 12-month term", "Used"],
-              ["§ 3.2", "Refundable deposit", "Used"],
-              ["§ 4.1", "Recurring and admin fees", "Used"],
-              ["§ 6.3", "Late payment fees", "Used"],
-              ["§ 9.2", "Early termination", "Used"],
-              ["§ 12.4", "Roommates and subletting", "Used"],
-              ["—", "HOA / community rules", "Missing"],
-              ["—", "Renewal and move-out terms", "Missing"],
-            ].map(([cite, label, status]) => (
+            {evidenceRows.map(([cite, label, status]) => (
               <div className="source-index-row" key={label}>
                 <b>{cite}</b>
                 <span>{label}</span>
@@ -883,8 +945,8 @@ export function DecisionSummary({ go }: { go: DecisionGo }) {
               <small>RENTWELL ADVISOR TAKEAWAY</small>
               <h2>Promising, but clarify three things first.</h2>
               <p>
-                The price is somewhat above the demo median, costs are mostly clear, and roommate
-                approval needs a written process.
+                The Decision Receipt remains the cost source of truth. This fictional lease review
+                adds questions and clause-level risks for {model.title}.
               </p>
             </div>
           </div>
@@ -932,11 +994,11 @@ export function DecisionSummary({ go }: { go: DecisionGo }) {
           </section>
           <AdvisorNotice />
           <div className="advisor-actions decision-actions">
-            <AdvisorButton secondary onClick={() => go("truecost")}>
-              Back to costs
+            <AdvisorButton secondary onClick={onBackToDecision}>
+              Back to Decision Receipt
             </AdvisorButton>
-            <AdvisorButton onClick={() => go("matches")}>
-              View fictional roommate matches <AdvisorIcon name="arrow" size={16} />
+            <AdvisorButton onClick={onPlanWithRoommates}>
+              Plan with roommates <AdvisorIcon name="arrow" size={16} />
             </AdvisorButton>
           </div>
         </section>

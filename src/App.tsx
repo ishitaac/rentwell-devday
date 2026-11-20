@@ -6,10 +6,24 @@ import {
   TrueHousingCost,
   type AdvisorScreen,
 } from "./Advisor";
-import { ListingDetails, ListingsBrowser } from "./Listings";
+import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
+import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { ManagerWorkspace } from "./ManagerWorkspace";
+import { RentalEntry } from "./RentalEntry";
 import rentSnapshotData from "./data/rentcast-slc.json";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
+import {
+  createDemoRentalDecision,
+  createExternalRentalDecision,
+  type ExternalRentalEntry,
+  type RentalDecisionRecord,
+} from "./rentalDecision";
+import {
+  createRentalFirstRoommateContext,
+  createRoommateFirstContext,
+  getRoommateStages,
+  type RoommatePlanningContext,
+} from "./roommatePlanning";
 import {
   calculateRentComparison,
   describeComparisonMethod,
@@ -22,6 +36,7 @@ type Screen =
   | "listings"
   | "listing-details"
   | "manager"
+  | "rental-entry"
   | "rental"
   | "analysis"
   | "math"
@@ -46,6 +61,56 @@ type IconName =
 export const HERO_IMAGE = "/listings/interior-warm.jpg";
 export const APARTMENT_IMAGE = "/listings/interior-blue.jpg";
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
+
+export type DecisionOrigin = "listings" | "rental-entry" | "manager";
+
+export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
+  return origin;
+}
+
+export function getAdvisorEntryScreen(
+  decision: Pick<RentalDecisionRecord, "decisionId"> | null,
+): "advisor" | "rental-entry" {
+  return decision ? "advisor" : "rental-entry";
+}
+
+export function refreshActiveDecisionFromListings(
+  decision: RentalDecisionRecord | null,
+  listings: DemoListing[],
+): RentalDecisionRecord | null {
+  if (!decision || decision.source !== "synthetic-demo-listing") return decision;
+  const currentListing = listings.find(
+    (listing) => listing.synthetic.listingId === decision.decisionId,
+  );
+  return currentListing ? createDemoRentalDecision(currentListing) : decision;
+}
+
+export function getNavSection(
+  screen: Screen,
+  decisionOrigin: DecisionOrigin,
+): "" | "advisor" | "listings" | "manager" | "rental" | "roommates" {
+  if (["advisor", "lease", "truecost", "decision"].includes(screen)) return "advisor";
+  if (["math", "preferences", "matches"].includes(screen)) return "roommates";
+  if (screen === "manager" || (screen === "listing-details" && decisionOrigin === "manager")) {
+    return "manager";
+  }
+  if (screen === "listings" || (screen === "listing-details" && decisionOrigin === "listings")) {
+    return "listings";
+  }
+  if (screen === "home") return "";
+  return "rental";
+}
+
+const INITIAL_EXTERNAL_ENTRY: ExternalRentalEntry = {
+  label: "",
+  neighborhood: "",
+  askingRent: 0,
+  bedrooms: 1,
+  squareFootage: null,
+  mandatoryRecurringFeeTotal: 0,
+  noMandatoryRecurringFees: false,
+  moveInDate: "",
+};
 
 const paths: Record<IconName, React.ReactNode> = {
   arrow: (
@@ -186,6 +251,37 @@ function Progress({ current, go }: { current: Screen; go: (screen: Screen) => vo
   );
 }
 
+function RoommateProgress({
+  current,
+  context,
+  go,
+}: {
+  current: "math" | "preferences" | "matches";
+  context: RoommatePlanningContext;
+  go: (screen: Screen) => void;
+}) {
+  const stages = getRoommateStages(context);
+  const active = stages.findIndex((stage) => stage.screen === current);
+
+  return (
+    <div className="progress-wrap" aria-label="Roommate planning progress">
+      <div className={`progress roommate-progress stages-${stages.length}`}>
+        {stages.map((stage, index) => (
+          <button
+            className={`progress-step ${index <= active ? "is-active" : ""}`}
+            key={stage.screen}
+            onClick={() => index < active && go(stage.screen)}
+            disabled={index > active}
+          >
+            <span>{index < active ? <Icon name="check" size={14} /> : index + 1}</span>
+            <small>{stage.label}</small>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PageHeading({
   eyebrow,
   title,
@@ -238,7 +334,9 @@ function Field({
   );
 }
 
-function Home({ go }: { go: (screen: Screen) => void }) {
+export function Home({ go }: { go: (screen: Screen) => void }) {
+  const sampleListing = getDemoListings(demoListingsDataset)[2].synthetic;
+
   return (
     <main>
       <section className="hero">
@@ -258,12 +356,12 @@ function Home({ go }: { go: (screen: Screen) => void }) {
             spreadsheet chaos.
           </p>
           <div className="hero-actions">
-            <Button onClick={() => go("rental")}>
-              Check a rental <Icon name="arrow" size={18} />
+            <Button onClick={() => go("listings")}>
+              Browse rentals <Icon name="arrow" size={18} />
             </Button>
-            <button className="text-button" onClick={() => go("rental")}>
-              <Icon name="sparkle" size={18} /> Try demo
-            </button>
+            <Button secondary onClick={() => go("rental-entry")}>
+              Check a rental you found
+            </Button>
           </div>
           <p className="micro">
             <Icon name="check" size={15} /> No sign-up needed &nbsp;·&nbsp; Cached market snapshot
@@ -271,16 +369,16 @@ function Home({ go }: { go: (screen: Screen) => void }) {
         </div>
         <div className="hero-visual">
           <div className="hero-image">
-            <img src={HERO_IMAGE} alt="Warm, light-filled apartment living room" />
+            <img src={sampleListing.images[0]} alt={`${sampleListing.title} demo property`} />
             <div className="price-float">
               <span className="icon-tile mint">
                 <Icon name="building" size={19} />
               </span>
               <div>
-                <small>Sample listing</small>
-                <strong>$2,100 / mo</strong>
+                <small>{sampleListing.title}</small>
+                <strong>${sampleListing.trueMonthlyCost.toLocaleString()} / mo true cost</strong>
               </div>
-              <span className="fair-pill">Fair-ish</span>
+              <span className="fair-pill">Fees included</span>
             </div>
           </div>
           <div className="people-float">
@@ -290,7 +388,7 @@ function Home({ go }: { go: (screen: Screen) => void }) {
               <span>RS</span>
             </div>
             <div>
-              <strong>3 strong matches</strong>
+              <strong>Fictional roommate preview</strong>
               <small>Based on lifestyle, not identity</small>
             </div>
           </div>
@@ -300,52 +398,49 @@ function Home({ go }: { go: (screen: Screen) => void }) {
 
       <section className="path-section">
         <div className="section-intro">
-          <p className="eyebrow">One decision, two sides</p>
+          <p className="eyebrow">One connected decision journey</p>
           <h2>A good rental is more than a rent number.</h2>
           <p>
-            Check the place, understand the split, then find people whose housing priorities fit
-            yours.
+            Start with a RentWell listing or bring your own, understand the real cost, then decide
+            whether to continue solo or with roommates.
           </p>
         </div>
-        <div className="path-grid">
-          <button className="path-card" onClick={() => go("rental")}>
+        <div className="path-grid journey-grid">
+          <article className="path-card">
             <span className="number">01</span>
             <span className="icon-tile coral">
               <Icon name="building" size={26} />
             </span>
-            <h3>Check a Rental</h3>
+            <h3>Find or bring a rental</h3>
             <p>
-              See how the rent compares to a dated Salt Lake City rental snapshot, then calculate
-              the real cost with fees.
+              Browse RentWell’s synthetic demo listings or check a rental you found somewhere else.
             </p>
-            <span className="card-link">
-              Analyze a place <Icon name="arrow" size={17} />
-            </span>
-          </button>
-          <div className="path-connector">
-            <span>
-              <Icon name="arrow" />
-            </span>
-            <small>
-              Use your rental
-              <br />
-              in roommate search
-            </small>
-          </div>
-          <button className="path-card" onClick={() => go("preferences")}>
+            <span className="card-link">Two ways to start</span>
+          </article>
+          <article className="path-card">
             <span className="number">02</span>
+            <span className="icon-tile coral">
+              <Icon name="dollar" size={26} />
+            </span>
+            <h3>Understand the real cost</h3>
+            <p>
+              See advertised rent, mandatory fees, true monthly cost, and Fair Rent evidence in one
+              Decision Receipt.
+            </p>
+            <span className="card-link">One shared receipt</span>
+          </article>
+          <article className="path-card">
+            <span className="number">03</span>
             <span className="icon-tile mint">
               <Icon name="people" size={26} />
             </span>
-            <h3>Find a Roommate</h3>
+            <h3>Decide solo or shared</h3>
             <p>
-              Match on budgets, neighborhoods, schedules, and the everyday habits that make a home
-              work.
+              Finish your rental decision or continue into cost sharing and preference-based
+              roommate planning.
             </p>
-            <span className="card-link">
-              Set your preferences <Icon name="arrow" size={17} />
-            </span>
-          </button>
+            <span className="card-link">Optional next step</span>
+          </article>
         </div>
       </section>
       <section className="trust-strip">
@@ -660,42 +755,41 @@ function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => 
 }
 
 function RoommateMath({
-  rental,
-  setRental,
+  context,
   go,
+  onBackToDecision,
 }: {
-  rental: RentalData;
-  setRental: React.Dispatch<React.SetStateAction<RentalData>>;
+  context: RoommatePlanningContext;
   go: (screen: Screen) => void;
+  onBackToDecision: () => void;
 }) {
   const [occupants, setOccupants] = useState(2);
-  const total = rental.rent + rental.fees;
+  if (context.entryPerspective !== "rental-first") return null;
+  const rental = context.rental;
+  const total = rental.trueMonthlyCost;
   const each = total / occupants;
   return (
     <main className="app-main">
-      <Progress current="math" go={go} />
-      <PageHeading eyebrow="Roommate math · Step 3 of 5" title="See what sharing really saves.">
-        Adjust the fees or household size and we’ll update the split instantly.
+      <RoommateProgress current="math" context={context} go={go} />
+      <PageHeading eyebrow="Roommate planning · Cost split" title="See what sharing really saves.">
+        Review the Decision Receipt costs, then adjust the household size.
       </PageHeading>
       <div className="math-layout">
         <section className="card costs-card">
           <div className="card-title-row">
             <div>
               <h2>Monthly housing costs</h2>
-              <p>{rental.neighborhood} sample apartment</p>
+              <p>
+                {rental.title} · {rental.neighborhood}
+              </p>
             </div>
-            <span className="demo-tag">EDITABLE</span>
+            <span className="demo-tag">FROM DECISION RECEIPT</span>
           </div>
           <div className="cost-row">
             <span>Base rent</span>
             <div className="inline-money">
               <span>$</span>
-              <input
-                aria-label="Base rent"
-                type="number"
-                value={rental.rent}
-                onChange={(e) => setRental((old) => ({ ...old, rent: Number(e.target.value) }))}
-              />
+              <input aria-label="Base rent" type="number" value={rental.advertisedRent} readOnly />
             </div>
           </div>
           <div className="cost-row">
@@ -707,8 +801,8 @@ function RoommateMath({
               <input
                 aria-label="Monthly fees"
                 type="number"
-                value={rental.fees}
-                onChange={(e) => setRental((old) => ({ ...old, fees: Number(e.target.value) }))}
+                value={rental.recurringFeeTotal}
+                readOnly
               />
             </div>
           </div>
@@ -746,9 +840,9 @@ function RoommateMath({
             <small>/ month</small>
           </div>
           <div className="equation">
-            <span>${rental.rent.toLocaleString()} rent</span>
+            <span>${rental.advertisedRent.toLocaleString()} rent</span>
             <b>+</b>
-            <span>${rental.fees.toLocaleString()} fees</span>
+            <span>${rental.recurringFeeTotal.toLocaleString()} fees</span>
             <b>÷</b>
             <span>{occupants} people</span>
           </div>
@@ -767,17 +861,28 @@ function RoommateMath({
           </small>
         </section>
       </div>
+      <div className="bottom-actions">
+        <Button secondary onClick={onBackToDecision}>
+          Back to Decision Receipt
+        </Button>
+      </div>
     </main>
   );
 }
 
 const neighborhoods = ["The Avenues", "Central City", "Sugar House", "Downtown", "9th & 9th"];
 
-function Preferences({ go }: { go: (screen: Screen) => void }) {
+export function Preferences({
+  context,
+  go,
+}: {
+  context: RoommatePlanningContext;
+  go: (screen: Screen) => void;
+}) {
   const [budget, setBudget] = useState(1250);
   const [selectedAreas, setSelectedAreas] = useState(["The Avenues", "Central City"]);
   const [clean, setClean] = useState(4);
-  const [moveIn, setMoveIn] = useState("August 2025");
+  const [moveIn, setMoveIn] = useState("December 2026");
   const [schedule, setSchedule] = useState("Early-ish");
   const [guests, setGuests] = useState("Sometimes");
   const [atmosphere, setAtmosphere] = useState("Friendly & independent");
@@ -787,9 +892,9 @@ function Preferences({ go }: { go: (screen: Screen) => void }) {
     );
   return (
     <main className="app-main">
-      <Progress current="preferences" go={go} />
+      <RoommateProgress current="preferences" context={context} go={go} />
       <PageHeading
-        eyebrow="Roommate preferences · Step 4 of 5"
+        eyebrow="Roommate planning · Living preferences"
         title="What makes a place feel like home?"
       >
         We match only on housing needs and everyday living preferences—never protected
@@ -852,7 +957,7 @@ function Preferences({ go }: { go: (screen: Screen) => void }) {
             <p>How soon are you looking?</p>
           </div>
           <div className="select-cards">
-            {["August 2025", "September 2025", "Flexible"].map((x) => (
+            {["December 2026", "January 2027", "Flexible"].map((x) => (
               <button
                 className={moveIn === x ? "selected" : ""}
                 key={x}
@@ -963,8 +1068,11 @@ function Preferences({ go }: { go: (screen: Screen) => void }) {
         </span>
       </div>
       <div className="bottom-actions">
-        <Button secondary onClick={() => go("math")}>
-          Back to cost split
+        <Button
+          secondary
+          onClick={() => go(context.entryPerspective === "rental-first" ? "math" : "home")}
+        >
+          {context.entryPerspective === "rental-first" ? "Back to cost split" : "Back to home"}
         </Button>
         <Button onClick={() => go("matches")}>
           Find my matches <Icon name="arrow" size={18} />
@@ -984,7 +1092,7 @@ const profiles = [
     area: "The Avenues, Central City",
     matches: [
       "Similar tidy-but-not-perfect style",
-      "Aligned August move-in",
+      "Compatible move-in timing",
       "Friendly, independent home vibe",
     ],
     difference: "Maya starts her day earlier and prefers quiet after 10:30 PM.",
@@ -998,7 +1106,7 @@ const profiles = [
     budget: "$1,100–$1,350",
     area: "The Avenues, Downtown",
     matches: [
-      "Great budget fit for this apartment",
+      "Great fit with your stated housing budget",
       "Similar approach to occasional guests",
       "Both value clear chore expectations",
     ],
@@ -1018,35 +1126,46 @@ const profiles = [
   },
 ];
 
-function Matches({ rental, go }: { rental: RentalData; go: (screen: Screen) => void }) {
+export function Matches({
+  context,
+  go,
+}: {
+  context: RoommatePlanningContext;
+  go: (screen: Screen) => void;
+}) {
   const [open, setOpen] = useState(0);
+  const rental = context.rental;
   return (
     <main className="app-main matches-main">
-      <Progress current="matches" go={go} />
+      <RoommateProgress current="matches" context={context} go={go} />
       <div className="matches-heading">
         <div>
-          <p className="eyebrow">Roommate matches · Step 5 of 5</p>
+          <p className="eyebrow">Roommate planning · Matches</p>
           <h1>Your strongest fits</h1>
-          <p>Ranked by the housing preferences you shared. Every profile below is fictional.</p>
+          <p>
+            {rental
+              ? `Matches for ${rental.title}, ranked by the housing preferences you shared.`
+              : "Matches based on your living preferences. Every profile below is fictional."}
+          </p>
         </div>
         <span className="demo-tag">FICTIONAL PROFILES</span>
       </div>
-      <div className="context-banner">
-        <img src={APARTMENT_IMAGE} alt="Sample apartment connected to these roommate matches" />
-        <div>
-          <small>MATCHING FOR</small>
-          <h3>
-            {rental.neighborhood} · {rental.bedrooms}-bed sample
-          </h3>
-          <p>
-            ${(rental.rent + rental.fees).toLocaleString()}/mo total &nbsp;·&nbsp; $
-            {Math.round((rental.rent + rental.fees) / 2).toLocaleString()} each with two
-          </p>
+      {rental && (
+        <div className="context-banner context-banner-text-only">
+          <div>
+            <small>MATCHING FOR</small>
+            <h3>{rental.title}</h3>
+            <p>
+              {rental.neighborhood} · {rental.bedrooms}-bed · $
+              {rental.trueMonthlyCost.toLocaleString()}/mo total &nbsp;·&nbsp; $
+              {Math.round(rental.trueMonthlyCost / 2).toLocaleString()} each with two
+            </p>
+          </div>
+          <button onClick={() => go("math")}>
+            View cost split <Icon name="chevron" size={17} />
+          </button>
         </div>
-        <button onClick={() => go("math")}>
-          View apartment <Icon name="chevron" size={17} />
-        </button>
-      </div>
+      )}
       <div className="match-list">
         {profiles.map((profile, index) => (
           <article className={`match-card ${open === index ? "open" : ""}`} key={profile.name}>
@@ -1102,9 +1221,11 @@ function Matches({ rental, go }: { rental: RentalData; go: (screen: Screen) => v
                   {open === index ? "Profile selected" : "View match details"}{" "}
                   {open === index && <Icon name="check" size={17} />}
                 </Button>
-                <button className="text-button" onClick={() => go("math")}>
-                  See apartment split <Icon name="arrow" size={16} />
-                </button>
+                {rental && (
+                  <button className="text-button" onClick={() => go("math")}>
+                    See apartment split <Icon name="arrow" size={16} />
+                  </button>
+                )}
               </div>
             </div>
           </article>
@@ -1125,7 +1246,15 @@ function Matches({ rental, go }: { rental: RentalData; go: (screen: Screen) => v
         <Button secondary onClick={() => go("preferences")}>
           Adjust preferences
         </Button>
-        <Button onClick={() => go("home")}>Start a new search</Button>
+        <Button
+          onClick={() =>
+            go(context.entryPerspective === "rental-first" ? "listing-details" : "home")
+          }
+        >
+          {context.entryPerspective === "rental-first"
+            ? "Back to Decision Receipt"
+            : "Back to home"}
+        </Button>
       </div>
     </main>
   );
@@ -1138,52 +1267,49 @@ function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [menu, setMenu] = useState(false);
   const [listingQuery, setListingQuery] = useState("");
-  const [selectedListing, setSelectedListing] = useState<DemoListing | null>(null);
-  const [savedListingIds, setSavedListingIds] = useState<string[]>([]);
-  const [comparedListingIds, setComparedListingIds] = useState<string[]>([]);
-  const [showCalculation, setShowCalculation] = useState(false);
-  const [tourRequested, setTourRequested] = useState(false);
-  const [listingReturnScreen, setListingReturnScreen] = useState<"listings" | "manager">(
-    "listings",
+  const [listingFilters, setListingFilters] = useState<ListingFilters>(() => ({
+    ...DEFAULT_LISTING_FILTERS,
+  }));
+  const [activeDecision, setActiveDecision] = useState<RentalDecisionRecord | null>(null);
+  const [decisionOrigin, setDecisionOrigin] = useState<DecisionOrigin>("listings");
+  const [externalEntry, setExternalEntry] = useState<ExternalRentalEntry>(INITIAL_EXTERNAL_ENTRY);
+  const [roommateContext, setRoommateContext] = useState<RoommatePlanningContext>(() =>
+    createRoommateFirstContext(),
   );
-  const [rental, setRental] = useState<RentalData>({
-    neighborhood: "The Avenues",
-    rent: 2100,
-    bedrooms: 2,
-    sqft: 940,
-    fees: 200,
-    date: "2025-08-15",
-  });
+  const [savedDecisionIds, setSavedDecisionIds] = useState<string[]>([]);
+  const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
+  const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
+  const [showCalculation, setShowCalculation] = useState(false);
   const go = (next: Screen) => {
     setScreen(next);
     setMenu(false);
   };
   const openListing = (listing: DemoListing, returnScreen: "listings" | "manager" = "listings") => {
-    setSelectedListing(listing);
-    setListingReturnScreen(returnScreen);
+    setActiveDecision(createDemoRentalDecision(listing));
+    setDecisionOrigin(returnScreen);
     setShowCalculation(false);
-    setTourRequested(false);
     go("listing-details");
+  };
+  const openExternalDecision = (entry: ExternalRentalEntry) => {
+    setExternalEntry(entry);
+    setActiveDecision(createExternalRentalDecision(entry));
+    setDecisionOrigin("rental-entry");
+    setShowCalculation(false);
+    go("listing-details");
+  };
+  const startRoommateFirst = () => {
+    setRoommateContext(createRoommateFirstContext());
+    go("preferences");
+  };
+  const planWithRoommates = () => {
+    if (!activeDecision) return;
+    setRoommateContext(createRentalFirstRoommateContext(activeDecision));
+    go("math");
   };
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
-  const navActive = useMemo(
-    () =>
-      ["advisor", "lease", "truecost", "decision"].includes(screen)
-        ? "advisor"
-        : screen === "preferences" || screen === "matches"
-          ? "roommates"
-          : screen === "manager" ||
-              (screen === "listing-details" && listingReturnScreen === "manager")
-            ? "manager"
-            : screen === "listings" || screen === "listing-details"
-              ? "listings"
-              : screen === "home"
-                ? ""
-                : "rental",
-    [listingReturnScreen, screen],
-  );
+  const navActive = useMemo(() => getNavSection(screen, decisionOrigin), [decisionOrigin, screen]);
 
   return (
     <div className="site-shell">
@@ -1203,23 +1329,32 @@ function App() {
           >
             Browse Rentals
           </button>
-          <button className={navActive === "manager" ? "active" : ""} onClick={() => go("manager")}>
-            Manager Workspace
-          </button>
-          <button className={navActive === "rental" ? "active" : ""} onClick={() => go("rental")}>
-            Check a Rental
+          <button
+            className={navActive === "rental" ? "active" : ""}
+            onClick={() => go("rental-entry")}
+          >
+            Check Your Rental
           </button>
           <button
             className={navActive === "roommates" ? "active" : ""}
-            onClick={() => go("preferences")}
+            onClick={startRoommateFirst}
           >
-            Find a Roommate
+            Roommate Planning
           </button>
-          <button className={navActive === "advisor" ? "active" : ""} onClick={() => go("advisor")}>
+          <button
+            className={navActive === "advisor" ? "active" : ""}
+            onClick={() => go(getAdvisorEntryScreen(activeDecision))}
+          >
             AI Advisor
           </button>
           <button onClick={() => go("home")}>How It Works</button>
-          <Button onClick={() => go("advisor")}>
+          <button
+            className={`manager-role-entry ${navActive === "manager" ? "active" : ""}`}
+            onClick={() => go("manager")}
+          >
+            For property managers
+          </button>
+          <Button onClick={() => go(getAdvisorEntryScreen(activeDecision))}>
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>
         </nav>
@@ -1234,57 +1369,94 @@ function App() {
       {screen === "home" && <Home go={go} />}
       {screen === "listings" && (
         <ListingsBrowser
-          listings={demoListings.slice(0, 6)}
+          listings={demoListings}
           onViewDetails={(listing) => openListing(listing, "listings")}
           query={listingQuery}
           onQueryChange={setListingQuery}
+          filters={listingFilters}
+          onFiltersChange={setListingFilters}
         />
       )}
-      {screen === "listing-details" && selectedListing && (
-        <ListingDetails
-          listing={selectedListing}
-          saved={savedListingIds.includes(selectedListing.synthetic.listingId)}
-          compared={comparedListingIds.includes(selectedListing.synthetic.listingId)}
-          tourRequested={tourRequested}
+      {screen === "listing-details" && activeDecision && (
+        <RentalDecisionDetails
+          decision={activeDecision}
+          saved={savedDecisionIds.includes(activeDecision.decisionId)}
+          compared={comparedDecisionIds.includes(activeDecision.decisionId)}
+          tourRequested={tourRequestedIds.includes(activeDecision.decisionId)}
           showCalculation={showCalculation}
           backLabel={
-            listingReturnScreen === "manager" ? "Back to manager workspace" : "Back to listings"
+            decisionOrigin === "manager"
+              ? "Back to manager workspace"
+              : decisionOrigin === "rental-entry"
+                ? "Back to rental entry"
+                : "Back to listings"
           }
-          onBack={() => go(listingReturnScreen)}
+          onBack={() => go(getDecisionBackScreen(decisionOrigin))}
           onToggleSaved={() =>
-            setSavedListingIds((current) =>
-              current.includes(selectedListing.synthetic.listingId)
-                ? current.filter((id) => id !== selectedListing.synthetic.listingId)
-                : [...current, selectedListing.synthetic.listingId],
+            setSavedDecisionIds((current) =>
+              current.includes(activeDecision.decisionId)
+                ? current.filter((id) => id !== activeDecision.decisionId)
+                : [...current, activeDecision.decisionId],
             )
           }
           onToggleCompared={() =>
-            setComparedListingIds((current) =>
-              current.includes(selectedListing.synthetic.listingId)
-                ? current.filter((id) => id !== selectedListing.synthetic.listingId)
-                : [...current, selectedListing.synthetic.listingId],
+            setComparedDecisionIds((current) =>
+              current.includes(activeDecision.decisionId)
+                ? current.filter((id) => id !== activeDecision.decisionId)
+                : [...current, activeDecision.decisionId],
             )
           }
-          onRequestTour={() => setTourRequested(true)}
+          onRequestTour={() =>
+            setTourRequestedIds((current) =>
+              current.includes(activeDecision.decisionId)
+                ? current
+                : [...current, activeDecision.decisionId],
+            )
+          }
+          onPlanWithRoommates={planWithRoommates}
+          onOpenAdvisor={() => go("advisor")}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
         />
       )}
       {screen === "manager" && (
         <ManagerWorkspace
           listings={demoListings}
-          onListingsChange={setDemoListings}
+          onListingsChange={(listings) => {
+            setDemoListings(listings);
+            setActiveDecision((current) => refreshActiveDecisionFromListings(current, listings));
+          }}
           onPreviewListing={(listing) => openListing(listing, "manager")}
         />
       )}
-      {screen === "rental" && <RentalInput rental={rental} setRental={setRental} go={go} />}
-      {screen === "analysis" && <Analysis rental={rental} go={go} />}
-      {screen === "math" && <RoommateMath rental={rental} setRental={setRental} go={go} />}
-      {screen === "preferences" && <Preferences go={go} />}
-      {screen === "matches" && <Matches rental={rental} go={go} />}
-      {screen === "advisor" && <AdvisorHome go={go} />}
-      {screen === "lease" && <LeaseAnalysis go={go} />}
-      {screen === "truecost" && <TrueHousingCost go={go} />}
-      {screen === "decision" && <DecisionSummary go={go} />}
+      {screen === "rental-entry" && (
+        <RentalEntry
+          initialEntry={externalEntry}
+          onEntryChange={setExternalEntry}
+          onSubmit={openExternalDecision}
+        />
+      )}
+      {screen === "math" && (
+        <RoommateMath
+          context={roommateContext}
+          go={go}
+          onBackToDecision={() => go("listing-details")}
+        />
+      )}
+      {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
+      {screen === "matches" && <Matches context={roommateContext} go={go} />}
+      {screen === "advisor" && activeDecision && <AdvisorHome decision={activeDecision} go={go} />}
+      {screen === "lease" && activeDecision && <LeaseAnalysis decision={activeDecision} go={go} />}
+      {screen === "truecost" && activeDecision && (
+        <TrueHousingCost decision={activeDecision} go={go} />
+      )}
+      {screen === "decision" && activeDecision && (
+        <DecisionSummary
+          decision={activeDecision}
+          go={go}
+          onBackToDecision={() => go("listing-details")}
+          onPlanWithRoommates={planWithRoommates}
+        />
+      )}
       <footer>
         <button className="brand footer-brand" onClick={() => go("home")}>
           <span className="brand-mark">

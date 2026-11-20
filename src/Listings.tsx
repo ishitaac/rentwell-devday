@@ -1,8 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import rentSnapshotData from "./data/rentcast-slc.json";
 import type { DemoListing } from "./demoListings";
-import { buildListingDecisionReceipt } from "./listingDecision";
+import {
+  DEFAULT_LISTING_FILTERS,
+  filterListings,
+  hasActiveListingFilters,
+  type ListingBedroomFilter,
+  type ListingFilters,
+  type ListingPriceFilter,
+} from "./listingFilters";
+import { buildListingDecisionReceipt, buildRentalDecisionReceipt } from "./listingDecision";
+import { createDemoRentalDecision, type RentalDecisionRecord } from "./rentalDecision";
 import type { RentSnapshot } from "./rentMarket";
 
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
@@ -72,25 +81,40 @@ export function ListingsBrowser({
   onViewDetails,
   query: controlledQuery,
   onQueryChange,
+  filters: controlledFilters,
+  onFiltersChange,
 }: {
   listings: DemoListing[];
   onViewDetails: (listing: DemoListing) => void;
   query?: string;
   onQueryChange?: (query: string) => void;
+  filters?: ListingFilters;
+  onFiltersChange?: (filters: ListingFilters) => void;
 }) {
   const [localQuery, setLocalQuery] = useState("");
+  const [localFilters, setLocalFilters] = useState<ListingFilters>(DEFAULT_LISTING_FILTERS);
+  const [visibleCount, setVisibleCount] = useState(6);
   const query = controlledQuery ?? localQuery;
   const setQuery = onQueryChange ?? setLocalQuery;
-  const filteredListings = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return listings;
-    return listings.filter(({ synthetic }) =>
-      [synthetic.title, synthetic.neighborhood, synthetic.propertyType]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalized),
-    );
-  }, [listings, query]);
+  const filters = controlledFilters ?? localFilters;
+  const setFilters = onFiltersChange ?? setLocalFilters;
+  const filteredListings = useMemo(
+    () => filterListings(listings, query, filters),
+    [filters, listings, query],
+  );
+  const visibleListings = filteredListings.slice(0, visibleCount);
+  const hasMoreListings = visibleCount < filteredListings.length;
+  const filtersAreActive = hasActiveListingFilters(query, filters);
+  const updateFilter = <Key extends keyof ListingFilters>(key: Key, value: ListingFilters[Key]) =>
+    setFilters({ ...filters, [key]: value });
+  const clearFilters = () => {
+    setQuery("");
+    setFilters({ ...DEFAULT_LISTING_FILTERS });
+  };
+
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [filters, query]);
 
   return (
     <main className="listings-page">
@@ -107,7 +131,7 @@ export function ListingsBrowser({
       </section>
 
       <section className="listings-controls" aria-label="Rental search controls">
-        <label>
+        <label className="listing-search-field">
           <span>Search listings</span>
           <input
             type="search"
@@ -116,37 +140,105 @@ export function ListingsBrowser({
             placeholder="Neighborhood, property, or type"
           />
         </label>
-        <div className="listing-filter-pills" aria-label="Available filters">
-          <span>Any price</span>
-          <span>Any beds</span>
-          <span>Any move-in date</span>
-          <span>Complete fee disclosure</span>
+        <div className="listing-filter-fields" aria-label="Available filters">
+          <label>
+            <span>True monthly cost</span>
+            <select
+              value={filters.price}
+              onChange={(event) => updateFilter("price", event.target.value as ListingPriceFilter)}
+            >
+              <option value="any">Any price</option>
+              <option value="under-1200">Under $1,200</option>
+              <option value="1200-1600">$1,200–$1,600</option>
+              <option value="over-1600">Over $1,600</option>
+            </select>
+          </label>
+          <label>
+            <span>Bedrooms</span>
+            <select
+              value={filters.bedrooms}
+              onChange={(event) =>
+                updateFilter("bedrooms", event.target.value as ListingBedroomFilter)
+              }
+            >
+              <option value="any">Any beds</option>
+              <option value="studio">Studio</option>
+              <option value="1">1 bedroom</option>
+              <option value="2">2 bedrooms</option>
+              <option value="3-plus">3+ bedrooms</option>
+            </select>
+          </label>
+          <label>
+            <span>Move in by</span>
+            <input
+              type="date"
+              value={filters.moveInBy}
+              onChange={(event) => updateFilter("moveInBy", event.target.value)}
+            />
+          </label>
+          <label className="listing-checkbox-filter">
+            <input
+              type="checkbox"
+              checked={filters.noMandatoryFees}
+              onChange={(event) => updateFilter("noMandatoryFees", event.target.checked)}
+            />
+            <span>No mandatory recurring fees</span>
+          </label>
+        </div>
+        <div className="listing-filter-meta">
+          <span className="listing-disclosure-badge">Complete fee disclosure</span>
+          {filtersAreActive && (
+            <button type="button" onClick={clearFilters}>
+              Clear all
+            </button>
+          )}
         </div>
       </section>
 
       <div className="listings-results-heading">
         <div>
-          <h2>{filteredListings.length} rentals match</h2>
+          <h2>
+            {filtersAreActive
+              ? `${filteredListings.length} ${filteredListings.length === 1 ? "rental" : "rentals"} match`
+              : "Available rentals"}
+          </h2>
           <p>Known mandatory fees are included in the displayed monthly cost.</p>
         </div>
         <span>Demo data only</span>
       </div>
 
-      <section className="listings-grid" aria-label="Rental listings">
-        {filteredListings.map((listing) => (
-          <ListingCard
-            key={listing.synthetic.listingId}
-            listing={listing}
-            onViewDetails={onViewDetails}
-          />
-        ))}
-      </section>
+      {filteredListings.length > 0 ? (
+        <section className="listings-grid" aria-label="Rental listings">
+          {visibleListings.map((listing) => (
+            <ListingCard
+              key={listing.synthetic.listingId}
+              listing={listing}
+              onViewDetails={onViewDetails}
+            />
+          ))}
+        </section>
+      ) : (
+        <section className="listings-empty-state" aria-live="polite">
+          <h2>No rentals match those filters</h2>
+          <p>Try a different price, bedroom count, move-in date, or search.</p>
+          <button type="button" onClick={clearFilters}>
+            Clear all filters
+          </button>
+        </section>
+      )}
+      {hasMoreListings && (
+        <div className="listings-show-more">
+          <button type="button" onClick={() => setVisibleCount((count) => count + 6)}>
+            Show more rentals
+          </button>
+        </div>
+      )}
     </main>
   );
 }
 
-export function ListingDetails({
-  listing,
+export function RentalDecisionDetails({
+  decision,
   saved,
   compared = false,
   tourRequested = false,
@@ -156,9 +248,11 @@ export function ListingDetails({
   onToggleSaved,
   onToggleCompared = () => undefined,
   onRequestTour = () => undefined,
+  onPlanWithRoommates,
+  onOpenAdvisor,
   onToggleCalculation,
 }: {
-  listing: DemoListing;
+  decision: RentalDecisionRecord;
   saved: boolean;
   compared?: boolean;
   tourRequested?: boolean;
@@ -168,10 +262,12 @@ export function ListingDetails({
   onToggleSaved: () => void;
   onToggleCompared?: () => void;
   onRequestTour?: () => void;
+  onPlanWithRoommates: () => void;
+  onOpenAdvisor: () => void;
   onToggleCalculation: () => void;
 }) {
-  const { synthetic } = listing;
-  const receipt = buildListingDecisionReceipt(listing, RENT_SNAPSHOT);
+  const receipt = buildRentalDecisionReceipt(decision, RENT_SNAPSHOT);
+  const isDemoListing = decision.source === "synthetic-demo-listing";
   const updatedDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -186,70 +282,97 @@ export function ListingDetails({
 
       <div className="listing-details-layout">
         <div className="listing-details-main">
-          <img
-            className="listing-details-image"
-            src={synthetic.images[0]}
-            alt={`${synthetic.title} demo property`}
-          />
+          {decision.images.length > 0 ? (
+            <img
+              className="listing-details-image"
+              src={decision.images[0]}
+              alt={`${decision.title} demo property`}
+            />
+          ) : (
+            <div className="entered-rental-summary">
+              <span>Rental you entered · Demo analysis</span>
+              <strong>No listing image was provided</strong>
+              <p>RentWell is evaluating only the facts entered below.</p>
+            </div>
+          )}
 
           <section className="listing-overview">
             <div className="listing-title-row">
               <div>
-                <span className="listing-demo-tag">SYNTHETIC DEMO LISTING</span>
-                <h1>{synthetic.title}</h1>
-                <p>{synthetic.neighborhood}, Salt Lake City</p>
+                <span className="listing-demo-tag">
+                  {isDemoListing ? "SYNTHETIC DEMO LISTING" : "Rental you entered · Demo analysis"}
+                </span>
+                <h1>{decision.title}</h1>
+                <p>
+                  {decision.neighborhood}, {decision.city}
+                </p>
               </div>
-              <span className="listing-available">
-                Available {formatDate(synthetic.availableDate)}
-              </span>
+              {isDemoListing && decision.availableDate && (
+                <span className="listing-available">
+                  Available {formatDate(decision.availableDate)}
+                </span>
+              )}
             </div>
 
             <div className="listing-facts" aria-label="Property facts">
               <span>
-                <strong>{synthetic.bedrooms}</strong>{" "}
-                {synthetic.bedrooms === 1 ? "bedroom" : "bedrooms"}
+                <strong>{decision.bedrooms}</strong>{" "}
+                {decision.bedrooms === 1 ? "bedroom" : "bedrooms"}
               </span>
-              <span>
-                <strong>{synthetic.bathrooms}</strong>{" "}
-                {synthetic.bathrooms === 1 ? "bathroom" : "bathrooms"}
-              </span>
-              <span>
-                <strong>{synthetic.squareFootage?.toLocaleString("en-US") ?? "—"}</strong> sq ft
-              </span>
-              <span>
-                <strong>{synthetic.propertyType}</strong> type
-              </span>
+              {decision.bathrooms !== null && (
+                <span>
+                  <strong>{decision.bathrooms}</strong>{" "}
+                  {decision.bathrooms === 1 ? "bathroom" : "bathrooms"}
+                </span>
+              )}
+              {decision.squareFootage !== null && (
+                <span>
+                  <strong>{decision.squareFootage.toLocaleString("en-US")}</strong> sq ft
+                </span>
+              )}
+              {decision.propertyType && (
+                <span>
+                  <strong>{decision.propertyType}</strong> type
+                </span>
+              )}
+              {!isDemoListing && decision.availableDate && (
+                <span>
+                  <strong>{formatDate(decision.availableDate)}</strong> move-in
+                </span>
+              )}
             </div>
 
-            <p className="listing-description">{synthetic.description}</p>
+            {decision.description && <p className="listing-description">{decision.description}</p>}
 
-            <div className="listing-info-grid">
-              <section>
-                <h2>Amenities</h2>
-                <ul>
-                  {synthetic.amenities.map((amenity) => (
-                    <li key={amenity}>{amenity}</li>
-                  ))}
-                </ul>
-              </section>
-              <section>
-                <h2>Before you tour</h2>
-                <dl>
-                  <div>
-                    <dt>Parking</dt>
-                    <dd>Ask manager</dd>
-                  </div>
-                  <div>
-                    <dt>Pet policy</dt>
-                    <dd>Not provided</dd>
-                  </div>
-                  <div>
-                    <dt>Utilities</dt>
-                    <dd>Confirm included services</dd>
-                  </div>
-                </dl>
-              </section>
-            </div>
+            {isDemoListing && (
+              <div className="listing-info-grid">
+                <section>
+                  <h2>Amenities</h2>
+                  <ul>
+                    {decision.amenities.map((amenity) => (
+                      <li key={amenity}>{amenity}</li>
+                    ))}
+                  </ul>
+                </section>
+                <section>
+                  <h2>Before you tour</h2>
+                  <dl>
+                    <div>
+                      <dt>Parking</dt>
+                      <dd>Ask manager</dd>
+                    </div>
+                    <div>
+                      <dt>Pet policy</dt>
+                      <dd>Not provided</dd>
+                    </div>
+                    <div>
+                      <dt>Utilities</dt>
+                      <dd>Confirm included services</dd>
+                    </div>
+                  </dl>
+                </section>
+              </div>
+            )}
           </section>
         </div>
 
@@ -273,27 +396,37 @@ export function ListingDetails({
               <dt>Advertised rent</dt>
               <dd>{formatMoney(receipt.advertisedRent)}</dd>
             </div>
-            {synthetic.mandatoryRecurringFees.map((fee) => (
+            {decision.recurringFees.map((fee) => (
               <div key={fee.id}>
                 <dt>{fee.label}</dt>
                 <dd>{formatMoney(fee.amount)}</dd>
               </div>
             ))}
-            {synthetic.noMandatoryRecurringFees && (
+            {decision.noMandatoryRecurringFees && (
               <div>
                 <dt>Mandatory recurring fees</dt>
                 <dd>$0</dd>
               </div>
             )}
             <div className="receipt-total">
-              <dt>Estimated move-in cost</dt>
-              <dd>{formatMoney(receipt.estimatedMoveInCost)}</dd>
+              {receipt.estimatedMoveInCost === null ? (
+                <>
+                  <dt>Move-in cost unavailable</dt>
+                  <dd>Confirm deposit</dd>
+                </>
+              ) : (
+                <>
+                  <dt>Estimated move-in cost</dt>
+                  <dd>{formatMoney(receipt.estimatedMoveInCost)}</dd>
+                </>
+              )}
             </div>
           </dl>
 
           <section className="fair-rent-result">
             <span>Fair Rent result</span>
             <strong>{receipt.fairRentResult}</strong>
+            <small>Compares advertised rent before mandatory fees</small>
             {receipt.comparison ? (
               <p>
                 Snapshot range {formatMoney(receipt.comparison.lower)}–
@@ -333,20 +466,74 @@ export function ListingDetails({
 
           <div className="listing-detail-actions">
             <button className={saved ? "is-active" : ""} onClick={onToggleSaved}>
-              {saved ? "Saved" : "Save listing"}
+              {saved ? "Saved" : isDemoListing ? "Save listing" : "Save evaluation"}
             </button>
-            <button className={compared ? "is-active" : ""} onClick={onToggleCompared}>
-              {compared ? "Added to compare" : "Add to compare"}
+            {decision.capabilities.canCompare && (
+              <button className={compared ? "is-active" : ""} onClick={onToggleCompared}>
+                {compared ? "Added to compare" : "Add to compare"}
+              </button>
+            )}
+            {decision.capabilities.canRequestTour && (
+              <button className="primary" onClick={onRequestTour}>
+                {tourRequested ? "Tour request noted" : "Request a tour"}
+              </button>
+            )}
+            <button className="roommate-plan-action" onClick={onPlanWithRoommates}>
+              Plan costs with roommates
             </button>
-            <button className="primary" onClick={onRequestTour}>
-              {tourRequested ? "Tour request noted" : "Request a tour"}
+            <button className="advisor-review-action" onClick={onOpenAdvisor}>
+              Review sample lease with Advisor
             </button>
           </div>
-          {tourRequested && (
+          {decision.capabilities.canRequestTour && tourRequested && (
             <p className="tour-feedback">Demo only: a manager would receive your tour request.</p>
           )}
         </aside>
       </div>
     </main>
+  );
+}
+
+export function ListingDetails({
+  listing,
+  saved,
+  compared = false,
+  tourRequested = false,
+  showCalculation,
+  backLabel = "Back to listings",
+  onBack,
+  onToggleSaved,
+  onToggleCompared = () => undefined,
+  onRequestTour = () => undefined,
+  onToggleCalculation,
+}: {
+  listing: DemoListing;
+  saved: boolean;
+  compared?: boolean;
+  tourRequested?: boolean;
+  showCalculation: boolean;
+  backLabel?: string;
+  onBack: () => void;
+  onToggleSaved: () => void;
+  onToggleCompared?: () => void;
+  onRequestTour?: () => void;
+  onToggleCalculation: () => void;
+}) {
+  return (
+    <RentalDecisionDetails
+      decision={createDemoRentalDecision(listing)}
+      saved={saved}
+      compared={compared}
+      tourRequested={tourRequested}
+      showCalculation={showCalculation}
+      backLabel={backLabel}
+      onBack={onBack}
+      onToggleSaved={onToggleSaved}
+      onToggleCompared={onToggleCompared}
+      onRequestTour={onRequestTour}
+      onPlanWithRoommates={() => undefined}
+      onOpenAdvisor={() => undefined}
+      onToggleCalculation={onToggleCalculation}
+    />
   );
 }
