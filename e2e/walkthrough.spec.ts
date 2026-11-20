@@ -113,6 +113,12 @@ test("a real photo that can't be analyzed counts as not checked, never as a pass
   await openWalkthrough(page);
   await startTour(page, false);
   await page.getByLabel("Take photo").setInputFiles(PHOTO);
+  // A real JPEG's base64 starts with "/9j/"; it must still render as an image, not a broken link.
+  const thumb = page.locator(".wt-stop-figure img");
+  await expect(thumb).toHaveAttribute("src", /^data:image\/jpeg;base64,\/9j\//);
+  await expect
+    .poll(() => thumb.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
   await expect(page.getByText(/Couldn't read/)).toBeVisible({ timeout: 15_000 });
   for (let i = 0; i < 6; i += 1)
     await page.getByRole("button", { name: /Next stop|Skip for now/ }).click();
