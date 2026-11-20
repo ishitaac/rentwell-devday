@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { FinePrint } from "./finePrint/FinePrint";
+import {
+  AdvisorHome,
+  DecisionSummary,
+  LeaseAnalysis,
+  TrueHousingCost,
+  type AdvisorScreen,
+} from "./Advisor";
 
-type Screen = "home" | "rental" | "analysis" | "math" | "preferences" | "matches" | "fineprint";
+type Screen = "home" | "rental" | "analysis" | "math" | "preferences" | "matches" | AdvisorScreen;
 type IconName =
   | "arrow"
   | "building"
   | "check"
   | "chevron"
   | "clock"
-  | "document"
   | "dollar"
   | "home"
   | "info"
@@ -42,12 +47,6 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
-    </>
-  ),
-  document: (
-    <>
-      <path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
-      <path d="M14 3v5h5M9 13h7M9 17h5" />
     </>
   ),
   dollar: (
@@ -326,22 +325,6 @@ function Home({ go }: { go: (screen: Screen) => void }) {
             </span>
           </button>
         </div>
-        <button className="path-card fp-home-card" onClick={() => go("fineprint")}>
-          <span className="number">03</span>
-          <span className="icon-tile mint">
-            <Icon name="document" size={26} />
-          </span>
-          <div>
-            <h3>Read the Fine Print</h3>
-            <p>
-              Paste a lease. See the real monthly cost, every charge linked to its clause, and what
-              the lease doesn't say.
-            </p>
-          </div>
-          <span className="card-link">
-            Read a lease <Icon name="arrow" size={17} />
-          </span>
-        </button>
       </section>
       <section className="trust-strip">
         <div>
@@ -1134,8 +1117,8 @@ function App() {
   }, [screen]);
   const navActive = useMemo(
     () =>
-      screen === "fineprint"
-        ? "fineprint"
+      ["advisor", "lease", "truecost", "decision"].includes(screen)
+        ? "advisor"
         : screen === "preferences" || screen === "matches"
           ? "roommates"
           : screen === "home"
@@ -1165,15 +1148,12 @@ function App() {
           >
             Find a Roommate
           </button>
-          <button
-            className={navActive === "fineprint" ? "active" : ""}
-            onClick={() => go("fineprint")}
-          >
-            Fine Print
+          <button className={navActive === "advisor" ? "active" : ""} onClick={() => go("advisor")}>
+            AI Advisor
           </button>
           <button onClick={() => go("home")}>How It Works</button>
-          <Button onClick={() => go("fineprint")}>
-            Read a lease <Icon name="document" size={16} />
+          <Button onClick={() => go("advisor")}>
+            Try Advisor <Icon name="sparkle" size={16} />
           </Button>
         </nav>
         <button
@@ -1190,7 +1170,10 @@ function App() {
       {screen === "math" && <RoommateMath rental={rental} setRental={setRental} go={go} />}
       {screen === "preferences" && <Preferences go={go} />}
       {screen === "matches" && <Matches rental={rental} go={go} />}
-      {screen === "fineprint" && <FinePrint />}
+      {screen === "advisor" && <AdvisorHome go={go} />}
+      {screen === "lease" && <LeaseAnalysis go={go} />}
+      {screen === "truecost" && <TrueHousingCost go={go} />}
+      {screen === "decision" && <DecisionSummary go={go} />}
       <footer>
         <button className="brand footer-brand" onClick={() => go("home")}>
           <span className="brand-mark">
