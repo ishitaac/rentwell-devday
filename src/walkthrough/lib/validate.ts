@@ -4,6 +4,7 @@ import {
   CONFIDENCES,
   FINDINGS,
   SEVERITIES,
+  ZONES,
   type Category,
   type Confidence,
   type Finding,
@@ -11,6 +12,7 @@ import {
   type PhotoResult,
   type Severity,
   type UnitType,
+  type Zone,
 } from "./types.js";
 
 /**
@@ -19,6 +21,7 @@ import {
  */
 
 export const MAX_DESCRIPTION_CHARS = 140;
+export const MAX_HEADLINE_CHARS = 40;
 const MAX_HINT_CHARS = 80;
 const MAX_CANNOT_JUDGE_CHARS = 200;
 const MAX_REASON_CHARS = 120;
@@ -59,6 +62,15 @@ function clip(text: string, max: number): string {
   return clean.length <= max ? clean : `${clean.slice(0, max - 1).trimEnd()}…`;
 }
 
+/** Fallback headline: the first few words of the description. */
+function shortHeadline(description: string): string {
+  return description
+    .split(/[,.;(]/)[0]
+    .split(" ")
+    .slice(0, 5)
+    .join(" ");
+}
+
 function asText(value: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
@@ -71,6 +83,8 @@ interface RawObservation {
   locationHint?: unknown;
   confidence?: unknown;
   cannotJudge?: unknown;
+  headline?: unknown;
+  zone?: unknown;
 }
 
 type ObservationOutcome = { ok: true; value: Observation | null } | { ok: false; detail: string };
@@ -94,6 +108,8 @@ function validateObservation(raw: RawObservation, allowed: Category[]): Observat
       description,
       locationHint: asText(raw.locationHint) ?? "",
       cannotJudge: asText(raw.cannotJudge) ?? "",
+      headline: asText(raw.headline) ?? "",
+      zone: isOneOf(ZONES, raw.zone) ? raw.zone : null,
     }),
   };
 }
@@ -103,27 +119,36 @@ function applyCaps(
   finding: Finding,
   rawSeverity: Severity | null,
   confidence: Confidence,
-  text: { description: string; locationHint: string; cannotJudge: string },
+  text: {
+    description: string;
+    locationHint: string;
+    cannotJudge: string;
+    headline: string;
+    zone: Zone | null;
+  },
 ): Observation {
+  const description = clip(text.description, MAX_DESCRIPTION_CHARS);
   const base = {
     category,
     finding,
     confidence,
-    description: clip(text.description, MAX_DESCRIPTION_CHARS),
+    headline: clip(text.headline || shortHeadline(description), MAX_HEADLINE_CHARS),
+    description,
     locationHint: clip(text.locationHint, MAX_HINT_CHARS),
     cannotJudge: clip(
       text.cannotJudge || "What is outside the frame or hidden behind surfaces.",
       MAX_CANNOT_JUDGE_CHARS,
     ),
   };
-  if (finding === "no_concern_visible") return { ...base, severity: null };
+  if (finding === "no_concern_visible") return { ...base, severity: null, zone: null };
 
   // A concern without a severity is treated as the mildest one.
   const severity = rawSeverity ?? "follow_up";
   if (confidence === "low") {
-    return { ...base, severity: "follow_up", capNote: CLOSER_PHOTO_NOTE };
+    // Low confidence: no zone either, so we never point confidently at a guess.
+    return { ...base, severity: "follow_up", zone: null, capNote: CLOSER_PHOTO_NOTE };
   }
-  return { ...base, severity };
+  return { ...base, severity, zone: text.zone };
 }
 
 /** Validate untrusted model output (or an imported record) for one shot. */
@@ -189,7 +214,7 @@ function collectText(data: Record<string, unknown>): string {
   for (const item of data.observations as unknown[]) {
     if (!item || typeof item !== "object") continue;
     const obs = item as RawObservation;
-    for (const value of [obs.description, obs.locationHint, obs.cannotJudge]) {
+    for (const value of [obs.headline, obs.description, obs.locationHint, obs.cannotJudge]) {
       if (typeof value === "string") parts.push(value);
     }
   }

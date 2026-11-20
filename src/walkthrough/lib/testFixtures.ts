@@ -5,6 +5,8 @@ export function observation(overrides: Partial<Observation> = {}): Observation {
     category: "walls_ceilings",
     finding: "concern_visible",
     severity: "priority",
+    headline: "Ceiling stain",
+    zone: "top_left",
     description: "Brown staining on the ceiling corner",
     locationHint: "upper left corner near the window",
     confidence: "high",

@@ -1,7 +1,7 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
-import { findShot, UNIT_TYPES } from "./shots.js";
+import { findShot, MISC_SHOTS, UNIT_TYPES } from "./shots.js";
 import type { CapturedPhoto } from "./session.js";
-import { MAX_NOTE_CHARS } from "./session.js";
+import { MAX_NOTE_CHARS, MAX_PROMPT_CHARS, type QuickAnswer } from "./session.js";
 import type { PhotoResult, ShotAnalysis, UnitType } from "./types.js";
 import { UNIT_TYPE_IDS } from "./types.js";
 import { validatePhotoResult } from "./validate.js";
@@ -27,6 +27,12 @@ export interface RecordShot {
   photoTakenAt: string | null;
   photoTakenAtSource: CapturedPhoto["takenAtSource"];
   renterNote: string | null;
+  /** Renter's answer to the stop's quick check. Renter-recorded, unverified. */
+  quickCheck: QuickAnswer | null;
+  /** Why the renter skipped this stop, if they did. */
+  skipReason: string | null;
+  /** "Anything else?" shots: what the renter asked about. */
+  renterPrompt: string | null;
   analysis: { state: "ok"; result: PhotoResult } | { state: "failed"; reason: string } | null;
 }
 
@@ -46,6 +52,9 @@ export interface RecordInput {
   photos: Record<string, CapturedPhoto>;
   slots: Record<string, string>;
   notes: Record<string, string>;
+  quickChecks: Record<string, QuickAnswer>;
+  skipped: Record<string, string>;
+  prompts: Record<string, string>;
   analyses: ShotAnalysis[];
   rental: { name: string | null; rent: number | null } | null;
   isSample: boolean;
@@ -76,7 +85,7 @@ export function buildRecord(input: RecordInput): { record: WalkthroughRecord; zi
   const analyses = new Map(input.analyses.map((entry) => [entry.shotId, entry]));
   const files: Record<string, Uint8Array> = {};
   const config = UNIT_TYPES[input.unitType];
-  const shots: RecordShot[] = [...config.required, ...config.optional]
+  const shots: RecordShot[] = [...config.required, ...config.optional, ...MISC_SHOTS]
     .filter((shot) => config.required.includes(shot) || input.slots[shot.id])
     .map((shot) => {
       const photo = input.photos[input.slots[shot.id] ?? ""];
@@ -90,6 +99,9 @@ export function buildRecord(input: RecordInput): { record: WalkthroughRecord; zi
         photoTakenAt: photo?.takenAt ?? null,
         photoTakenAtSource: photo?.takenAtSource ?? "none",
         renterNote: input.notes[shot.id] ?? null,
+        quickCheck: input.quickChecks[shot.id] ?? null,
+        skipReason: input.skipped[shot.id] ?? null,
+        renterPrompt: input.prompts[shot.id] ?? null,
         analysis: analysis
           ? analysis.state === "ok"
             ? { state: "ok", result: analysis.result }
@@ -166,6 +178,12 @@ function parseShot(
       photoTakenAt: optionalString(data.photoTakenAt, 40),
       photoTakenAtSource: source === "device_exif" || source === "file_date" ? source : "none",
       renterNote: optionalString(data.renterNote, MAX_NOTE_CHARS),
+      quickCheck:
+        data.quickCheck === "yes" || data.quickCheck === "no" || data.quickCheck === "skip"
+          ? data.quickCheck
+          : null,
+      skipReason: optionalString(data.skipReason, 80),
+      renterPrompt: optionalString(data.renterPrompt, MAX_PROMPT_CHARS),
       analysis,
     },
     photoBytes ? `data:image/jpeg;base64,${bytesToBase64(photoBytes)}` : null,

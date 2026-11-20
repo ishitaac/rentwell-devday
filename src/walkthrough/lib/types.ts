@@ -29,14 +29,32 @@ export type Severity = (typeof SEVERITIES)[number];
 export const CONFIDENCES = ["low", "medium", "high"] as const;
 export type Confidence = (typeof CONFIDENCES)[number];
 
+/** Nine zones of the photo. A coarse region is far easier to get right than a precise box. */
+export const ZONES = [
+  "top_left",
+  "top_center",
+  "top_right",
+  "middle_left",
+  "center",
+  "middle_right",
+  "bottom_left",
+  "bottom_center",
+  "bottom_right",
+] as const;
+export type Zone = (typeof ZONES)[number];
+
 export interface Observation {
   category: Category;
   finding: Finding;
   severity: Severity | null;
+  /** 2 to 5 words for the results grid, e.g. "Ceiling stain". */
+  headline: string;
   description: string;
   locationHint: string;
   confidence: Confidence;
   cannotJudge: string;
+  /** Shaded on the photo. Code keeps it only for concerns with medium or high confidence. */
+  zone: Zone | null;
   /** Set by code when a cap changed what the model said (for example low confidence). */
   capNote?: string;
 }
@@ -54,6 +72,8 @@ export interface PhotoRequest {
   unitType: UnitType;
   shotId: string;
   imageBase64: string;
+  /** "Anything else?" shots only: what the renter wants a second opinion on. */
+  renterPrompt?: string;
 }
 
 /** What the browser knows about one analyzed shot. */

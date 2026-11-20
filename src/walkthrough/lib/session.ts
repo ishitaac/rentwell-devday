@@ -22,12 +22,63 @@ export interface CaptureState {
   tray: string[];
   /** shotId -> renter note. Renter-recorded, unverified. */
   notes: Record<string, string>;
+  /** shotId -> the renter's answer to that stop's quick check. */
+  quickChecks: Record<string, QuickAnswer>;
+  /** shotId -> why the renter couldn't take this shot ("locked", "no time"). Still a gap. */
+  skipped: Record<string, string>;
+  /** "Anything else?" shots: what the renter wants a second opinion on. */
+  prompts: Record<string, string>;
 }
+
+export type QuickAnswer = "yes" | "no" | "skip";
 
 export const MAX_NOTE_CHARS = 500;
 
 export function initialCaptureState(unitType: UnitType): CaptureState {
-  return { unitType, photos: {}, slots: {}, tray: [], notes: {} };
+  return {
+    unitType,
+    photos: {},
+    slots: {},
+    tray: [],
+    notes: {},
+    quickChecks: {},
+    skipped: {},
+    prompts: {},
+  };
+}
+
+/** A copy of a record without one key. */
+function without<T>(record: Record<string, T>, key: string): Record<string, T> {
+  if (!(key in record)) return record;
+  const copy = { ...record };
+  delete copy[key];
+  return copy;
+}
+
+export const MAX_PROMPT_CHARS = 200;
+
+export function setQuickCheck(
+  state: CaptureState,
+  shotId: string,
+  answer: QuickAnswer,
+): CaptureState {
+  return { ...state, quickChecks: { ...state.quickChecks, [shotId]: answer } };
+}
+
+export function skipShot(state: CaptureState, shotId: string, reason: string): CaptureState {
+  const cleared = clearSlot(state, shotId);
+  return {
+    ...cleared,
+    skipped: { ...cleared.skipped, [shotId]: reason.slice(0, 80) || "Not accessible" },
+  };
+}
+
+export function setPrompt(state: CaptureState, shotId: string, prompt: string): CaptureState {
+  const clean = prompt.slice(0, MAX_PROMPT_CHARS);
+  return {
+    ...state,
+    prompts: clean.trim() ? { ...state.prompts, [shotId]: clean } : without(state.prompts, shotId),
+  };
 }
 
 export function hasAssignedPhotos(state: CaptureState): boolean {
@@ -44,7 +95,12 @@ export function placePhoto(
   const previous = state.slots[shotId];
   const photos = { ...state.photos, [photo.id]: photo };
   if (previous && previous !== photo.id) delete photos[previous];
-  return { ...state, photos, slots: { ...state.slots, [shotId]: photo.id } };
+  return {
+    ...state,
+    photos,
+    slots: { ...state.slots, [shotId]: photo.id },
+    skipped: without(state.skipped, shotId),
+  };
 }
 
 export function addToTray(state: CaptureState, photos: CapturedPhoto[]): CaptureState {
@@ -77,7 +133,7 @@ export function clearSlot(state: CaptureState, shotId: string): CaptureState {
   delete photos[photoId];
   const notes = { ...state.notes };
   delete notes[shotId];
-  return { ...state, slots, photos, notes };
+  return { ...state, slots, photos, notes, prompts: without(state.prompts, shotId) };
 }
 
 export function removeFromTray(state: CaptureState, photoId: string): CaptureState {

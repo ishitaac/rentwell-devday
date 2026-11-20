@@ -71,7 +71,7 @@ export function TypePicker({ value, onChange, onContinue, onBack }: TypePickerPr
       </div>
       <div className="wt-actions">
         <button className="wt-btn wt-btn-primary" onClick={onContinue}>
-          Show the shot list
+          Start the tour
         </button>
       </div>
     </section>

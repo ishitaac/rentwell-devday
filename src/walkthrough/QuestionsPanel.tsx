@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { formatEmail, formatQuestionList, type LandlordQuestion } from "./lib/questions";
-import { findShot } from "./lib/shots";
-import type { UnitType } from "./lib/types";
 
 interface QuestionsPanelProps {
-  unitType: UnitType;
   unitTypeLabel: string;
   questions: LandlordQuestion[];
   standard: string[];
@@ -20,14 +17,15 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
+/** Short lines on screen; Copy and Copy as email use the full wording. */
 export function QuestionsPanel({
-  unitType,
   unitTypeLabel,
   questions,
   standard,
   rentalName,
 }: QuestionsPanelProps) {
   const [copied, setCopied] = useState<string | null>(null);
+  const [showStandard, setShowStandard] = useState(false);
   const all = [...questions.map((q) => q.text), ...standard];
 
   const copy = async (kind: "list" | "email") => {
@@ -40,7 +38,7 @@ export function QuestionsPanel({
   return (
     <section className="wt-panel" aria-labelledby="wt-questions-title">
       <div className="wt-panel-head">
-        <h2 id="wt-questions-title">Questions for the landlord</h2>
+        <h2 id="wt-questions-title">Ask the landlord ({questions.length})</h2>
         <div className="wt-panel-actions">
           <button className="wt-btn wt-btn-small" onClick={() => copy("list")}>
             Copy
@@ -50,43 +48,42 @@ export function QuestionsPanel({
           </button>
         </div>
       </div>
-      <p className="wt-muted" aria-live="polite">
+      <p className="wt-micro" aria-live="polite">
         {copied === "failed"
-          ? "Copy didn't work in this browser. Select the text instead."
+          ? "Copy didn't work in this browser."
           : copied
-            ? "Copied."
-            : "Generated from templates, not by AI."}
+            ? "Copied, in full sentences."
+            : "From templates, not AI. Copy gives full sentences."}
       </p>
       {questions.length > 0 ? (
-        <ol className="wt-questions">
+        <ul className="wt-qlist">
           {questions.map((question) => (
             <li key={question.id}>
-              {question.text}
-              {question.sourceShotId && (
-                <a className="wt-source" href={`#wt-shot-${question.sourceShotId}`}>
-                  From photo: {findShot(unitType, question.sourceShotId)?.label}
-                </a>
+              {question.sourceShotId ? (
+                <a href={`#wt-shot-${question.sourceShotId}`}>{question.short}</a>
+              ) : (
+                question.short
               )}
             </li>
           ))}
-        </ol>
+        </ul>
       ) : (
-        <p className="wt-muted">No questions came from your photos.</p>
+        <p className="wt-muted">Nothing from your photos.</p>
       )}
-      <h3 className="wt-subhead">Also ask for this type of home</h3>
-      <p className="wt-micro">
-        Standard questions for this type of home, not findings. Fine Print can check what your lease
-        says.
-      </p>
-      <ol className="wt-questions wt-questions-standard" start={questions.length + 1}>
-        {standard.map((text) => (
-          <li key={text}>{text}</li>
-        ))}
-      </ol>
-      <p className="wt-micro">
-        Anything the landlord tells you later is renter-recorded and unverified until it's in
-        writing.
-      </p>
+      <button
+        className="wt-link"
+        onClick={() => setShowStandard((v) => !v)}
+        aria-expanded={showStandard}
+      >
+        {showStandard ? "Hide" : "+"} {standard.length} standard questions for this type of home
+      </button>
+      {showStandard && (
+        <ul className="wt-qlist wt-qlist-standard">
+          {standard.map((text) => (
+            <li key={text}>{text}</li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

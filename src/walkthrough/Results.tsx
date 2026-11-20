@@ -1,8 +1,8 @@
-import { useMemo } from "react";
-import { PhotoCard, SEVERITY_META } from "./PhotoCard";
+import { useCallback, useMemo, useState } from "react";
+import { PhotoTile, SEVERITY_META, ShotDetail } from "./PhotoCard";
 import { QuestionsPanel } from "./QuestionsPanel";
 import { buildQuestions, standardQuestions } from "./lib/questions";
-import { allShots, UNIT_TYPES } from "./lib/shots";
+import { allShots, findShot, UNIT_TYPES } from "./lib/shots";
 import { NO_CONCERNS_LINE, summarize } from "./lib/summarize";
 import type { ResultsView } from "./view";
 
@@ -22,6 +22,30 @@ interface ResultsProps {
   onStartOver: () => void;
 }
 
+function Banner({ view }: { view: ResultsView }) {
+  if (view.source === "sample") {
+    return (
+      <p className="wt-sample-banner" role="note">
+        <strong>Sample</strong> ·{" "}
+        {view.isIllustrated
+          ? "illustrated photos and saved example results"
+          : "saved results from labeled test photos"}
+        . Not a real rental.
+      </p>
+    );
+  }
+  if (view.source === "record") {
+    return (
+      <p className="wt-sample-banner" role="note">
+        <strong>Saved walkthrough</strong> · recorded{" "}
+        {view.recordCreatedAt ? new Date(view.recordCreatedAt).toLocaleString() : "earlier"}. View
+        only.
+      </p>
+    );
+  }
+  return null;
+}
+
 export function Results({
   view,
   saving,
@@ -34,108 +58,105 @@ export function Results({
 }: ResultsProps) {
   const config = UNIT_TYPES[view.unitType];
   const summary = useMemo(
-    () => summarize(view.unitType, view.analyses),
-    [view.unitType, view.analyses],
+    () =>
+      summarize(view.unitType, view.analyses, {
+        skipped: view.skipped,
+        quickChecks: view.quickChecks,
+      }),
+    [view.unitType, view.analyses, view.skipped, view.quickChecks],
   );
   const questions = useMemo(() => buildQuestions(summary), [summary]);
+  const [openShot, setOpenShot] = useState<string | null>(null);
+  const closeDetail = useCallback(() => setOpenShot(null), []);
   const byShot = new Map(view.analyses.map((entry) => [entry.shotId, entry]));
+  const pending = new Set(view.pending);
   const shownShots = allShots(view.unitType).filter(
-    (shot) => byShot.has(shot.id) || view.photoUrls[shot.id],
+    (shot) => byShot.has(shot.id) || pending.has(shot.id) || view.photoUrls[shot.id],
   );
-  const editable = view.source !== "record";
+  const opened = openShot ? findShot(view.unitType, openShot) : undefined;
+
+  const chips = [
+    { key: "stop", ...SEVERITY_META.stop_and_verify, count: summary.stopAndVerifyCount },
+    { key: "priority", ...SEVERITY_META.priority, count: summary.priorityCount },
+    { key: "follow", ...SEVERITY_META.follow_up, count: summary.followUpCount },
+  ].filter((chip) => chip.count > 0);
 
   return (
     <section className="wt-section wt-results">
-      {view.source === "sample" && (
-        <p className="wt-sample-banner" role="note">
-          <strong>Sample</strong> ·{" "}
-          {view.isIllustrated
-            ? "Illustrated shots and a saved example result. "
-            : "Saved result from labeled test photos. "}
-          Not a real rental.
-        </p>
-      )}
-      {view.source === "record" && (
-        <p className="wt-sample-banner" role="note">
-          <strong>Saved walkthrough</strong> · recorded{" "}
-          {view.recordCreatedAt ? new Date(view.recordCreatedAt).toLocaleString() : "earlier"}. View
-          only.
-        </p>
-      )}
-
+      <Banner view={view} />
       <p className="wt-eyebrow">
-        Walkthrough from your photos · {config.label}
+        Your walkthrough · {config.label}
         {view.rental?.name ? ` · ${view.rental.name}` : ""}
       </p>
       <h1 className="wt-status">{summary.statusLabel}</h1>
       {summary.showNoConcernsLine && <p className="wt-lede">{NO_CONCERNS_LINE}</p>}
 
-      <dl className="wt-counts">
-        {(["stop_and_verify", "priority", "follow_up"] as const).map((severity) => {
-          const count =
-            severity === "stop_and_verify"
-              ? summary.stopAndVerifyCount
-              : severity === "priority"
-                ? summary.priorityCount
-                : summary.followUpCount;
-          return (
-            <div key={severity} className={`wt-count ${SEVERITY_META[severity].className}`}>
-              <dt>
-                <span aria-hidden="true">{SEVERITY_META[severity].icon}</span>{" "}
-                {SEVERITY_META[severity].label}
-              </dt>
-              <dd>{count}</dd>
-            </div>
-          );
-        })}
-        <div className="wt-count is-gap">
-          <dt>Not checked</dt>
-          <dd>{summary.notCheckedCount}</dd>
-        </div>
-      </dl>
-      <p className="wt-muted">
-        {summary.coverageText}. Coverage describes the photos taken, not the home's quality.
-      </p>
-      <p className="wt-safety" role="note">
-        {SAFETY_LINE}
+      <ul className="wt-chips" aria-label="Counts">
+        {chips.map((chip) => (
+          <li key={chip.key} className={`wt-chip ${chip.className}`}>
+            <span aria-hidden="true">{chip.icon}</span> {chip.count} {chip.label}
+          </li>
+        ))}
+        {summary.renterFlags.length > 0 && (
+          <li className="wt-chip is-you">
+            <span aria-hidden="true">✋</span> {summary.renterFlags.length} you noticed
+          </li>
+        )}
+        <li className="wt-chip is-none">
+          <span aria-hidden="true">○</span> {summary.notCheckedCount} not checked
+        </li>
+      </ul>
+      <p className="wt-micro">
+        {summary.coverageText}
+        {view.pending.length > 0 ? ` · reading ${view.pending.length} more…` : ""}. Tap a photo for
+        details.
       </p>
 
       <div className="wt-results-grid">
-        <div className="wt-cards">
+        <div className="wt-tiles">
           {shownShots.map((shot) => (
-            <PhotoCard
+            <PhotoTile
               key={shot.id}
               shot={shot}
               analysis={byShot.get(shot.id)}
+              pending={pending.has(shot.id)}
               photoUrl={view.photoUrls[shot.id]}
-              taken={view.takenAt[shot.id]}
-              note={view.notes[shot.id] ?? ""}
-              editable={editable}
-              onNote={(note) => onNote(shot.id, note)}
-              onRetry={view.source === "live" ? () => onRetry(shot.id) : undefined}
+              onOpen={() => setOpenShot(shot.id)}
             />
           ))}
         </div>
 
         <aside className="wt-side">
-          <section className="wt-panel" aria-labelledby="wt-gaps-title">
-            <h2 id="wt-gaps-title">Gaps: not taken or not assessable</h2>
-            {summary.gaps.length === 0 ? (
-              <p className="wt-muted">Every required shot was assessable.</p>
-            ) : (
-              <ul className="wt-gaps">
-                {summary.gaps.map((gap) => (
-                  <li key={gap.shotId}>
-                    <strong>{gap.label}</strong>
-                    <span>{gap.reason}</span>
+          {summary.renterFlags.length > 0 && (
+            <section className="wt-panel">
+              <h2>You noticed</h2>
+              <ul className="wt-compact">
+                {summary.renterFlags.map((flag) => (
+                  <li key={flag.shotId}>
+                    <span aria-hidden="true">✕</span> {flag.label}: no
                   </li>
                 ))}
               </ul>
-            )}
-          </section>
+              <p className="wt-micro">Your quick checks. Renter-recorded, unverified.</p>
+            </section>
+          )}
+
+          {summary.gaps.length > 0 && (
+            <section className="wt-panel">
+              <h2>Gaps ({summary.gaps.length})</h2>
+              <ul className="wt-compact">
+                {summary.gaps.map((gap) => (
+                  <li key={gap.shotId}>
+                    <span aria-hidden="true">○</span>{" "}
+                    <strong>{findShot(view.unitType, gap.shotId)?.short ?? gap.label}</strong> ·{" "}
+                    {gap.reason}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <QuestionsPanel
-            unitType={view.unitType}
             unitTypeLabel={config.label}
             questions={questions}
             standard={standardQuestions(view.unitType)}
@@ -145,13 +166,20 @@ export function Results({
           {view.source !== "record" && (
             <section className="wt-panel">
               <h2>Keep a copy for move-out</h2>
-              <p className="wt-muted">
-                Saves a ZIP to your device with your photos, the dates they were taken, your notes,
-                and these observations. Reopen it at move-out if there's a deposit dispute. RentWell
-                doesn't keep a copy.
+              <p className="wt-micro">
+                Photos, dates, your notes and checks, in a ZIP on your device. RentWell keeps
+                nothing.
               </p>
-              <button className="wt-btn wt-btn-primary" onClick={onSave} disabled={saving}>
-                {saving ? "Saving…" : "Save walkthrough (.zip)"}
+              <button
+                className="wt-btn wt-btn-primary"
+                onClick={onSave}
+                disabled={saving || view.pending.length > 0}
+              >
+                {saving
+                  ? "Saving…"
+                  : view.pending.length > 0
+                    ? "Finishing photos…"
+                    : "Save walkthrough (.zip)"}
               </button>
               {saveMessage && (
                 <p className="wt-micro" aria-live="polite">
@@ -163,6 +191,9 @@ export function Results({
         </aside>
       </div>
 
+      <p className="wt-safety" role="note">
+        {SAFETY_LINE}
+      </p>
       <div className="wt-actions">
         {view.source === "live" && (
           <button className="wt-btn" onClick={onBack}>
@@ -174,6 +205,23 @@ export function Results({
         </button>
       </div>
       <footer className="wt-footer">{FOOTER_LINE}</footer>
+
+      {opened && (
+        <ShotDetail
+          shot={opened}
+          analysis={byShot.get(opened.id)}
+          pending={pending.has(opened.id)}
+          photoUrl={view.photoUrls[opened.id]}
+          taken={view.takenAt[opened.id]}
+          note={view.notes[opened.id] ?? ""}
+          quickCheck={view.quickChecks[opened.id]}
+          prompt={view.prompts[opened.id]}
+          editable={view.source !== "record"}
+          onNote={(note) => onNote(opened.id, note)}
+          onRetry={view.source === "live" ? () => onRetry(opened.id) : undefined}
+          onClose={closeDetail}
+        />
+      )}
     </section>
   );
 }

@@ -19,14 +19,48 @@ const FAILURE_TEXT: Record<string, string> = {
   offline: "No connection",
 };
 
+/** At most three photo calls in flight across the whole app, so a fast tour doesn't trip rate limits. */
+const MAX_IN_FLIGHT = 3;
+let inFlight = 0;
+const waiting: (() => void)[] = [];
+
+async function acquire(): Promise<void> {
+  if (inFlight < MAX_IN_FLIGHT) {
+    inFlight += 1;
+    return;
+  }
+  await new Promise<void>((resolve) => waiting.push(resolve));
+}
+
+function release(): void {
+  const next = waiting.shift();
+  if (next) next();
+  else inFlight -= 1;
+}
+
 export async function analyzeShot(
   unitType: UnitType,
   shotId: string,
   base64: string,
+  renterPrompt?: string,
+): Promise<ShotAnalysis> {
+  await acquire();
+  try {
+    return await analyzeNow(unitType, shotId, base64, renterPrompt);
+  } finally {
+    release();
+  }
+}
+
+async function analyzeNow(
+  unitType: UnitType,
+  shotId: string,
+  base64: string,
+  renterPrompt?: string,
 ): Promise<ShotAnalysis> {
   // crypto.subtle only exists on HTTPS or localhost; without it, skip the cache rather than fail.
   const key = globalThis.crypto?.subtle
-    ? cacheKey(await hashBytes(base64Bytes(base64)), unitType, shotId)
+    ? cacheKey(await hashBytes(base64Bytes(base64)), unitType, `${shotId}:${renterPrompt ?? ""}`)
     : null;
   const cached = key ? resultCache.get(key) : null;
   if (cached) return { shotId, state: "ok", result: cached };
@@ -37,7 +71,7 @@ export async function analyzeShot(
     const response = await fetch("/api/analyze-photo", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ unitType, shotId, imageBase64: base64 }),
+      body: JSON.stringify({ unitType, shotId, imageBase64: base64, renterPrompt }),
       signal: controller.signal,
     });
     const body = (await response.json().catch(() => null)) as { error?: { code?: string } } | null;
