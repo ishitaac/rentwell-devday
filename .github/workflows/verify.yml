@@ -1,0 +1,89 @@
+name: Verify
+
+on:
+  push:
+    branches: [feature/ai-roommate-intelligence]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      run_ai_smoke:
+        description: "Run the real Claude API smoke test (needs the ANTHROPIC_API_KEY secret in the roommate-ai-smoke environment)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm test:data
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm build
+      - name: Build with roommate AI flag
+        run: pnpm build
+        env:
+          VITE_ROOMMATE_AI: "1"
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build with roommate AI flag (dist-on)
+        run: pnpm exec vite build --outDir dist-on
+        env:
+          VITE_ROOMMATE_AI: "1"
+      - name: Build without flag (dist-off)
+        run: pnpm exec vite build --outDir dist-off
+      - name: Install Playwright (pinned, test-only, isolated in e2e/)
+        run: |
+          npm install --prefix e2e --no-audit --no-fund
+          npx --prefix e2e playwright install --with-deps chromium
+      - run: npx --prefix e2e playwright test -c e2e/playwright.config.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+
+  ai-smoke:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_ai_smoke
+    runs-on: ubuntu-latest
+    environment: roommate-ai-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Real Claude API smoke test (one call)
+        run: pnpm exec vitest run src/roommateAI/smoke.test.ts
+        env:
+          ROOMMATE_AI_SMOKE: "1"
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
