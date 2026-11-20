@@ -20,7 +20,8 @@
     "eval": "tsx eval/run.ts",
     "cache:sample": "tsx scripts/cache-sample.ts",
     "test:e2e": "playwright test",
-    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle"
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle",
+    "data:seed": "node --env-file-if-exists=.env.local scripts/seed-supabase.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",
