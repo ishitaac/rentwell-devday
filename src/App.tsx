@@ -65,10 +65,13 @@ export type DecisionOrigin = "listings" | "rental-entry";
 /**
  * The property-manager workspace is a separate application with its own URL
  * (see manager.html and docs/two-apps-deployment.md). Set VITE_MANAGER_URL in
- * the renter project's environment to the manager app's address.
+ * the renter project's environment to the manager app's address; otherwise the
+ * link falls back to the local dev server, or the default production address.
  */
+const DEFAULT_MANAGER_APP_URL = "https://rentwell-manager.vercel.app";
 export const MANAGER_APP_URL: string =
-  import.meta.env.VITE_MANAGER_URL || (import.meta.env.DEV ? "http://localhost:5174/manager.html" : "");
+  import.meta.env.VITE_MANAGER_URL ||
+  (import.meta.env.DEV ? "http://localhost:5174/manager.html" : DEFAULT_MANAGER_APP_URL);
 
 export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
   return origin;
@@ -1349,23 +1352,14 @@ function App() {
             AI Advisor
           </button>
           <button onClick={() => go("home")}>How It Works</button>
-          {MANAGER_APP_URL ? (
-            <a
-              className="manager-role-entry"
-              href={MANAGER_APP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              For property managers <span aria-hidden="true">↗</span>
-            </a>
-          ) : (
-            <span
-              className="manager-role-entry is-disabled"
-              title="The property-manager app address is not configured for this deployment."
-            >
-              For property managers
-            </span>
-          )}
+          <a
+            className="btn-secondary manager-role-entry"
+            href={MANAGER_APP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            For property managers <Icon name="arrow" size={16} />
+          </a>
           <Button onClick={() => go(getAdvisorEntryScreen(activeDecision))}>
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>

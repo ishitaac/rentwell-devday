@@ -43,7 +43,7 @@ describe("unified App navigation", () => {
   it("opens the property-manager role as a separate app in a new tab", () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain('class="manager-role-entry"');
+    expect(html).toContain('class="btn-secondary manager-role-entry"');
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
   });
