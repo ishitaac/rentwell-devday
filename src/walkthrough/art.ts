@@ -37,8 +37,26 @@ const toDataUrl = (body: string, label: string) =>
 export const exampleArt = (key: ArtKey) => toDataUrl(SCENES[key], "EXAMPLE");
 
 /** Stand-in photo for the demo tour and the Sample. */
+/**
+ * Real sample photos, if the team adds them: src/walkthrough/data/photos/<stop>.jpg (for example
+ * ceiling.jpg). Each one replaces that stop's illustration in the demo tour and the Sample.
+ * Use your own or clearly licensed non-listing photos that actually show the sample finding.
+ */
+const REAL_PHOTOS = import.meta.glob<string>("./data/photos/*.{jpg,jpeg}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+
+function realPhoto(key: ArtKey): string | null {
+  return (
+    REAL_PHOTOS[`./data/photos/${key}.jpg`] ?? REAL_PHOTOS[`./data/photos/${key}.jpeg`] ?? null
+  );
+}
+
+/** Stand-in photo for the demo tour and the Sample: a real photo if one was added, else an illustration. */
 export const sampleArt = (key: ArtKey) =>
-  toDataUrl(key === "appliances" ? DARK_KITCHEN : SCENES[key], "SAMPLE PHOTO");
+  realPhoto(key) ?? toDataUrl(key === "appliances" ? DARK_KITCHEN : SCENES[key], "SAMPLE PHOTO");
 
 /** The Sample's "too dark" photo, so the demo shows how a gap looks. */
 const DARK_KITCHEN = `<rect width="400" height="300" fill="#15191c"/><rect x="50" y="40" width="130" height="240" fill="#1d2226"/><rect x="220" y="150" width="140" height="130" fill="#20262a"/><circle cx="300" cy="80" r="8" fill="#2a3035"/>`;
