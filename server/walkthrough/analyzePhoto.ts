@@ -12,6 +12,7 @@ export const PHOTO_BUDGET_MS = 24_000;
 const MIN_RETRY_MS = 6_000;
 /** About 3 MB of JPEG; the browser sends ~1 MB. Keeps us well under the platform body limit. */
 export const MAX_IMAGE_BASE64_CHARS = 4_000_000;
+export const MAX_PROMPT_CHARS = 200;
 
 export class InputError extends Error {
   constructor(message: string) {
@@ -36,7 +37,11 @@ export function parsePhotoRequest(body: unknown): PhotoRequest {
   if (!imageBase64.startsWith("/9j/") || !/^[A-Za-z0-9+/]+=*$/.test(imageBase64)) {
     throw new InputError("Photo must be a JPEG.");
   }
-  return { unitType: type, shotId, imageBase64 };
+  const prompt = (body as Record<string, unknown>).renterPrompt;
+  if (prompt != null && (typeof prompt !== "string" || prompt.length > MAX_PROMPT_CHARS)) {
+    throw new InputError("Note is too long.");
+  }
+  return { unitType: type, shotId, imageBase64, renterPrompt: prompt ?? undefined };
 }
 
 export async function analyzePhoto(
@@ -47,7 +52,7 @@ export async function analyzePhoto(
   const shot = findShot(request.unitType, request.shotId);
   if (!shot) throw new InputError("Unknown shot for this home type.");
   const deadline = now() + PHOTO_BUDGET_MS;
-  const text = buildUserText(UNIT_TYPES[request.unitType], shot);
+  const text = buildUserText(UNIT_TYPES[request.unitType], shot, request.renterPrompt);
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const remaining = deadline - now();

@@ -13,6 +13,7 @@ interface CaptureProps {
   onClearSlot: (shotId: string) => void;
   onRemoveTray: (photoId: string) => void;
   onChangeType: () => void;
+  onBackToTour: () => void;
   onAnalyze: () => void;
 }
 
@@ -88,9 +89,14 @@ export function Capture(props: CaptureProps) {
             listed as gaps, never as passes.
           </p>
         </div>
-        <button className="wt-link" onClick={props.onChangeType}>
-          Change home type
-        </button>
+        <div className="wt-head-links">
+          <button className="wt-link" onClick={props.onBackToTour}>
+            Back to the guided tour
+          </button>
+          <button className="wt-link" onClick={props.onChangeType}>
+            Change home type
+          </button>
+        </div>
       </div>
 
       {props.error && (

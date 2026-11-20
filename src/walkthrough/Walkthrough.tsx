@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { analyzeShot } from "./api";
+import { sampleArt } from "./art";
 import { Analyzing, type ProgressState } from "./Analyzing";
 import { Capture } from "./Capture";
 import { photoSrc, PhotoError, preparePhoto } from "./image";
 import { Intro } from "./Intro";
-import { runLimited } from "./lib/queue";
-import type { CapturedPhoto, CaptureState } from "./lib/session";
+import type { CapturedPhoto, CaptureState, QuickAnswer } from "./lib/session";
 import {
   addToTray,
   assignFromTray,
@@ -15,52 +15,73 @@ import {
   placePhoto,
   removeFromTray,
   setNote,
+  setPrompt,
+  setQuickCheck,
+  skipShot,
 } from "./lib/session";
-import { DEFAULT_UNIT_TYPE } from "./lib/shots";
+import { DEFAULT_UNIT_TYPE, findShot, MISC_SHOTS, tourShots } from "./lib/shots";
 import type { ShotAnalysis, UnitType } from "./lib/types";
 import { Results } from "./Results";
-import { SAMPLE } from "./sample";
+import { SAMPLE, sampleAnalysis } from "./sample";
+import { Tour, type ShotStatus } from "./Tour";
 import { TypePicker } from "./TypePicker";
 import type { RentalContext, ResultsView } from "./view";
 import "./walkthrough.css";
+import "./tour.css";
 
-/** Walkthrough: intro -> home type -> shot list -> analyzing -> results. Owns all state. */
+/**
+ * Walkthrough: intro -> home type -> guided tour (photos read in the background) -> results.
+ * "Already toured?" switches to the upload list. Owns all state.
+ */
 
-type Stage = "intro" | "type" | "capture" | "analyzing" | "results";
-const MAX_CONCURRENT = 3;
-const SAMPLE_DELAY_MS = 1800;
+type Stage = "intro" | "type" | "tour" | "capture" | "analyzing" | "results";
+const SAMPLE_DELAY_MS = 1200;
+const DEMO_READ_MS = 700;
 
 interface Persisted {
   stage: Stage;
   capture: CaptureState;
   analyses: ShotAnalysis[];
   staticView: ResultsView | null;
+  tourIndex: number;
+  isDemo: boolean;
 }
 
 // Kept in memory only, so leaving for the Decision Receipt and coming back keeps the walkthrough.
 let memory: Persisted | null = null;
 
+const isSamplePhoto = (photo: CapturedPhoto) => photo.base64.startsWith("data:");
+
 function liveView(
   capture: CaptureState,
   analyses: ShotAnalysis[],
+  pending: string[],
   rental: RentalContext | null,
+  isDemo: boolean,
 ): ResultsView {
   const photoUrls: ResultsView["photoUrls"] = {};
   const takenAt: ResultsView["takenAt"] = {};
+  let usedSample = false;
   for (const [shotId, photoId] of Object.entries(capture.slots)) {
     const photo = capture.photos[photoId];
     if (!photo) continue;
+    usedSample ||= isSamplePhoto(photo);
     photoUrls[shotId] = photoSrc(photo);
     takenAt[shotId] = { at: photo.takenAt, source: photo.takenAtSource };
   }
   return {
-    source: "live",
+    source: isDemo && usedSample ? "sample" : "live",
     unitType: capture.unitType,
     analyses,
+    pending,
     photoUrls,
     takenAt,
     notes: capture.notes,
+    quickChecks: capture.quickChecks,
+    skipped: capture.skipped,
+    prompts: capture.prompts,
     rental: rental ? { name: rental.name, rent: rental.rent } : null,
+    isIllustrated: usedSample,
   };
 }
 
@@ -69,9 +90,13 @@ function sampleView(): ResultsView {
     source: "sample",
     unitType: SAMPLE.unitType,
     analyses: SAMPLE.analyses,
+    pending: [],
     photoUrls: SAMPLE.photos,
     takenAt: {},
     notes: SAMPLE.notes,
+    quickChecks: SAMPLE.quickChecks,
+    skipped: {},
+    prompts: SAMPLE.prompts,
     rental: SAMPLE.rental,
     isIllustrated: SAMPLE.isIllustrated,
   };
@@ -88,7 +113,7 @@ function downloadBytes(bytes: Uint8Array, fileName: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-/** Photos from a view, as JPEG base64, for the saved record. Illustrations are skipped. */
+/** Only real JPEGs go into a saved record; illustrations are skipped. */
 function recordPhotos(view: ResultsView): {
   photos: Record<string, CapturedPhoto>;
   slots: Record<string, string>;
@@ -119,46 +144,115 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
     memory?.capture ?? initialCaptureState(DEFAULT_UNIT_TYPE),
   );
   const [analyses, setAnalyses] = useState<ShotAnalysis[]>(memory?.analyses ?? []);
+  const [pending, setPending] = useState<string[]>([]);
   const [staticView, setStaticView] = useState<ResultsView | null>(memory?.staticView ?? null);
+  const [tourIndex, setTourIndex] = useState(memory?.tourIndex ?? 0);
+  const [isDemo, setIsDemo] = useState(memory?.isDemo ?? false);
   const [progress, setProgress] = useState<Record<string, ProgressState>>({});
   const [preparing, setPreparing] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  // shotId -> photo id that the latest analysis belongs to, so a retake's result wins over an older one.
+  const latest = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    memory = { stage, capture, analyses, staticView };
-  }, [stage, capture, analyses, staticView]);
+    memory = { stage, capture, analyses, staticView, tourIndex, isDemo };
+  }, [stage, capture, analyses, staticView, tourIndex, isDemo]);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
-  }, [stage]);
+  }, [stage, tourIndex]);
+
+  const stops = useMemo(() => [...tourShots(capture.unitType), MISC_SHOTS[0]], [capture.unitType]);
 
   const view = useMemo(
-    () => staticView ?? liveView(capture, analyses, rental),
-    [staticView, capture, analyses, rental],
+    () => staticView ?? liveView(capture, analyses, pending, rental, isDemo),
+    [staticView, capture, analyses, pending, rental, isDemo],
   );
 
-  const withPreparing = async <T,>(count: number, work: () => Promise<T>): Promise<T | null> => {
+  const status = useMemo(() => {
+    const map: Record<string, ShotStatus> = {};
+    for (const entry of analyses) {
+      map[entry.shotId] =
+        entry.state === "failed" ? "failed" : entry.result.assessable ? "done" : "unreadable";
+    }
+    for (const id of pending) map[id] = "reading";
+    return map;
+  }, [analyses, pending]);
+
+  const forget = (shotId: string) =>
+    setAnalyses((list) => list.filter((entry) => entry.shotId !== shotId));
+
+  const record = useCallback((analysis: ShotAnalysis, photoId: string) => {
+    if (latest.current[analysis.shotId] !== photoId) return;
+    setAnalyses((list) => [...list.filter((entry) => entry.shotId !== analysis.shotId), analysis]);
+    setPending((list) => list.filter((id) => id !== analysis.shotId));
+  }, []);
+
+  /** Starts reading one photo in the background. */
+  const read = useCallback(
+    (unitType: UnitType, shotId: string, photo: CapturedPhoto, prompt?: string) => {
+      latest.current[shotId] = photo.id;
+      setPending((list) => (list.includes(shotId) ? list : [...list, shotId]));
+      setAnalyses((list) => list.filter((entry) => entry.shotId !== shotId));
+      if (isSamplePhoto(photo)) {
+        const shot = findShot(unitType, shotId);
+        window.setTimeout(
+          () => shot && record(sampleAnalysis(unitType, shot), photo.id),
+          DEMO_READ_MS,
+        );
+        return;
+      }
+      void analyzeShot(unitType, shotId, photo.base64, prompt).then((analysis) =>
+        record(analysis, photo.id),
+      );
+    },
+    [record],
+  );
+
+  const withPreparing = async (count: number, work: () => Promise<void>) => {
     setPreparing((n) => n + count);
     setError(null);
     try {
-      return await work();
+      await work();
     } catch (err) {
       setError(
         err instanceof PhotoError ? err.message : "Could not read that photo. Try another one.",
       );
-      return null;
     } finally {
       setPreparing((n) => n - count);
     }
   };
 
+  /** Tour: a photo is placed and read right away. */
+  const tourPhoto = (shotId: string, file: File, prompt?: string) =>
+    withPreparing(1, async () => {
+      const photo = await preparePhoto(file);
+      setCapture((state) => placePhoto(state, shotId, photo));
+      read(capture.unitType, shotId, photo, prompt ?? capture.prompts[shotId]);
+    });
+
+  const samplePhoto = (shotId: string) => {
+    const shot = findShot(capture.unitType, shotId);
+    if (!shot) return;
+    const photo: CapturedPhoto = {
+      id: `sample-${shotId}-${Date.now()}`,
+      base64: sampleArt(shot.art),
+      takenAt: null,
+      takenAtSource: "none",
+      fileName: `sample-${shotId}.svg`,
+    };
+    setCapture((state) => placePhoto(state, shotId, photo));
+    read(capture.unitType, shotId, photo);
+  };
+
+  /** Upload list: photos are placed and read together when "Analyze photos" is tapped. */
   const pickSlot = (shotId: string, file: File) =>
     withPreparing(1, async () => {
       const photo = await preparePhoto(file);
       setCapture((state) => placePhoto(state, shotId, photo));
-      setAnalyses((list) => list.filter((entry) => entry.shotId !== shotId));
+      forget(shotId);
     });
 
   const bulk = (files: File[]) =>
@@ -172,43 +266,43 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
 
   const chooseType = (unitType: UnitType) => {
     const change = changeUnitType(capture, unitType, false);
-    if (change.kind === "needs_confirmation") {
-      if (!window.confirm("Changing the home type clears the photos in your shot slots. Continue?"))
-        return;
-      const confirmed = changeUnitType(capture, unitType, true);
-      if (confirmed.kind === "changed") {
-        setCapture(confirmed.state);
-        setAnalyses([]);
-      }
-      return;
-    }
-    if (change.kind === "changed") {
-      setCapture(change.state);
+    const apply = (state: CaptureState) => {
+      setCapture(state);
       setAnalyses([]);
-    }
+      setPending([]);
+      setTourIndex(0);
+    };
+    if (change.kind === "changed") apply(change.state);
+    if (change.kind !== "needs_confirmation") return;
+    if (!window.confirm("Changing the home type clears the photos you've taken. Continue?")) return;
+    const confirmed = changeUnitType(capture, unitType, true);
+    if (confirmed.kind === "changed") apply(confirmed.state);
   };
 
-  const analyze = async (shotIds: string[]) => {
+  /** Upload list: read every assigned photo, showing progress, then show results. */
+  const analyzeAll = async (shotIds: string[]) => {
     setStaticView(null);
-    setProgress(Object.fromEntries(shotIds.map((id) => [id, "waiting" as ProgressState])));
+    setProgress(Object.fromEntries(shotIds.map((id) => [id, "reading" as ProgressState])));
     setStage("analyzing");
     const unitType = capture.unitType;
-    const results = await runLimited(shotIds, MAX_CONCURRENT, async (shotId) => {
-      setProgress((p) => ({ ...p, [shotId]: "reading" }));
-      const photo = capture.photos[capture.slots[shotId] ?? ""];
-      const analysis: ShotAnalysis = photo
-        ? await analyzeShot(unitType, shotId, photo.base64)
-        : { shotId, state: "failed", reason: "Photo missing" };
-      setProgress((p) => ({ ...p, [shotId]: analysis.state === "ok" ? "done" : "failed" }));
-      return analysis;
-    });
-    const fresh = results.map((r, i): ShotAnalysis =>
-      r.status === "fulfilled"
-        ? r.value
-        : { shotId: shotIds[i], state: "failed", reason: "Could not analyze" },
+    await Promise.all(
+      shotIds.map(async (shotId) => {
+        const photo = capture.photos[capture.slots[shotId] ?? ""];
+        if (!photo) return;
+        latest.current[shotId] = photo.id;
+        const analysis = isSamplePhoto(photo)
+          ? sampleAnalysis(unitType, findShot(unitType, shotId)!)
+          : await analyzeShot(unitType, shotId, photo.base64, capture.prompts[shotId]);
+        record(analysis, photo.id);
+        setProgress((p) => ({ ...p, [shotId]: analysis.state === "ok" ? "done" : "failed" }));
+      }),
     );
-    setAnalyses((list) => [...list.filter((entry) => !shotIds.includes(entry.shotId)), ...fresh]);
     setStage("results");
+  };
+
+  const retry = (shotId: string) => {
+    const photo = capture.photos[capture.slots[shotId] ?? ""];
+    if (photo) read(capture.unitType, shotId, photo, capture.prompts[shotId]);
   };
 
   const runSample = () => {
@@ -220,6 +314,13 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
     window.setTimeout(() => setStage("results"), SAMPLE_DELAY_MS);
   };
 
+  const startTour = (demo: boolean) => {
+    setIsDemo(demo);
+    setStaticView(null);
+    setTourIndex(0);
+    setStage("type");
+  };
+
   const openSaved = async (file: File) => {
     setError(null);
     try {
@@ -227,17 +328,27 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
       const opened = openRecord(new Uint8Array(await file.arrayBuffer()));
       const takenAt: ResultsView["takenAt"] = {};
       const notes: Record<string, string> = {};
+      const quickChecks: Record<string, QuickAnswer> = {};
+      const skipped: Record<string, string> = {};
+      const prompts: Record<string, string> = {};
       for (const shot of opened.record.shots) {
         takenAt[shot.shotId] = { at: shot.photoTakenAt, source: shot.photoTakenAtSource };
         if (shot.renterNote) notes[shot.shotId] = shot.renterNote;
+        if (shot.quickCheck) quickChecks[shot.shotId] = shot.quickCheck;
+        if (shot.skipReason) skipped[shot.shotId] = shot.skipReason;
+        if (shot.renterPrompt) prompts[shot.shotId] = shot.renterPrompt;
       }
       setStaticView({
         source: "record",
         unitType: opened.record.unitType,
         analyses: recordAnalyses(opened.record),
+        pending: [],
         photoUrls: opened.photoUrls,
         takenAt,
         notes,
+        quickChecks,
+        skipped,
+        prompts,
         rental: opened.record.rental,
         recordCreatedAt: opened.record.createdAt,
       });
@@ -260,16 +371,23 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
         view.source === "live"
           ? { photos: capture.photos, slots: capture.slots }
           : recordPhotos(view);
-      const { record, zip } = buildRecord({
+      const realPhotos = Object.fromEntries(
+        Object.entries(source.photos).filter(([, photo]) => !isSamplePhoto(photo)),
+      );
+      const { record: saved, zip } = buildRecord({
         unitType: view.unitType,
-        ...source,
+        photos: realPhotos,
+        slots: source.slots,
         notes: view.notes,
+        quickChecks: view.quickChecks,
+        skipped: view.skipped,
+        prompts: view.prompts,
         analyses: view.analyses,
         rental: view.rental,
         isSample: view.source === "sample",
       });
-      downloadBytes(zip, recordFileName(record));
-      setSaveMessage("Saved to your downloads. Keep it somewhere safe until you move out.");
+      downloadBytes(zip, recordFileName(saved));
+      setSaveMessage("Saved to your downloads. Keep it until you move out.");
     } catch {
       setSaveMessage("Couldn't create the file. Try again.");
     } finally {
@@ -288,7 +406,10 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
   const startOver = () => {
     setCapture(initialCaptureState(capture.unitType));
     setAnalyses([]);
+    setPending([]);
     setStaticView(null);
+    setTourIndex(0);
+    setIsDemo(false);
     setError(null);
     setSaveMessage(null);
     setStage("intro");
@@ -300,7 +421,8 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
         <Intro
           rental={rental}
           error={error}
-          onStart={() => setStage("type")}
+          onStart={() => startTour(false)}
+          onDemo={() => startTour(true)}
           onSample={runSample}
           onOpenRecord={openSaved}
         />
@@ -309,8 +431,40 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
         <TypePicker
           value={capture.unitType}
           onChange={chooseType}
-          onContinue={() => setStage("capture")}
+          onContinue={() => setStage("tour")}
           onBack={() => setStage("intro")}
+        />
+      )}
+      {stage === "tour" && (
+        <Tour
+          state={capture}
+          stops={stops}
+          index={Math.min(tourIndex, stops.length - 1)}
+          isDemo={isDemo}
+          status={status}
+          preparing={preparing > 0}
+          error={error}
+          onPhoto={tourPhoto}
+          onSamplePhoto={samplePhoto}
+          onQuickCheck={(shotId, answer) =>
+            setCapture((state) => setQuickCheck(state, shotId, answer))
+          }
+          onSkip={(shotId, reason) => {
+            setCapture((state) => skipShot(state, shotId, reason));
+            forget(shotId);
+          }}
+          onPrompt={(shotId, prompt) => setCapture((state) => setPrompt(state, shotId, prompt))}
+          onRemove={(shotId) => {
+            setCapture((state) => clearSlot(state, shotId));
+            forget(shotId);
+            setPending((list) => list.filter((id) => id !== shotId));
+          }}
+          onGo={(index) => setTourIndex(Math.max(0, Math.min(index, stops.length - 1)))}
+          onFinish={() => {
+            setStaticView(null);
+            setStage("results");
+          }}
+          onExit={() => setStage("capture")}
         />
       )}
       {stage === "capture" && (
@@ -322,15 +476,16 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
           onBulk={bulk}
           onAssign={(photoId, shotId) => {
             setCapture((state) => assignFromTray(state, photoId, shotId));
-            setAnalyses((list) => list.filter((entry) => entry.shotId !== shotId));
+            forget(shotId);
           }}
           onClearSlot={(shotId) => {
             setCapture((state) => clearSlot(state, shotId));
-            setAnalyses((list) => list.filter((entry) => entry.shotId !== shotId));
+            forget(shotId);
           }}
           onRemoveTray={(photoId) => setCapture((state) => removeFromTray(state, photoId))}
           onChangeType={() => setStage("type")}
-          onAnalyze={() => analyze(Object.keys(capture.slots))}
+          onBackToTour={() => setStage("tour")}
+          onAnalyze={() => analyzeAll(Object.keys(capture.slots))}
         />
       )}
       {stage === "analyzing" && (
@@ -346,9 +501,9 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
           saving={saving}
           saveMessage={saveMessage}
           onNote={onNote}
-          onRetry={(shotId) => analyze([shotId])}
+          onRetry={retry}
           onSave={save}
-          onBack={() => setStage("capture")}
+          onBack={() => setStage("tour")}
           onStartOver={startOver}
         />
       )}

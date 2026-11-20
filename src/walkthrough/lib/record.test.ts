@@ -20,6 +20,9 @@ describe("walkthrough record", () => {
       },
       slots: { A2: "p1" },
       notes: { A2: "Landlord said it will be repainted by 1/5" },
+      quickChecks: { A2: "no" },
+      skipped: { A6: "Locked" },
+      prompts: {},
       analyses: [okResult("A2", [observation()])],
       rental: { name: "Juniper Row 4B", rent: 2100 },
       isSample: false,
@@ -32,7 +35,9 @@ describe("walkthrough record", () => {
       photoFile: "photos/A2.jpg",
       renterNote: "Landlord said it will be repainted by 1/5",
       photoTakenAt: "2026-11-20T09:41:00",
+      quickCheck: "no",
     });
+    expect(opened.record.shots.find((s) => s.shotId === "A6")?.skipReason).toBe("Locked");
     expect(opened.photoUrls.A2).toBe(`data:image/jpeg;base64,${JPEG_BASE64}`);
     expect(recordAnalyses(opened.record)).toHaveLength(1);
     expect(opened.record.rental).toEqual({ name: "Juniper Row 4B", rent: 2100 });

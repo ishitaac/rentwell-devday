@@ -5,11 +5,12 @@ interface IntroProps {
   rental: RentalContext | null;
   error: string | null;
   onStart: () => void;
+  onDemo: () => void;
   onSample: () => void;
   onOpenRecord: (file: File) => void;
 }
 
-export function Intro({ rental, error, onStart, onSample, onOpenRecord }: IntroProps) {
+export function Intro({ rental, error, onStart, onDemo, onSample, onOpenRecord }: IntroProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   return (
     <section className="wt-intro">
@@ -35,12 +36,26 @@ export function Intro({ rental, error, onStart, onSample, onOpenRecord }: IntroP
           {error}
         </p>
       )}
+      <ol className="wt-howto">
+        <li>
+          <strong>Walk it room by room.</strong> About 6 stops, each with what to look for.
+        </li>
+        <li>
+          <strong>Snap a photo, tap a quick check.</strong> Photos are read while you keep walking.
+        </li>
+        <li>
+          <strong>Leave with your questions.</strong> Plus a copy to keep for move-out.
+        </li>
+      </ol>
       <div className="wt-actions">
         <button className="wt-btn wt-btn-primary" onClick={onStart}>
-          Start
+          Start the tour
+        </button>
+        <button className="wt-btn" onClick={onDemo}>
+          Try the demo tour
         </button>
         <button className="wt-btn" onClick={onSample}>
-          See a sample
+          See sample results
         </button>
         <button className="wt-btn wt-btn-ghost" onClick={() => fileInput.current?.click()}>
           Open a saved walkthrough
