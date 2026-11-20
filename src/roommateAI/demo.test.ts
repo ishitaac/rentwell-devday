@@ -27,7 +27,8 @@ describe("demo endpoint access control", () => {
   it("requires the access code, never calls the model without it, and never echoes secrets", async () => {
     const m = reply(accept);
     const r = route(m);
-    for (const headers of [{}, { "x-demo-code": "wrong-code-value" }]) {
+    const attempts: Array<Record<string, string>> = [{}, { "x-demo-code": "wrong-code-value" }];
+    for (const headers of attempts) {
       const res = await r(req(turn(OK10), headers));
       expect(res.status).toBe(401);
       const text = await res.text();
