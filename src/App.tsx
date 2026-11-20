@@ -1598,18 +1598,11 @@ function App() {
             Roommate Planning
           </button>
           <button
-            className={navActive === "advisor" ? "active" : ""}
-            onClick={() => go(getAdvisorEntryScreen(activeDecision))}
-          >
-            AI Advisor
-          </button>
-          <button
             className={navActive === "fineprint" ? "active" : ""}
             onClick={() => go("fineprint")}
           >
             Fine Print
           </button>
-          <button onClick={() => go("home")}>How It Works</button>
           <button className={screen === "plan-summary" ? "active" : ""} onClick={openMyPlan}>
             My Plan
           </button>
