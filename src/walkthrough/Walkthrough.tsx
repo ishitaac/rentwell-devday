@@ -26,6 +26,13 @@ import { SAMPLE, sampleAnalysis } from "./sample";
 import { Tour, type ShotStatus } from "./Tour";
 import { TypePicker } from "./TypePicker";
 import type { RentalContext, ResultsView } from "./view";
+import {
+  mustHaveResults,
+  mustHaveStops,
+  SAMPLE_MUST_HAVES,
+  type MustHaveAnswer,
+} from "./lib/mustHaves";
+import type { SavedWalkthrough } from "./lib/profile";
 import "./walkthrough.css";
 import "./tour.css";
 
@@ -45,12 +52,14 @@ interface Persisted {
   staticView: ResultsView | null;
   tourIndex: number;
   isDemo: boolean;
+  mustHaves: string[];
+  mustAnswers: Record<string, MustHaveAnswer>;
 }
 
 // Kept in memory only, so leaving for the Decision Receipt and coming back keeps the walkthrough.
 let memory: Persisted | null = null;
 
-const isSamplePhoto = (photo: CapturedPhoto) => photo.base64.startsWith("data:");
+const isSamplePhoto = (photo: CapturedPhoto) => photo.fileName.startsWith("sample-");
 
 function liveView(
   capture: CaptureState,
@@ -136,7 +145,20 @@ function recordPhotos(view: ResultsView): {
   return { photos, slots };
 }
 
-export function Walkthrough({ rental = null }: { rental?: RentalContext | null }) {
+interface WalkthroughProps {
+  rental?: RentalContext | null;
+  /** Saves findings and questions to the renter's profile; the app handles sign-in first if needed. */
+  onSaveToProfile?: (snapshot: SavedWalkthrough) => void;
+  profileMessage?: string | null;
+}
+
+const SAMPLE_ANSWERS: Record<string, MustHaveAnswer> = { kitchen: "yes", light: "unsure" };
+
+export function Walkthrough({
+  rental = null,
+  onSaveToProfile,
+  profileMessage = null,
+}: WalkthroughProps) {
   const [stage, setStage] = useState<Stage>(
     memory?.stage === "analyzing" ? "results" : (memory?.stage ?? "intro"),
   );
@@ -148,6 +170,10 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
   const [staticView, setStaticView] = useState<ResultsView | null>(memory?.staticView ?? null);
   const [tourIndex, setTourIndex] = useState(memory?.tourIndex ?? 0);
   const [isDemo, setIsDemo] = useState(memory?.isDemo ?? false);
+  const [mustHaves, setMustHaves] = useState<string[]>(memory?.mustHaves ?? SAMPLE_MUST_HAVES);
+  const [mustAnswers, setMustAnswers] = useState<Record<string, MustHaveAnswer>>(
+    memory?.mustAnswers ?? {},
+  );
   const [progress, setProgress] = useState<Record<string, ProgressState>>({});
   const [preparing, setPreparing] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -157,14 +183,15 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
   const latest = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    memory = { stage, capture, analyses, staticView, tourIndex, isDemo };
-  }, [stage, capture, analyses, staticView, tourIndex, isDemo]);
+    memory = { stage, capture, analyses, staticView, tourIndex, isDemo, mustHaves, mustAnswers };
+  }, [stage, capture, analyses, staticView, tourIndex, isDemo, mustHaves, mustAnswers]);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [stage, tourIndex]);
 
   const stops = useMemo(() => [...tourShots(capture.unitType), MISC_SHOTS[0]], [capture.unitType]);
+  const mustStops = useMemo(() => mustHaveStops(mustHaves, stops), [mustHaves, stops]);
 
   const view = useMemo(
     () => staticView ?? liveView(capture, analyses, pending, rental, isDemo),
@@ -410,6 +437,7 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
     setStaticView(null);
     setTourIndex(0);
     setIsDemo(false);
+    setMustAnswers({});
     setError(null);
     setSaveMessage(null);
     setStage("intro");
@@ -433,6 +461,12 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
           onChange={chooseType}
           onContinue={() => setStage("tour")}
           onBack={() => setStage("intro")}
+          mustHaves={mustHaves}
+          onToggleMustHave={(id) =>
+            setMustHaves((list) =>
+              list.includes(id) ? list.filter((x) => x !== id) : [...list, id],
+            )
+          }
         />
       )}
       {stage === "tour" && (
@@ -454,6 +488,9 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
             forget(shotId);
           }}
           onPrompt={(shotId, prompt) => setCapture((state) => setPrompt(state, shotId, prompt))}
+          mustHaveStops={mustStops}
+          mustAnswers={mustAnswers}
+          onMustAnswer={(id, answer) => setMustAnswers((map) => ({ ...map, [id]: answer }))}
           onRemove={(shotId) => {
             setCapture((state) => clearSlot(state, shotId));
             forget(shotId);
@@ -505,6 +542,12 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
           onSave={save}
           onBack={() => setStage("tour")}
           onStartOver={startOver}
+          mustHaves={mustHaveResults(
+            view.source === "record" ? [] : mustHaves,
+            staticView?.source === "sample" ? SAMPLE_ANSWERS : mustAnswers,
+          )}
+          profileMessage={profileMessage}
+          onSaveToProfile={(snapshot) => onSaveToProfile?.(snapshot)}
         />
       )}
     </main>
