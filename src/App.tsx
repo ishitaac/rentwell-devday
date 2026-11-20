@@ -14,6 +14,16 @@ import {
 } from "./DemoAccountAccess";
 import { FinePrint } from "./finePrint/FinePrint";
 import { Walkthrough } from "./walkthrough/Walkthrough";
+import { getQuickDemoCredentials, isCloudAccountsEnabled } from "./cloud/client";
+import {
+  getCurrentCloudSession,
+  signInRenter,
+  signOutRenter,
+  signUpRenter,
+  watchCloudSession,
+  type CloudSession,
+} from "./cloud/auth";
+import { loadCloudPlan, saveCloudPlan } from "./cloud/plans";
 import type { RentalContext } from "./walkthrough/view";
 import { SavedWalkthroughs } from "./walkthrough/SavedWalkthroughs";
 import {
@@ -174,6 +184,15 @@ export function getRenterPrivacyNotice(
   return action === "sign-out"
     ? "Your sign-out could not be saved in browser storage. Close this tab or reset browser data before sharing this device."
     : "RentWell demo data may still be stored because browser storage could not be cleared.";
+}
+
+/** Real Supabase accounts are on when the public Supabase URL and anon key are configured. */
+const CLOUD_ACCOUNTS = isCloudAccountsEnabled();
+
+function cloudUserId(session: DemoSession | null): string | null {
+  return session && "userId" in session && typeof session.userId === "string"
+    ? session.userId
+    : null;
 }
 
 function getBrowserStorage(): StorageLike | null {
@@ -1384,7 +1403,8 @@ function App() {
   const [journeyNotice, setJourneyNotice] = useState<string | null>(null);
   const [advisorReviewedDecisionId, setAdvisorReviewedDecisionId] = useState<string | null>(null);
   const [advisorSkippedDecisionId, setAdvisorSkippedDecisionId] = useState<string | null>(null);
-  const [renterSession, setRenterSession] = useState<DemoSession | null>(() => {
+  const [renterSession, setRenterSession] = useState<DemoSession | CloudSession | null>(() => {
+    if (CLOUD_ACCOUNTS) return null; // restored from Supabase in the effect below
     const storage = getBrowserStorage();
     if (!storage) return null;
     const result = loadDemoSession(storage, "renter");
@@ -1394,6 +1414,8 @@ function App() {
   const [planSaveState, setPlanSaveState] = useState<RentalPlanSaveState>("idle");
   const [accountMode, setAccountMode] = useState<DemoAccountMode>("sign-in");
   const [accountError, setAccountError] = useState<string | null>(null);
+  const [accountBusy, setAccountBusy] = useState(false);
+  const [accountNotice, setAccountNotice] = useState<string | null>(null);
   const [pendingPlanSave, setPendingPlanSave] = useState(false);
   const [savedDecisionIds, setSavedDecisionIds] = useState<string[]>([]);
   const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
@@ -1407,6 +1429,7 @@ function App() {
   );
   const [walkthroughMessage, setWalkthroughMessage] = useState<string | null>(null);
   const [walkthroughJustSaved, setWalkthroughJustSaved] = useState(false);
+  const [walkthroughAutoSave, setWalkthroughAutoSave] = useState(false);
   const [walkthroughVersion, setWalkthroughVersion] = useState(0);
   const go = (next: Screen) => {
     setScreen(next);
@@ -1475,6 +1498,29 @@ function App() {
     advisorSkippedDecisionId,
   );
 
+  useEffect(() => {
+    if (!CLOUD_ACCOUNTS) return;
+    let unsubscribe: (() => void) | null = null;
+    let cancelled = false;
+    getCurrentCloudSession()
+      .then((session) => {
+        if (!cancelled) setRenterSession(session);
+      })
+      .catch(() => undefined);
+    watchCloudSession((session) => {
+      if (!cancelled) setRenterSession(session);
+    })
+      .then((stop) => {
+        if (cancelled) stop();
+        else unsubscribe = stop;
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, []);
+
   const restoreSavedPlan = (plan: SavedRentalPlan) => {
     setActiveDecision(plan.decision);
     setDecisionOrigin(plan.decisionOrigin);
@@ -1504,6 +1550,15 @@ function App() {
       advisorStatus,
       savedAt: timestamp,
     };
+    const userId = cloudUserId(session);
+    if (userId) {
+      setPlanSaveState("saving");
+      void saveCloudPlan(userId, plan).then((result) => {
+        setPlanSaveState(getPlanSaveState(result));
+        if (result.ok) setSavedAt(timestamp);
+      });
+      return;
+    }
     const storage = getBrowserStorage();
     if (!storage) {
       setPlanSaveState("error");
@@ -1551,7 +1606,13 @@ function App() {
       go("renter-account");
       return;
     }
-    if (persistWalkthrough(renterSession, snapshot)) go("plan-summary");
+    if (!persistWalkthrough(renterSession, snapshot)) return;
+    if (cloudUserId(renterSession)) {
+      // Signed in to a real account: also upload the ZIP (photos). Stay here so the result shows.
+      setWalkthroughAutoSave(true);
+      return;
+    }
+    go("plan-summary");
   };
 
   const completeRenterAccess = (payload: DemoAccountSubmitPayload) => {
@@ -1568,11 +1629,23 @@ function App() {
     }
     setRenterSession(session);
     setAccountError(null);
+    void afterRenterSignIn(session);
+  };
+
+  /** After any successful sign-in: finish a pending save, or reopen the saved plan. */
+  const afterRenterSignIn = async (session: DemoSession | CloudSession) => {
     if (pendingWalkthroughSave) {
+      // A guest chose "Save walkthrough" before signing in: finish it now, so they never redo the tour.
       const snapshot = pendingWalkthroughSave;
       setPendingWalkthroughSave(null);
       persistWalkthrough(session, snapshot);
-      go("plan-summary");
+      if (cloudUserId(session)) {
+        // The ZIP with photos uploads from the Walkthrough screen, which still holds the tour.
+        setWalkthroughAutoSave(true);
+        go("walkthrough");
+      } else {
+        go("plan-summary");
+      }
       return;
     }
     if (pendingPlanSave && activeDecision) {
@@ -1582,13 +1655,42 @@ function App() {
       return;
     }
     if (shouldRestoreSavedPlan(activeDecision)) {
-      const loaded = loadSavedPlan(storage, session.email);
-      if (loaded.ok && loaded.value) {
-        restoreSavedPlan(loaded.value);
+      const userId = cloudUserId(session);
+      const plan = userId
+        ? await loadCloudPlan(userId)
+        : (() => {
+            const storage = getBrowserStorage();
+            const loaded = storage ? loadSavedPlan(storage, session.email) : null;
+            return loaded?.ok ? loaded.value : null;
+          })();
+      if (plan) {
+        restoreSavedPlan(plan);
         return;
       }
     }
     go(activeDecision ? "plan-summary" : "listings");
+  };
+
+  const completeCloudAccess = async (email: string, password: string, mode: DemoAccountMode) => {
+    setAccountBusy(true);
+    setAccountError(null);
+    setAccountNotice(null);
+    const result =
+      mode === "sign-in"
+        ? await signInRenter(email, password)
+        : await signUpRenter(email, password);
+    setAccountBusy(false);
+    if (!result.ok) {
+      if (result.needsConfirmation) {
+        setAccountMode("sign-in");
+        setAccountNotice(result.error);
+      } else {
+        setAccountError(result.error);
+      }
+      return;
+    }
+    setRenterSession(result.session);
+    await afterRenterSignIn(result.session);
   };
 
   const openMyPlan = () => {
@@ -1600,6 +1702,14 @@ function App() {
     }
     if (!shouldRestoreSavedPlan(activeDecision)) {
       go("plan-summary");
+      return;
+    }
+    const userId = cloudUserId(renterSession);
+    if (userId) {
+      void loadCloudPlan(userId).then((plan) => {
+        if (plan) restoreSavedPlan(plan);
+        else go("listings");
+      });
       return;
     }
     const storage = getBrowserStorage();
@@ -1689,11 +1799,34 @@ function App() {
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>
         </nav>
+        {!renterSession && CLOUD_ACCOUNTS && (
+          <div className="demo-account-menu">
+            <button
+              className="demo-account-signin"
+              onClick={() => {
+                setPendingPlanSave(false);
+                setAccountError(null);
+                setAccountMode("sign-in");
+                go("renter-account");
+              }}
+            >
+              Sign in
+            </button>
+          </div>
+        )}
         {renterSession && (
           <DemoAccountMenu
             session={renterSession}
             onOpenPlan={openMyPlan}
             onSignOut={() => {
+              if (cloudUserId(renterSession)) {
+                void signOutRenter().catch(() => undefined);
+                clearRenterDraft();
+                setRenterSession(null);
+                setJourneyNotice(null);
+                go("home");
+                return;
+              }
               const storage = getBrowserStorage();
               const result: StorageWriteResult = storage
                 ? clearDemoSession(storage, "renter")
@@ -1703,22 +1836,26 @@ function App() {
               setJourneyNotice(getRenterPrivacyNotice("sign-out", result));
               go("home");
             }}
-            onReset={() => {
-              if (
-                typeof window !== "undefined" &&
-                !window.confirm("Reset only the RentWell demo account and saved-plan data?")
-              ) {
-                return;
-              }
-              const storage = getBrowserStorage();
-              const result: StorageWriteResult = storage
-                ? resetRentwellDemoData(storage)
-                : { ok: false, error: "Browser storage is unavailable." };
-              clearRenterDraft();
-              setRenterSession(null);
-              setJourneyNotice(getRenterPrivacyNotice("reset", result));
-              go("home");
-            }}
+            onReset={
+              cloudUserId(renterSession)
+                ? undefined
+                : () => {
+                    if (
+                      typeof window !== "undefined" &&
+                      !window.confirm("Reset only the RentWell demo account and saved-plan data?")
+                    ) {
+                      return;
+                    }
+                    const storage = getBrowserStorage();
+                    const result: StorageWriteResult = storage
+                      ? resetRentwellDemoData(storage)
+                      : { ok: false, error: "Browser storage is unavailable." };
+                    clearRenterDraft();
+                    setRenterSession(null);
+                    setJourneyNotice(getRenterPrivacyNotice("reset", result));
+                    go("home");
+                  }
+            }
           />
         )}
         <button
@@ -1734,8 +1871,24 @@ function App() {
       {screen === "walkthrough" && (
         <Walkthrough
           rental={walkthroughRental}
+          account={
+            cloudUserId(renterSession)
+              ? { userId: cloudUserId(renterSession)!, displayName: renterSession!.displayName }
+              : null
+          }
+          onSignIn={
+            CLOUD_ACCOUNTS
+              ? () => {
+                  setPendingPlanSave(false);
+                  setAccountError(null);
+                  go("renter-account");
+                }
+              : undefined
+          }
           onSaveToProfile={requestWalkthroughSave}
           profileMessage={walkthroughMessage}
+          autoSaveToAccount={walkthroughAutoSave}
+          onAutoSaveDone={() => setWalkthroughAutoSave(false)}
         />
       )}
       {screen === "plan-summary" && savedWalkthroughs.length > 0 && (
@@ -1759,6 +1912,17 @@ function App() {
           onSubmit={completeRenterAccess}
           onCancel={() => go(activeDecision ? "plan-summary" : "home")}
           error={accountError}
+          cloud={
+            CLOUD_ACCOUNTS
+              ? {
+                  onSubmit: (email, password, mode) =>
+                    void completeCloudAccess(email, password, mode),
+                  busy: accountBusy,
+                  notice: accountNotice,
+                  quickLogin: getQuickDemoCredentials(),
+                }
+              : null
+          }
         />
       )}
       {screen === "listings" && (

@@ -33,6 +33,7 @@ import {
   type MustHaveAnswer,
 } from "./lib/mustHaves";
 import type { SavedWalkthrough } from "./lib/profile";
+import type { SavedWalkthrough as CloudSavedWalkthrough } from "../cloud/walkthroughs";
 import "./walkthrough.css";
 import "./tour.css";
 
@@ -145,19 +146,32 @@ function recordPhotos(view: ResultsView): {
   return { photos, slots };
 }
 
+/** A signed-in renter (Supabase). Null keeps the original download-only behaviour. */
+export type WalkthroughAccount = { userId: string; displayName: string };
+
 interface WalkthroughProps {
   rental?: RentalContext | null;
+  account?: WalkthroughAccount | null;
+  /** Shown as "Sign in to save to your account" when accounts exist but nobody is signed in. */
+  onSignIn?: () => void;
   /** Saves findings and questions to the renter's profile; the app handles sign-in first if needed. */
   onSaveToProfile?: (snapshot: SavedWalkthrough) => void;
   profileMessage?: string | null;
+  /** Set after a guest signs in (or saves while signed in): upload the ZIP to the account once. */
+  autoSaveToAccount?: boolean;
+  onAutoSaveDone?: () => void;
 }
 
 const SAMPLE_ANSWERS: Record<string, MustHaveAnswer> = { kitchen: "yes", light: "unsure" };
 
 export function Walkthrough({
   rental = null,
+  account = null,
+  onSignIn,
   onSaveToProfile,
   profileMessage = null,
+  autoSaveToAccount = false,
+  onAutoSaveDone,
 }: WalkthroughProps) {
   const [stage, setStage] = useState<Stage>(
     memory?.stage === "analyzing" ? "results" : (memory?.stage ?? "intro"),
@@ -179,6 +193,10 @@ export function Walkthrough({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [savedList, setSavedList] = useState<CloudSavedWalkthrough[] | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [openingId, setOpeningId] = useState<string | null>(null);
+  const accountId = account?.userId ?? null;
   // shotId -> photo id that the latest analysis belongs to, so a retake's result wins over an older one.
   const latest = useRef<Record<string, string>>({});
 
@@ -341,6 +359,21 @@ export function Walkthrough({
     window.setTimeout(() => setStage("results"), SAMPLE_DELAY_MS);
   };
 
+  const refreshSaved = useCallback(async () => {
+    if (!accountId) {
+      setSavedList(null);
+      return;
+    }
+    const { listWalkthroughs } = await import("../cloud/walkthroughs");
+    const list = await listWalkthroughs();
+    setSavedList(list ?? []);
+    setListError(list ? null : "Couldn't load your saved walkthroughs.");
+  }, [accountId]);
+
+  useEffect(() => {
+    if (stage === "intro") void refreshSaved();
+  }, [stage, refreshSaved]);
+
   const startTour = (demo: boolean) => {
     setIsDemo(demo);
     setStaticView(null);
@@ -348,11 +381,44 @@ export function Walkthrough({
     setStage("type");
   };
 
-  const openSaved = async (file: File) => {
+  const openSaved = async (file: File) => openRecordBytes(new Uint8Array(await file.arrayBuffer()));
+
+  const openFromAccount = async (saved: CloudSavedWalkthrough) => {
+    setError(null);
+    setOpeningId(saved.id);
+    try {
+      const { downloadWalkthrough } = await import("../cloud/walkthroughs");
+      const bytes = await downloadWalkthrough(saved.storagePath);
+      if (!bytes) {
+        setError("Couldn't download that walkthrough. Try again.");
+        return;
+      }
+      await openRecordBytes(bytes);
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const deleteFromAccount = async (saved: CloudSavedWalkthrough) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm("Delete this saved walkthrough from your account?")
+    ) {
+      return;
+    }
+    const { deleteWalkthrough } = await import("../cloud/walkthroughs");
+    if (await deleteWalkthrough(saved)) {
+      setSavedList((list) => list?.filter((item) => item.id !== saved.id) ?? null);
+    } else {
+      setListError("Couldn't delete that walkthrough. Try again.");
+    }
+  };
+
+  const openRecordBytes = async (bytes: Uint8Array) => {
     setError(null);
     try {
       const { openRecord, recordAnalyses } = await import("./lib/record");
-      const opened = openRecord(new Uint8Array(await file.arrayBuffer()));
+      const opened = openRecord(bytes);
       const takenAt: ResultsView["takenAt"] = {};
       const notes: Record<string, string> = {};
       const quickChecks: Record<string, QuickAnswer> = {};
@@ -389,7 +455,7 @@ export function Walkthrough({
     }
   };
 
-  const save = async () => {
+  const save = async (target: "download" | "account" = "download") => {
     setSaving(true);
     setSaveMessage(null);
     try {
@@ -413,6 +479,24 @@ export function Walkthrough({
         rental: view.rental,
         isSample: view.source === "sample",
       });
+      if (target === "account" && account) {
+        const { uploadWalkthrough } = await import("../cloud/walkthroughs");
+        const result = await uploadWalkthrough({
+          userId: account.userId,
+          zip,
+          rentalName: saved.rental?.name ?? null,
+          unitType: saved.unitType,
+          photoCount: Object.keys(realPhotos).length,
+          isSample: saved.isSample,
+          recordedAt: saved.createdAt,
+        });
+        setSaveMessage(
+          result.ok
+            ? "Saved to your account. Reopen it any time from Walkthrough."
+            : `${result.error} You can still download a copy.`,
+        );
+        return;
+      }
       downloadBytes(zip, recordFileName(saved));
       setSaveMessage("Saved to your downloads. Keep it until you move out.");
     } catch {
@@ -421,6 +505,16 @@ export function Walkthrough({
       setSaving(false);
     }
   };
+
+  // A guest chose "Save walkthrough", signed in, and came back: upload once, after photos finish reading.
+  const autoSaved = useRef(false);
+  useEffect(() => {
+    if (!autoSaveToAccount || !account || stage !== "results" || view.pending.length > 0) return;
+    if (autoSaved.current) return;
+    autoSaved.current = true;
+    void save("account").finally(() => onAutoSaveDone?.());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSaveToAccount, account, stage, view.pending.length]);
 
   const onNote = (shotId: string, note: string) => {
     if (staticView) {
@@ -453,6 +547,13 @@ export function Walkthrough({
           onDemo={() => startTour(true)}
           onSample={runSample}
           onOpenRecord={openSaved}
+          account={account}
+          onSignIn={onSignIn}
+          saved={savedList}
+          savedError={listError}
+          openingId={openingId}
+          onOpenSaved={openFromAccount}
+          onDeleteSaved={deleteFromAccount}
         />
       )}
       {stage === "type" && (
@@ -540,6 +641,8 @@ export function Walkthrough({
           onNote={onNote}
           onRetry={retry}
           onSave={save}
+          signedIn={Boolean(account)}
+          onSignIn={onSignIn}
           onBack={() => setStage("tour")}
           onStartOver={startOver}
           mustHaves={mustHaveResults(
