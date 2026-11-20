@@ -20,9 +20,11 @@ function formatDate(value: string): string {
 export function ListingCard({
   listing,
   onViewDetails,
+  showAction = true,
 }: {
   listing: DemoListing;
   onViewDetails: (listing: DemoListing) => void;
+  showAction?: boolean;
 }) {
   const { synthetic } = listing;
   const receipt = buildListingDecisionReceipt(listing, RENT_SNAPSHOT);
@@ -55,9 +57,11 @@ export function ListingCard({
           <span>Complete fee disclosure</span>
         </div>
 
-        <button className="listing-card-action" onClick={() => onViewDetails(listing)}>
-          View details <span aria-hidden="true">→</span>
-        </button>
+        {showAction && (
+          <button className="listing-card-action" onClick={() => onViewDetails(listing)}>
+            View details <span aria-hidden="true">→</span>
+          </button>
+        )}
       </div>
     </article>
   );
@@ -147,6 +151,7 @@ export function ListingDetails({
   compared = false,
   tourRequested = false,
   showCalculation,
+  backLabel = "Back to listings",
   onBack,
   onToggleSaved,
   onToggleCompared = () => undefined,
@@ -158,6 +163,7 @@ export function ListingDetails({
   compared?: boolean;
   tourRequested?: boolean;
   showCalculation: boolean;
+  backLabel?: string;
   onBack: () => void;
   onToggleSaved: () => void;
   onToggleCompared?: () => void;
@@ -175,7 +181,7 @@ export function ListingDetails({
   return (
     <main className="listing-details-page">
       <button className="listing-back" onClick={onBack}>
-        <span aria-hidden="true">←</span> Back to listings
+        <span aria-hidden="true">←</span> {backLabel}
       </button>
 
       <div className="listing-details-layout">
