@@ -11,8 +11,6 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    env:
-      VITE_ROOMMATE_AI: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,3 +24,7 @@ jobs:
       - run: pnpm test
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
+      - name: Build with roommate AI flag
+        run: pnpm build
+        env:
+          VITE_ROOMMATE_AI: "1"
