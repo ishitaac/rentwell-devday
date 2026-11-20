@@ -146,6 +146,7 @@ describe("ListingDetails", () => {
     expect(html).toContain("How we calculated this");
     expect(html).toContain("Save listing");
     expect(html).toContain("Request a tour");
+    expect(html).toContain("View my rental plan");
     expect(html).toContain("Back to listings");
   });
 

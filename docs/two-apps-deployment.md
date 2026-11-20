@@ -3,17 +3,18 @@
 The renter app and the property-manager app live in this repository and share the
 code in `src/`. Each is deployed as its own Vercel project with its own URL.
 
-| | Renter app | Manager app |
-| --- | --- | --- |
-| Entry page | `index.html` → `src/main.tsx` | `manager.html` → `src/manager/main.tsx` |
-| Vite config | `vite.config.ts` | `vite.manager.config.ts` |
-| Build command | `pnpm build` | `pnpm build:manager` |
-| Output directory | `dist` | `dist-manager` |
-| Local dev | `pnpm dev` → http://localhost:5173 | `pnpm dev:manager` → http://localhost:5174/manager.html |
-| Env var | `VITE_MANAGER_URL` = manager app URL | `VITE_RENTER_URL` = renter app URL |
+|                  | Renter app                           | Manager app                                             |
+| ---------------- | ------------------------------------ | ------------------------------------------------------- |
+| Entry page       | `index.html` → `src/main.tsx`        | `manager.html` → `src/manager/main.tsx`                 |
+| Vite config      | `vite.config.ts`                     | `vite.manager.config.ts`                                |
+| Build command    | `pnpm build`                         | `pnpm build:manager`                                    |
+| Output directory | `dist`                               | `dist-manager`                                          |
+| Local dev        | `pnpm dev` → http://localhost:5173   | `pnpm dev:manager` → http://localhost:5174/manager.html |
+| Env var          | `VITE_MANAGER_URL` = manager app URL | `VITE_RENTER_URL` = renter app URL                      |
 
 Flow: a renter clicks **For property managers** in the header, which opens the manager
-app in a new tab. The manager sees a sign-in page, then the dashboard.
+app in a new tab. The manager sees a sign-in page, chooses **Start free pilot** or
+**Request a demo**, then enters the dashboard.
 
 ## Demo sign-in
 
@@ -23,6 +24,9 @@ app in a new tab. The manager sees a sign-in page, then the dashboard.
 The sign-in page also has a **Fill demo credentials** button. This is a client-side demo
 gate only: it protects nothing, there are no real accounts, and the credentials are
 visible on the page on purpose. Real authentication is a post-DevDay roadmap item.
+
+The pilot choice is also demo-only and stored in that browser. No payment is collected,
+and subscription pricing has not been finalized.
 
 Edits made in the manager app are held in browser memory and are **not** shared with the
 renter app (they are different sites). Do not describe it as live sync.

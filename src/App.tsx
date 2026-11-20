@@ -6,11 +6,33 @@ import {
   TrueHousingCost,
   type AdvisorScreen,
 } from "./Advisor";
+import {
+  DemoAccountAccess,
+  DemoAccountMenu,
+  type DemoAccountMode,
+  type DemoAccountSubmitPayload,
+} from "./DemoAccountAccess";
 import { FinePrint } from "./finePrint/FinePrint";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
+import { RentalPlanSummary, type RentalPlanSaveState } from "./RentalPlan";
 import { RentalEntry } from "./RentalEntry";
 import rentSnapshotData from "./data/rentcast-slc.json";
+import {
+  clearDemoSession,
+  createDemoSession,
+  loadDemoSession,
+  loadSavedPlan,
+  resetRentwellDemoData,
+  saveDemoSession,
+  saveSavedPlan,
+  type DecisionOrigin,
+  type DemoSession,
+  type RoommateSelection,
+  type SavedRentalPlan,
+  type StorageLike,
+  type StorageWriteResult,
+} from "./demoAccount";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
 import {
   createDemoRentalDecision,
@@ -25,6 +47,12 @@ import {
   getRoommateStages,
   type RoommatePlanningContext,
 } from "./roommatePlanning";
+import {
+  ROOMMATE_PROFILES,
+  createRoommateSelection,
+  resolveRentalSelection,
+  type RoommateProfile,
+} from "./roommateProfiles";
 import {
   calculateRentComparison,
   describeComparisonMethod,
@@ -42,6 +70,8 @@ type Screen =
   | "math"
   | "preferences"
   | "matches"
+  | "plan-summary"
+  | "renter-account"
   | "roommate-ai"
   | "fineprint"
   | AdvisorScreen;
@@ -65,7 +95,7 @@ export const HERO_IMAGE = "/listings/interior-warm.jpg";
 export const APARTMENT_IMAGE = "/listings/interior-blue.jpg";
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
 
-export type DecisionOrigin = "listings" | "rental-entry";
+export type { DecisionOrigin } from "./demoAccount";
 
 /**
  * The property-manager workspace is a separate application with its own URL
@@ -78,14 +108,71 @@ export const MANAGER_APP_URL: string =
   import.meta.env.VITE_MANAGER_URL ||
   (import.meta.env.DEV ? "http://localhost:5174/manager.html" : DEFAULT_MANAGER_APP_URL);
 
-export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
-  return origin;
+export function getDecisionBackScreen(origin: DecisionOrigin): "listings" | "rental-entry" {
+  return origin === "manager" ? "listings" : origin;
 }
 
 export function getAdvisorEntryScreen(
   decision: Pick<RentalDecisionRecord, "decisionId"> | null,
 ): "advisor" | "rental-entry" {
   return decision ? "advisor" : "rental-entry";
+}
+
+export function getAdvisorPlanStatus(
+  activeDecisionId: string | null,
+  reviewedDecisionId: string | null,
+  skippedDecisionId: string | null,
+): "not-started" | "reviewed" | "skipped" {
+  if (!activeDecisionId) return "not-started";
+  if (reviewedDecisionId === activeDecisionId) return "reviewed";
+  if (skippedDecisionId === activeDecisionId) return "skipped";
+  return "not-started";
+}
+
+export function getPlanSaveDestination(
+  session: DemoSession | null,
+): "plan-summary" | "renter-account" {
+  return session?.role === "renter" ? "plan-summary" : "renter-account";
+}
+
+export function canViewSavedPlan(
+  session: DemoSession | null,
+  plan: SavedRentalPlan | null,
+): boolean {
+  return Boolean(
+    session?.role === "renter" &&
+    plan &&
+    session.email.trim().toLowerCase() === plan.ownerEmail.trim().toLowerCase(),
+  );
+}
+
+export function getPlanSaveState(result: StorageWriteResult): RentalPlanSaveState {
+  return result.ok ? "saved" : "error";
+}
+
+export function shouldRestoreSavedPlan(
+  activeDecision: Pick<RentalDecisionRecord, "decisionId"> | null,
+): boolean {
+  return activeDecision === null;
+}
+
+export function getRenterPrivacyNotice(
+  action: "sign-out" | "reset",
+  result: StorageWriteResult,
+): string | null {
+  if (result.ok) return null;
+  return action === "sign-out"
+    ? "Your sign-out could not be saved in browser storage. Close this tab or reset browser data before sharing this device."
+    : "RentWell demo data may still be stored because browser storage could not be cleared.";
+}
+
+function getBrowserStorage(): StorageLike | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 export function refreshActiveDecisionFromListings(
@@ -109,7 +196,7 @@ export function getNavSection(
     return "listings";
   }
   if (screen === "fineprint") return "fineprint";
-  if (screen === "home") return "";
+  if (["home", "plan-summary", "renter-account"].includes(screen)) return "";
   return "rental";
 }
 
@@ -352,11 +439,24 @@ function Field({
   );
 }
 
-export function Home({ go }: { go: (screen: Screen) => void }) {
+export function Home({
+  go,
+  journeyNotice,
+}: {
+  go: (screen: Screen) => void;
+  journeyNotice?: string | null;
+}) {
   const sampleListing = getDemoListings(demoListingsDataset)[2].synthetic;
 
   return (
     <main>
+      {journeyNotice && (
+        <div className="journey-notice" role="status">
+          <Icon name="check" size={18} />
+          <span>{journeyNotice}</span>
+          <button onClick={() => go("listings")}>Choose a rental</button>
+        </div>
+      )}
       <section className="hero">
         <div className="hero-copy">
           <div className="location-pill">
@@ -1105,56 +1205,14 @@ export function Preferences({
   );
 }
 
-const profiles = [
-  {
-    initials: "MJ",
-    name: "Maya J.",
-    score: 94,
-    role: "Fictional profile · Graduate student",
-    budget: "$1,050–$1,250",
-    area: "The Avenues, Central City",
-    matches: [
-      "Similar tidy-but-not-perfect style",
-      "Compatible move-in timing",
-      "Friendly, independent home vibe",
-    ],
-    difference: "Maya starts her day earlier and prefers quiet after 10:30 PM.",
-    color: "peach",
-  },
-  {
-    initials: "AK",
-    name: "Alex K.",
-    score: 89,
-    role: "Fictional profile · UX designer",
-    budget: "$1,100–$1,350",
-    area: "The Avenues, Downtown",
-    matches: [
-      "Great fit with your stated housing budget",
-      "Similar approach to occasional guests",
-      "Both value clear chore expectations",
-    ],
-    difference: "Alex works from home three days a week.",
-    color: "mint-avatar",
-  },
-  {
-    initials: "RS",
-    name: "Riley S.",
-    score: 83,
-    role: "Fictional profile · Research assistant",
-    budget: "$950–$1,200",
-    area: "Central City, 9th & 9th",
-    matches: ["Flexible on neighborhood", "Compatible shared-space habits", "Same move-in window"],
-    difference: "Riley prefers a more social household on weekends.",
-    color: "blue-avatar",
-  },
-];
-
 export function Matches({
   context,
   go,
+  onChooseRoommate,
 }: {
   context: RoommatePlanningContext;
   go: (screen: Screen) => void;
+  onChooseRoommate: (profile: RoommateProfile) => void;
 }) {
   const [open, setOpen] = useState(0);
   const rental = context.rental;
@@ -1190,7 +1248,7 @@ export function Matches({
         </div>
       )}
       <div className="match-list">
-        {profiles.map((profile, index) => (
+        {ROOMMATE_PROFILES.map((profile, index) => (
           <article className={`match-card ${open === index ? "open" : ""}`} key={profile.name}>
             <div className="profile-core">
               <div className={`profile-avatar ${profile.color}`}>
@@ -1240,16 +1298,23 @@ export function Matches({
                 </div>
               </div>
               <div className="match-actions">
-                <Button onClick={() => setOpen(index)}>
-                  {open === index ? "Profile selected" : "View match details"}{" "}
-                  {open === index && <Icon name="check" size={17} />}
+                <Button onClick={() => onChooseRoommate(profile)}>
+                  Choose this roommate <Icon name="check" size={17} />
                 </Button>
+                <button className="text-button" onClick={() => setOpen(index)}>
+                  {open === index ? "Details expanded" : "View match details"}
+                </button>
                 {rental && (
                   <button className="text-button" onClick={() => go("math")}>
                     See apartment split <Icon name="arrow" size={16} />
                   </button>
                 )}
               </div>
+              <p className="roommate-choice-handoff">
+                {rental
+                  ? `Add ${profile.name} to My Rental Plan for ${rental.title}.`
+                  : "Choose a rental next. We’ll keep this roommate choice pending without inventing a monthly share."}
+              </p>
             </div>
           </article>
         ))}
@@ -1297,6 +1362,24 @@ function App() {
   const [roommateContext, setRoommateContext] = useState<RoommatePlanningContext>(() =>
     createRoommateFirstContext(),
   );
+  const [selectedRoommate, setSelectedRoommate] = useState<RoommateSelection | null>(null);
+  const [roommateStatus, setRoommateStatus] = useState<"not-started" | "selected" | "skipped">(
+    "not-started",
+  );
+  const [journeyNotice, setJourneyNotice] = useState<string | null>(null);
+  const [advisorReviewedDecisionId, setAdvisorReviewedDecisionId] = useState<string | null>(null);
+  const [advisorSkippedDecisionId, setAdvisorSkippedDecisionId] = useState<string | null>(null);
+  const [renterSession, setRenterSession] = useState<DemoSession | null>(() => {
+    const storage = getBrowserStorage();
+    if (!storage) return null;
+    const result = loadDemoSession(storage, "renter");
+    return result.ok ? result.value : null;
+  });
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [planSaveState, setPlanSaveState] = useState<RentalPlanSaveState>("idle");
+  const [accountMode, setAccountMode] = useState<DemoAccountMode>("sign-in");
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [pendingPlanSave, setPendingPlanSave] = useState(false);
   const [savedDecisionIds, setSavedDecisionIds] = useState<string[]>([]);
   const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
   const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
@@ -1305,21 +1388,31 @@ function App() {
     setScreen(next);
     setMenu(false);
   };
-  const openListing = (listing: DemoListing) => {
-    setActiveDecision(createDemoRentalDecision(listing));
-    setDecisionOrigin("listings");
+  const markPlanDirty = () => {
+    setSavedAt(null);
+    setPlanSaveState("idle");
+  };
+  const activateDecision = (decision: RentalDecisionRecord, origin: DecisionOrigin) => {
+    const resolved = resolveRentalSelection(selectedRoommate, decision.decisionId);
+    setActiveDecision(decision);
+    setDecisionOrigin(origin);
+    setSelectedRoommate(resolved.roommate);
+    setRoommateStatus(resolved.roommateStatus);
     setShowCalculation(false);
-    go("listing-details");
+    setJourneyNotice(null);
+    markPlanDirty();
+    go(resolved.destination);
+  };
+  const openListing = (listing: DemoListing) => {
+    activateDecision(createDemoRentalDecision(listing), "listings");
   };
   const openExternalDecision = (entry: ExternalRentalEntry) => {
     setExternalEntry(entry);
-    setActiveDecision(createExternalRentalDecision(entry));
-    setDecisionOrigin("rental-entry");
-    setShowCalculation(false);
-    go("listing-details");
+    activateDecision(createExternalRentalDecision(entry), "rental-entry");
   };
   const startRoommateFirst = () => {
     setRoommateContext(createRoommateFirstContext());
+    setJourneyNotice(null);
     go("preferences");
   };
   const planWithRoommates = () => {
@@ -1327,10 +1420,152 @@ function App() {
     setRoommateContext(createRentalFirstRoommateContext(activeDecision));
     go("math");
   };
+  const chooseRoommate = (profile: RoommateProfile) => {
+    const decisionId = roommateContext.rental?.decisionId ?? null;
+    const selection = createRoommateSelection(profile, decisionId);
+    setSelectedRoommate(selection);
+    setRoommateStatus("selected");
+    markPlanDirty();
+    if (decisionId && activeDecision?.decisionId === decisionId) {
+      setJourneyNotice(null);
+      go("plan-summary");
+      return;
+    }
+    setJourneyNotice(
+      `${profile.name} is saved as your pending roommate choice. Choose a rental to calculate the real share.`,
+    );
+    go("home");
+  };
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
   const navActive = useMemo(() => getNavSection(screen, decisionOrigin), [decisionOrigin, screen]);
+  const advisorStatus = getAdvisorPlanStatus(
+    activeDecision?.decisionId ?? null,
+    advisorReviewedDecisionId,
+    advisorSkippedDecisionId,
+  );
+
+  const restoreSavedPlan = (plan: SavedRentalPlan) => {
+    setActiveDecision(plan.decision);
+    setDecisionOrigin(plan.decisionOrigin);
+    setSelectedRoommate(plan.roommate);
+    setRoommateStatus(plan.roommateStatus);
+    setAdvisorReviewedDecisionId(
+      plan.advisorStatus === "reviewed" ? plan.advisorReviewedDecisionId : null,
+    );
+    setAdvisorSkippedDecisionId(plan.advisorStatus === "skipped" ? plan.decision.decisionId : null);
+    setSavedAt(plan.savedAt);
+    setPlanSaveState("saved");
+    setJourneyNotice(null);
+    go("plan-summary");
+  };
+
+  const saveCurrentPlan = (session: DemoSession) => {
+    if (!activeDecision) return;
+    const timestamp = new Date().toISOString();
+    const plan: SavedRentalPlan = {
+      version: 1,
+      ownerEmail: session.email,
+      decision: activeDecision,
+      decisionOrigin,
+      roommate: selectedRoommate,
+      roommateStatus,
+      advisorReviewedDecisionId: advisorStatus === "reviewed" ? activeDecision.decisionId : null,
+      advisorStatus,
+      savedAt: timestamp,
+    };
+    const storage = getBrowserStorage();
+    if (!storage) {
+      setPlanSaveState("error");
+      return;
+    }
+    setPlanSaveState("saving");
+    const result = saveSavedPlan(storage, plan);
+    setPlanSaveState(getPlanSaveState(result));
+    if (result.ok) {
+      setSavedAt(timestamp);
+    }
+  };
+
+  const requestPlanSave = () => {
+    if (!activeDecision) return;
+    if (!renterSession) {
+      setPendingPlanSave(true);
+      setAccountError(null);
+      go("renter-account");
+      return;
+    }
+    saveCurrentPlan(renterSession);
+  };
+
+  const completeRenterAccess = (payload: DemoAccountSubmitPayload) => {
+    const session = createDemoSession(payload.email, "renter");
+    const storage = getBrowserStorage();
+    if (!storage) {
+      setAccountError("Browser storage is unavailable. You can still continue without saving.");
+      return;
+    }
+    const sessionResult = saveDemoSession(storage, session);
+    if (!sessionResult.ok) {
+      setAccountError(sessionResult.error);
+      return;
+    }
+    setRenterSession(session);
+    setAccountError(null);
+    if (pendingPlanSave && activeDecision) {
+      setPendingPlanSave(false);
+      saveCurrentPlan(session);
+      go("plan-summary");
+      return;
+    }
+    if (shouldRestoreSavedPlan(activeDecision)) {
+      const loaded = loadSavedPlan(storage, session.email);
+      if (loaded.ok && loaded.value) {
+        restoreSavedPlan(loaded.value);
+        return;
+      }
+    }
+    go(activeDecision ? "plan-summary" : "listings");
+  };
+
+  const openMyPlan = () => {
+    if (!renterSession) {
+      setPendingPlanSave(false);
+      setAccountError(null);
+      go("renter-account");
+      return;
+    }
+    if (!shouldRestoreSavedPlan(activeDecision)) {
+      go("plan-summary");
+      return;
+    }
+    const storage = getBrowserStorage();
+    if (storage) {
+      const loaded = loadSavedPlan(storage, renterSession.email);
+      if (loaded.ok && loaded.value && canViewSavedPlan(renterSession, loaded.value)) {
+        restoreSavedPlan(loaded.value);
+        return;
+      }
+    }
+    go(activeDecision ? "plan-summary" : "listings");
+  };
+
+  const clearRenterDraft = () => {
+    setActiveDecision(null);
+    setDecisionOrigin("listings");
+    setExternalEntry({ ...INITIAL_EXTERNAL_ENTRY });
+    setRoommateContext(createRoommateFirstContext());
+    setSelectedRoommate(null);
+    setRoommateStatus("not-started");
+    setAdvisorReviewedDecisionId(null);
+    setAdvisorSkippedDecisionId(null);
+    setSavedAt(null);
+    setPlanSaveState("idle");
+    setPendingPlanSave(false);
+    setJourneyNotice(null);
+    setShowCalculation(false);
+  };
 
   return (
     <div className="site-shell">
@@ -1375,6 +1610,9 @@ function App() {
             Fine Print
           </button>
           <button onClick={() => go("home")}>How It Works</button>
+          <button className={screen === "plan-summary" ? "active" : ""} onClick={openMyPlan}>
+            My Plan
+          </button>
           <a
             className="btn-secondary manager-role-entry"
             href={MANAGER_APP_URL}
@@ -1387,6 +1625,38 @@ function App() {
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>
         </nav>
+        {renterSession && (
+          <DemoAccountMenu
+            session={renterSession}
+            onOpenPlan={openMyPlan}
+            onSignOut={() => {
+              const storage = getBrowserStorage();
+              const result: StorageWriteResult = storage
+                ? clearDemoSession(storage, "renter")
+                : { ok: false, error: "Browser storage is unavailable." };
+              clearRenterDraft();
+              setRenterSession(null);
+              setJourneyNotice(getRenterPrivacyNotice("sign-out", result));
+              go("home");
+            }}
+            onReset={() => {
+              if (
+                typeof window !== "undefined" &&
+                !window.confirm("Reset only the RentWell demo account and saved-plan data?")
+              ) {
+                return;
+              }
+              const storage = getBrowserStorage();
+              const result: StorageWriteResult = storage
+                ? resetRentwellDemoData(storage)
+                : { ok: false, error: "Browser storage is unavailable." };
+              clearRenterDraft();
+              setRenterSession(null);
+              setJourneyNotice(getRenterPrivacyNotice("reset", result));
+              go("home");
+            }}
+          />
+        )}
         <button
           className="menu-button"
           onClick={() => setMenu(!menu)}
@@ -1395,8 +1665,18 @@ function App() {
           <Icon name={menu ? "x" : "menu"} />
         </button>
       </header>
-      {screen === "home" && <Home go={go} />}
+      {screen === "home" && <Home go={go} journeyNotice={journeyNotice} />}
       {screen === "fineprint" && <FinePrint />}
+      {screen === "renter-account" && (
+        <DemoAccountAccess
+          role="renter"
+          mode={accountMode}
+          onModeChange={setAccountMode}
+          onSubmit={completeRenterAccess}
+          onCancel={() => go(activeDecision ? "plan-summary" : "home")}
+          error={accountError}
+        />
+      )}
       {screen === "listings" && (
         <ListingsBrowser
           listings={demoListings}
@@ -1414,7 +1694,9 @@ function App() {
           compared={comparedDecisionIds.includes(activeDecision.decisionId)}
           tourRequested={tourRequestedIds.includes(activeDecision.decisionId)}
           showCalculation={showCalculation}
-          backLabel={decisionOrigin === "rental-entry" ? "Back to rental entry" : "Back to listings"}
+          backLabel={
+            decisionOrigin === "rental-entry" ? "Back to rental entry" : "Back to listings"
+          }
           onBack={() => go(getDecisionBackScreen(decisionOrigin))}
           onToggleSaved={() =>
             setSavedDecisionIds((current) =>
@@ -1439,6 +1721,7 @@ function App() {
           }
           onPlanWithRoommates={planWithRoommates}
           onOpenAdvisor={() => go("advisor")}
+          onOpenPlan={() => go("plan-summary")}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
         />
       )}
@@ -1457,14 +1740,51 @@ function App() {
         />
       )}
       {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
-      {screen === "matches" && <Matches context={roommateContext} go={go} />}
-      {screen === "roommate-ai" && ROOMMATE_AI_ENABLED && (
-        <RoommateAI onExit={(to) => go(to)} />
+      {screen === "matches" && (
+        <Matches context={roommateContext} go={go} onChooseRoommate={chooseRoommate} />
+      )}
+      {screen === "roommate-ai" && ROOMMATE_AI_ENABLED && <RoommateAI onExit={(to) => go(to)} />}
+      {screen === "plan-summary" && activeDecision && (
+        <RentalPlanSummary
+          decision={activeDecision}
+          roommate={selectedRoommate}
+          roommateStatus={roommateStatus}
+          advisorStatus={advisorStatus}
+          savedAt={savedAt}
+          saveState={planSaveState}
+          onViewReceipt={() => go("listing-details")}
+          onChangeRental={() => go("listings")}
+          onExploreRoommates={planWithRoommates}
+          onChangeRoommate={planWithRoommates}
+          onReviewAdvisor={() => go("advisor")}
+          onViewAdvisor={() => go("decision")}
+          onSkipRoommate={() => {
+            setSelectedRoommate(null);
+            setRoommateStatus("skipped");
+            markPlanDirty();
+          }}
+          onSkipAdvisor={() => {
+            if (!activeDecision) return;
+            setAdvisorSkippedDecisionId(activeDecision.decisionId);
+            setAdvisorReviewedDecisionId(null);
+            markPlanDirty();
+          }}
+          onSave={requestPlanSave}
+          onContinueWithoutSaving={() => go("home")}
+        />
       )}
       {screen === "advisor" && activeDecision && <AdvisorHome decision={activeDecision} go={go} />}
       {screen === "lease" && activeDecision && <LeaseAnalysis decision={activeDecision} go={go} />}
       {screen === "truecost" && activeDecision && (
-        <TrueHousingCost decision={activeDecision} go={go} />
+        <TrueHousingCost
+          decision={activeDecision}
+          go={go}
+          onCompleteReview={() => {
+            setAdvisorReviewedDecisionId(activeDecision.decisionId);
+            setAdvisorSkippedDecisionId(null);
+            markPlanDirty();
+          }}
+        />
       )}
       {screen === "decision" && activeDecision && (
         <DecisionSummary
@@ -1472,6 +1792,12 @@ function App() {
           go={go}
           onBackToDecision={() => go("listing-details")}
           onPlanWithRoommates={planWithRoommates}
+          onAddToPlan={() => {
+            setAdvisorReviewedDecisionId(activeDecision.decisionId);
+            setAdvisorSkippedDecisionId(null);
+            markPlanDirty();
+            go("plan-summary");
+          }}
         />
       )}
       <footer>

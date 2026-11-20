@@ -2,11 +2,30 @@ import { useEffect, useMemo, useState } from "react";
 
 import { demoListingsDataset, getDemoListings, type DemoListing } from "../demoListings";
 import { RentalDecisionDetails } from "../Listings";
+import { ManagerPilot } from "../ManagerPilot";
 import { ManagerWorkspace } from "../ManagerWorkspace";
+import { loadManagerPilot, saveManagerPilot, type ManagerPilotChoice } from "../demoAccount";
 import { createDemoRentalDecision } from "../rentalDecision";
 import { clearSession, readSession, writeSession } from "./auth";
 import { getRenterUrl } from "./links";
 import { ManagerLogin } from "./ManagerLogin";
+
+export function getManagerStage(
+  sessionEmail: string | null,
+  pilotChoice: ManagerPilotChoice | null,
+): "login" | "pilot" | "workspace" {
+  if (!sessionEmail) return "login";
+  return pilotChoice ? "workspace" : "pilot";
+}
+
+function readPilotChoice(): ManagerPilotChoice | null {
+  try {
+    const result = loadManagerPilot(window.localStorage);
+    return result.ok ? result.value : null;
+  } catch {
+    return null;
+  }
+}
 
 function HomeMark() {
   return (
@@ -61,6 +80,10 @@ function RenterPreview({ listing, onBack }: { listing: DemoListing; onBack: () =
 
 export function ManagerApp() {
   const [sessionEmail, setSessionEmail] = useState<string | null>(() => readSession());
+  const [pilotChoice, setPilotChoice] = useState<ManagerPilotChoice | null>(() =>
+    readPilotChoice(),
+  );
+  const [pilotError, setPilotError] = useState<string | null>(null);
   const [listings, setListings] = useState<DemoListing[]>(() =>
     getDemoListings(demoListingsDataset),
   );
@@ -84,6 +107,16 @@ export function ManagerApp() {
     setPreviewId(null);
     setSessionEmail(null);
   };
+  const choosePilot = (choice: ManagerPilotChoice) => {
+    try {
+      const result = saveManagerPilot(window.localStorage, choice);
+      setPilotError(result.ok ? null : result.error);
+    } catch {
+      setPilotError("Browser storage is unavailable. Your pilot choice is temporary.");
+    }
+    setPilotChoice(choice);
+  };
+  const managerStage = getManagerStage(sessionEmail, pilotChoice);
 
   return (
     <div className="site-shell mgr-shell">
@@ -114,9 +147,18 @@ export function ManagerApp() {
         </div>
       </header>
 
-      {!sessionEmail && <ManagerLogin onSignedIn={signIn} />}
+      {managerStage === "login" && <ManagerLogin onSignedIn={signIn} />}
 
-      {sessionEmail && (
+      {managerStage === "pilot" && (
+        <ManagerPilot
+          onStartPilot={() => choosePilot("started")}
+          onRequestDemo={() => choosePilot("requested")}
+          onSignOut={signOut}
+          error={pilotError}
+        />
+      )}
+
+      {managerStage === "workspace" && (
         <>
           {/* Kept mounted while previewing so an open editor draft is not lost. */}
           <div className="mgr-workspace" hidden={previewListing !== null}>
@@ -133,8 +175,8 @@ export function ManagerApp() {
       )}
 
       <footer className="mgr-footer">
-        RentWell for property managers · Demo workspace with synthetic listings. Edits are not
-        saved or shared with the renter app.
+        RentWell for property managers · Demo workspace with synthetic listings. Edits are not saved
+        or shared with the renter app.
       </footer>
     </div>
   );

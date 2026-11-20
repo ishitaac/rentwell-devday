@@ -16,7 +16,13 @@ describe("Advisor rental context", () => {
   });
 
   it("uses the shared rental costs instead of a second fictional cost calculation", () => {
-    const html = renderToStaticMarkup(<TrueHousingCost decision={decision} go={() => undefined} />);
+    const html = renderToStaticMarkup(
+      <TrueHousingCost
+        decision={decision}
+        go={() => undefined}
+        onCompleteReview={() => undefined}
+      />,
+    );
 
     expect(html).toContain("$1,299");
     expect(html).toContain("$65");
@@ -40,6 +46,7 @@ describe("Advisor rental context", () => {
         go={() => undefined}
         onBackToDecision={() => undefined}
         onPlanWithRoommates={() => undefined}
+        onAddToPlan={() => undefined}
       />,
     );
 
@@ -48,6 +55,7 @@ describe("Advisor rental context", () => {
     expect(html).toContain("$1,364");
     expect(html).toContain("Back to Decision Receipt");
     expect(html).toContain("Plan with roommates");
+    expect(html).toContain("Add Advisor findings to My Rental Plan");
     expect(html).not.toContain("24 sample listings");
     expect(html).not.toContain("View fictional roommate matches");
   });
@@ -64,7 +72,11 @@ describe("Advisor rental context", () => {
       moveInDate: "2027-01-15",
     });
     const costs = renderToStaticMarkup(
-      <TrueHousingCost decision={externalDecision} go={() => undefined} />,
+      <TrueHousingCost
+        decision={externalDecision}
+        go={() => undefined}
+        onCompleteReview={() => undefined}
+      />,
     );
     const summary = renderToStaticMarkup(
       <DecisionSummary
@@ -72,6 +84,7 @@ describe("Advisor rental context", () => {
         go={() => undefined}
         onBackToDecision={() => undefined}
         onPlanWithRoommates={() => undefined}
+        onAddToPlan={() => undefined}
       />,
     );
 
@@ -79,6 +92,19 @@ describe("Advisor rental context", () => {
     expect(costs).not.toContain("$1,761");
     expect(summary).not.toContain("4 of 7 topics supported");
     expect(summary).toMatch(/Refundable deposit<\/span><em class="missing">Missing/);
+  });
+
+  it("marks Advisor review complete only when the summary is reached", () => {
+    const html = renderToStaticMarkup(
+      <TrueHousingCost
+        decision={decision}
+        go={() => undefined}
+        onCompleteReview={() => undefined}
+      />,
+    );
+
+    expect(html).toContain("Complete review and view summary");
+    expect(html).not.toContain("Advisor review complete");
   });
 
   it("describes the guided Advisor as a fictional sample instead of uploaded-file analysis", () => {

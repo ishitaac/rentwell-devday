@@ -166,6 +166,538 @@ a.btn-secondary:focus-visible {
   border-radius: 10px;
   place-items: center;
 }
+.journey-notice {
+  display: flex;
+  width: min(1144px, calc(100% - 56px));
+  align-items: center;
+  gap: 10px;
+  margin: 22px auto -30px;
+  padding: 13px 16px;
+  border: 1px solid #cbe5dc;
+  border-radius: 12px;
+  color: var(--teal-dark);
+  background: var(--mint-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+.journey-notice button {
+  margin-left: auto;
+  border: 0;
+  color: var(--teal-dark);
+  background: transparent;
+  font-weight: 800;
+}
+.demo-account-menu {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.demo-account-menu > button {
+  border: 0;
+  color: #596a67;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+}
+.demo-account-person {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.demo-account-person > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: var(--teal);
+}
+.demo-access-main {
+  min-height: calc(100vh - 76px);
+  padding: 64px 28px;
+  background: var(--cream);
+}
+.demo-access-card {
+  display: grid;
+  width: min(940px, 100%);
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  margin: 0 auto;
+  padding: 48px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 20px 60px rgba(23, 44, 43, 0.08);
+}
+.demo-access-copy h1 {
+  margin: 8px 0 14px;
+  font-size: clamp(32px, 4vw, 46px);
+  line-height: 1.08;
+}
+.demo-access-copy > p:last-of-type {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.demo-access-disclosure {
+  margin-top: 28px;
+  padding: 16px;
+  border: 1px solid #cbe5dc;
+  border-radius: 12px;
+  background: var(--mint-soft);
+}
+.demo-access-disclosure strong,
+.demo-access-disclosure span {
+  display: block;
+}
+.demo-access-disclosure span {
+  margin-top: 4px;
+  color: #4e6561;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.demo-access-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.demo-access-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 4px;
+  border-radius: 11px;
+  background: #eef3f1;
+}
+.demo-access-tabs button {
+  padding: 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #60716e;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+}
+.demo-access-tabs button.active {
+  color: var(--ink);
+  background: white;
+  box-shadow: 0 3px 10px rgba(23, 44, 43, 0.08);
+}
+.demo-access-form > label {
+  display: grid;
+  gap: 6px;
+  color: #425653;
+  font-size: 12px;
+  font-weight: 700;
+}
+.demo-access-form input {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #cfded9;
+  border-radius: 10px;
+  outline: none;
+}
+.demo-access-form input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.1);
+}
+.demo-access-form .btn-primary {
+  width: 100%;
+}
+.demo-access-form > .text-button {
+  align-self: center;
+}
+.demo-access-error {
+  color: #a3442d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.manager-pilot-main {
+  min-height: calc(100vh - 76px);
+  padding: 58px 28px 72px;
+  background: var(--cream);
+}
+.manager-pilot-card {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 46px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 20px 60px rgba(23, 44, 43, 0.08);
+}
+.manager-pilot-heading {
+  max-width: 720px;
+}
+.manager-pilot-heading h1 {
+  margin: 8px 0 14px;
+  font-size: clamp(34px, 4.5vw, 52px);
+  line-height: 1.08;
+}
+.manager-pilot-heading > p:last-child {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.manager-pilot-benefits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 34px 0;
+}
+.manager-pilot-benefits article {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--cream);
+}
+.manager-pilot-benefits article > span {
+  color: var(--teal);
+  font-size: 10px;
+  font-weight: 800;
+}
+.manager-pilot-benefits strong {
+  display: block;
+  margin: 10px 0 7px;
+  font: 700 15px "Manrope";
+}
+.manager-pilot-benefits p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.manager-pilot-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.manager-pilot-disclosure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+.manager-pilot-disclosure strong {
+  color: var(--ink);
+}
+
+.rental-plan-main {
+  width: min(1200px, 100%);
+  min-height: calc(100vh - 76px);
+  margin: 0 auto;
+  padding: 54px 28px 72px;
+  background: white;
+}
+.rental-plan-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 30px;
+}
+.rental-plan-heading h1 {
+  margin: 6px 0 10px;
+  font-size: clamp(34px, 4vw, 50px);
+}
+.rental-plan-heading > div:first-child > p:last-child {
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.rental-plan-save-note {
+  min-width: 250px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--cream);
+}
+.rental-plan-save-note strong,
+.rental-plan-save-note span {
+  display: block;
+}
+.rental-plan-save-note strong {
+  font-size: 13px;
+}
+.rental-plan-save-note span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.rental-plan-save-note.is-saved {
+  border-color: #cbe5dc;
+  background: var(--mint-soft);
+}
+.rental-plan-save-note.is-error {
+  border-color: #f1c7b4;
+  background: #fff7f2;
+}
+.rental-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+.rental-plan-card {
+  display: flex;
+  min-width: 0;
+  min-height: 420px;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 14px 36px rgba(23, 44, 43, 0.06);
+}
+.rental-plan-home-card {
+  border-color: #beddd3;
+}
+.rental-plan-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.rental-plan-step {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  color: white;
+  background: var(--teal);
+  font: 800 13px "Manrope";
+}
+.rental-plan-status {
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.rental-plan-status.complete {
+  color: var(--teal-dark);
+  background: var(--mint-soft);
+}
+.rental-plan-status.optional {
+  color: #667571;
+  background: #f0f3f2;
+}
+.rental-plan-card h2 {
+  margin: 6px 0 5px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.rental-plan-location,
+.rental-plan-empty-copy {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.rental-plan-cost {
+  display: flex;
+  flex-direction: column;
+  margin: 20px 0 16px;
+  padding: 17px;
+  border-radius: 13px;
+  color: white;
+  background: var(--teal-dark);
+}
+.rental-plan-cost.soft {
+  color: var(--ink);
+  background: var(--mint-soft);
+}
+.rental-plan-cost span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.rental-plan-cost strong {
+  margin: 5px 0;
+  font: 800 29px "Manrope";
+}
+.rental-plan-cost small {
+  color: inherit;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+.rental-plan-facts {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+.rental-plan-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+.rental-plan-facts dt {
+  color: var(--muted);
+}
+.rental-plan-facts dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+.rental-plan-confirmation {
+  margin-top: 10px;
+  color: #9b552e;
+  font-size: 11px;
+  font-weight: 700;
+}
+.rental-plan-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 22px;
+}
+.rental-plan-card-actions.stacked {
+  align-items: flex-start;
+  flex-direction: column;
+}
+.rental-plan-card > .text-button {
+  align-self: flex-start;
+  margin-top: auto;
+}
+.secondary-text {
+  color: #62716e;
+}
+.rental-plan-final-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 22px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--cream);
+}
+
+.rental-plan-checklist {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(280px, 1.3fr);
+  gap: 28px;
+  align-items: start;
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid #d9e2dc;
+  border-radius: 18px;
+  background: #f7faf8;
+}
+
+.rental-plan-checklist h2 {
+  margin: 6px 0 0;
+}
+
+.rental-plan-checklist ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rental-plan-checklist li {
+  position: relative;
+  padding-left: 28px;
+  color: #25372d;
+}
+
+.rental-plan-checklist li::before {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+}
+
+.rental-plan-checklist li.is-complete::before {
+  content: "✓";
+  color: #39785a;
+}
+
+.rental-plan-checklist li.is-open::before {
+  content: "○";
+  color: #a65e32;
+}
+.rental-plan-final-actions > div:first-child strong,
+.rental-plan-final-actions > div:first-child span {
+  display: block;
+}
+.rental-plan-final-actions > div:first-child span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.rental-plan-final-actions > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .demo-access-card {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    padding: 34px;
+  }
+  .manager-pilot-benefits {
+    grid-template-columns: 1fr;
+  }
+  .rental-plan-heading,
+  .rental-plan-final-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .rental-plan-save-note {
+    min-width: 0;
+  }
+  .rental-plan-grid {
+    grid-template-columns: 1fr;
+  }
+  .rental-plan-card {
+    min-height: 0;
+  }
+  .rental-plan-final-actions > div:last-child {
+    align-items: stretch;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .demo-access-main {
+    padding: 28px 16px;
+  }
+  .demo-access-card {
+    padding: 24px 19px;
+  }
+  .manager-pilot-main {
+    padding: 28px 16px;
+  }
+  .manager-pilot-card {
+    padding: 26px 19px;
+  }
+  .manager-pilot-actions,
+  .manager-pilot-disclosure {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .rental-plan-main {
+    padding: 34px 16px 54px;
+  }
+  .rental-plan-card,
+  .rental-plan-final-actions {
+    padding: 19px;
+  }
+}
 
 .hero {
   min-height: 640px;
@@ -1720,6 +2252,10 @@ a.btn-secondary:focus-visible {
 }
 
 @media (max-width: 760px) {
+  .rental-plan-checklist {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
   .manager-page {
     width: calc(100% - 32px);
     padding: 30px 0 62px;
@@ -3041,6 +3577,12 @@ a.btn-secondary:focus-visible {
 }
 .match-actions .text-button {
   font-size: 11px;
+}
+.roommate-choice-handoff {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
 }
 .prototype-note {
   display: flex;
