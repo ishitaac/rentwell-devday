@@ -6,6 +6,13 @@ import {
   TrueHousingCost,
   type AdvisorScreen,
 } from "./Advisor";
+import rentSnapshotData from "./data/rentcast-slc.json";
+import {
+  calculateRentComparison,
+  describeComparisonMethod,
+  describeRentDifference,
+  type RentSnapshot,
+} from "./rentMarket";
 
 type Screen = "home" | "rental" | "analysis" | "math" | "preferences" | "matches" | AdvisorScreen;
 type IconName =
@@ -23,10 +30,9 @@ type IconName =
   | "sparkle"
   | "x";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1502672023488-70e25813eb80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicmlnaHQlMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvciUyMHBsYW50cyUyMGNpdHklMjByZW50YWx8ZW58MXx8fHwxNzk0ODY2NjEyfDA&ixlib=rb-4.1.0&q=80&w=1080";
-const APARTMENT_IMAGE =
-  "https://images.unsplash.com/photo-1650137938625-11576502aecd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwyfHxicmlnaHQlMjBtb2Rlcm4lMjBhcGFydG1lbnQlMjBpbnRlcmlvciUyMHBsYW50cyUyMGNpdHklMjByZW50YWx8ZW58MXx8fHwxNzk0ODY2NjEyfDA&ixlib=rb-4.1.0&q=80&w=1080";
+export const HERO_IMAGE = "/listings/interior-warm.jpg";
+export const APARTMENT_IMAGE = "/listings/interior-blue.jpg";
+const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
 
 const paths: Record<IconName, React.ReactNode> = {
   arrow: (
@@ -122,17 +128,20 @@ function Button({
   secondary = false,
   className = "",
   type = "button",
+  disabled = false,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   secondary?: boolean;
   className?: string;
   type?: "button" | "submit";
+  disabled?: boolean;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`${secondary ? "btn-secondary" : "btn-primary"} ${className}`}
     >
       {children}
@@ -244,7 +253,7 @@ function Home({ go }: { go: (screen: Screen) => void }) {
             </button>
           </div>
           <p className="micro">
-            <Icon name="check" size={15} /> No sign-up needed &nbsp;·&nbsp; Fictional demo data
+            <Icon name="check" size={15} /> No sign-up needed &nbsp;·&nbsp; Cached market snapshot
           </p>
         </div>
         <div className="hero-visual">
@@ -293,8 +302,8 @@ function Home({ go }: { go: (screen: Screen) => void }) {
             </span>
             <h3>Check a Rental</h3>
             <p>
-              See how the rent compares to similar demo listings nearby, then calculate the real
-              cost with fees.
+              See how the rent compares to a dated Salt Lake City rental snapshot, then calculate
+              the real cost with fees.
             </p>
             <span className="card-link">
               Analyze a place <Icon name="arrow" size={17} />
@@ -344,8 +353,8 @@ function Home({ go }: { go: (screen: Screen) => void }) {
         <div>
           <Icon name="info" />
           <span>
-            <b>Honest demo</b>
-            <small>No claims of live market coverage</small>
+            <b>Dated market data</b>
+            <small>Cached snapshot—not live coverage</small>
           </span>
         </div>
       </section>
@@ -353,7 +362,7 @@ function Home({ go }: { go: (screen: Screen) => void }) {
   );
 }
 
-type RentalData = {
+export type RentalData = {
   neighborhood: string;
   rent: number;
   bedrooms: number;
@@ -361,6 +370,10 @@ type RentalData = {
   fees: number;
   date: string;
 };
+
+export function canAnalyzeRental(rental: RentalData): boolean {
+  return Number.isFinite(rental.rent) && rental.rent > 0;
+}
 
 function RentalInput({
   rental,
@@ -439,7 +452,7 @@ function RentalInput({
               onChange={(v) => update("rent", v)}
               type="number"
               prefix="$"
-              min={0}
+              min={1}
             />
             <Field
               label="Bedrooms"
@@ -471,7 +484,11 @@ function RentalInput({
               type="date"
             />
           </div>
-          <Button className="wide-button" onClick={() => go("analysis")}>
+          <Button
+            className="wide-button"
+            onClick={() => go("analysis")}
+            disabled={!canAnalyzeRental(rental)}
+          >
             Analyze this rental <Icon name="arrow" size={18} />
           </Button>
         </section>
@@ -497,7 +514,8 @@ function RentalInput({
             <p>
               <b>Prototype note</b>
               <br />
-              Extraction and market comparisons use fictional sample data—not live listings.
+              Listing extraction is simulated. Market comparisons use a dated RentCast snapshot, not
+              live coverage.
             </p>
           </div>
         </aside>
@@ -507,18 +525,24 @@ function RentalInput({
 }
 
 function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => void }) {
-  const median = 1950;
-  const diff = ((rental.rent - median) / median) * 100;
-  const max = Math.max(rental.rent, 2400);
+  const comparison = calculateRentComparison(RENT_SNAPSHOT, rental.bedrooms);
+  const difference = describeRentDifference(rental.rent, comparison);
+  const comparisonMethod = describeComparisonMethod(comparison, rental.bedrooms);
+  const max = Math.ceil(Math.max(rental.rent, comparison?.upper ?? 0, 1) / 100) * 100;
+  const scopeLabel =
+    comparison?.differenceScope === "exact-bedrooms"
+      ? `${rental.bedrooms}-bedroom listings`
+      : "all bedroom counts (broader fallback)";
+  const observedRange =
+    comparison?.observedStart && comparison.observedEnd
+      ? `${comparison.observedStart.slice(0, 10)} – ${comparison.observedEnd.slice(0, 10)}`
+      : "Observation dates unavailable";
   return (
     <main className="app-main">
       <Progress current="analysis" go={go} />
-      <PageHeading
-        eyebrow="Fair rent analysis · Step 2 of 5"
-        title="This rent is a little above the pack."
-      >
-        Here’s how the asking price compares with similar fictional rentals in {rental.neighborhood}
-        .
+      <PageHeading eyebrow="Fair rent analysis · Step 2 of 5" title={difference.heading}>
+        Here’s how the asking price compares with a cached snapshot of active Salt Lake City
+        rentals.
       </PageHeading>
       <div className="analysis-summary">
         <div>
@@ -527,40 +551,38 @@ function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => 
           <span>/ month</span>
         </div>
         <div>
-          <small>DEMO COMPARABLE MEDIAN</small>
-          <strong>${median.toLocaleString()}</strong>
+          <small>SNAPSHOT MEDIAN</small>
+          <strong>{comparison ? `$${comparison.median.toLocaleString()}` : "—"}</strong>
           <span>/ month</span>
         </div>
         <div className="difference">
           <small>DIFFERENCE</small>
-          <strong>+{diff.toFixed(1)}%</strong>
-          <span>above median</span>
+          <strong>{difference.percentageLabel}</strong>
+          <span>{difference.directionLabel}</span>
         </div>
       </div>
       <section className="card chart-card">
         <div className="card-title-row">
           <div>
             <h2>Rent comparison</h2>
-            <p>
-              {rental.bedrooms}-bedroom apartments in {rental.neighborhood}
-            </p>
+            <p>{comparison ? scopeLabel : "No valid comparison listings"} in Salt Lake City</p>
           </div>
-          <span className="demo-tag">DEMO DATA</span>
+          <span className="demo-tag">RENTCAST SNAPSHOT</span>
         </div>
         <div className="chart">
           <div className="bar-row">
             <span>Lower range</span>
             <div>
-              <i style={{ width: `${(1725 / max) * 100}%` }} />
+              <i style={{ width: `${((comparison?.lower ?? 0) / max) * 100}%` }} />
             </div>
-            <b>$1,725</b>
+            <b>{comparison ? `$${comparison.lower.toLocaleString()}` : "—"}</b>
           </div>
           <div className="bar-row median">
             <span>Comparable median</span>
             <div>
-              <i style={{ width: `${(median / max) * 100}%` }} />
+              <i style={{ width: `${((comparison?.median ?? 0) / max) * 100}%` }} />
             </div>
-            <b>$1,950</b>
+            <b>{comparison ? `$${comparison.median.toLocaleString()}` : "—"}</b>
           </div>
           <div className="bar-row asking">
             <span>This rental</span>
@@ -572,29 +594,29 @@ function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => 
           <div className="bar-row">
             <span>Upper range</span>
             <div>
-              <i style={{ width: `${(2325 / max) * 100}%` }} />
+              <i style={{ width: `${((comparison?.upper ?? 0) / max) * 100}%` }} />
             </div>
-            <b>$2,325</b>
+            <b>{comparison ? `$${comparison.upper.toLocaleString()}` : "—"}</b>
           </div>
           <div className="chart-axis">
             <span>$0</span>
-            <span>$1,200</span>
-            <span>$2,400</span>
+            <span>${Math.round(max / 2).toLocaleString()}</span>
+            <span>${max.toLocaleString()}</span>
           </div>
         </div>
         <div className="chart-stats">
           <div>
             <Icon name="building" />
             <span>
-              <b>24 sample listings</b>
-              <small>Similar beds, size & area</small>
+              <b>{comparison ? `${comparison.count} active listings` : "No valid listings"}</b>
+              <small>{comparison ? scopeLabel : "Comparison unavailable"}</small>
             </span>
           </div>
           <div>
             <Icon name="clock" />
             <span>
-              <b>Observed May–July 2025</b>
-              <small>Fictional prototype dataset</small>
+              <b>Observed {observedRange}</b>
+              <small>Snapshot retrieved {RENT_SNAPSHOT.generatedAt.slice(0, 10)}</small>
             </span>
           </div>
         </div>
@@ -606,10 +628,9 @@ function Analysis({ rental, go }: { rental: RentalData; go: (screen: Screen) => 
         <div>
           <h3>How we got here</h3>
           <p>
-            We compared your {rental.bedrooms}-bedroom, {rental.sqft} sq ft rental with 24 fictional
-            listings in and near {rental.neighborhood}. The median is the middle rent—not an
-            appraisal or guarantee. Building age, condition, parking, and utilities can all explain
-            differences.
+            {comparisonMethod} The median is the middle listed rent—not an appraisal, a guarantee,
+            or live market coverage. Building age, condition, parking, location, and utilities can
+            all explain differences.
           </p>
         </div>
       </section>
@@ -1184,7 +1205,10 @@ function App() {
           </span>
         </button>
         <p>Find a place. Find your people. Rent well.</p>
-        <small>Interactive prototype · Salt Lake City, Utah · Demo data only</small>
+        <small>
+          Interactive prototype · Salt Lake City, Utah · RentCast snapshot{" "}
+          {RENT_SNAPSHOT.generatedAt.slice(0, 10)}
+        </small>
       </footer>
     </div>
   );

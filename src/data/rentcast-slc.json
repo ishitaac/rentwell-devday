@@ -1,0 +1,262 @@
+{
+  "source": {
+    "provider": "RentCast",
+    "endpoint": "https://api.rentcast.io/v1/listings/rental/long-term",
+    "documentation": "https://developers.rentcast.io/reference/rental-listings-long-term"
+  },
+  "generatedAt": "2026-11-18T23:05:30.917Z",
+  "query": {
+    "city": "Salt Lake City",
+    "state": "UT",
+    "status": "Active",
+    "limit": 20
+  },
+  "listingCount": 20,
+  "limitations": [
+    "Cached snapshot; not live market coverage.",
+    "Listings may change or become unavailable after the retrieval time.",
+    "Market comparisons are informational and are not appraisals or guarantees."
+  ],
+  "listings": [
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84108",
+      "propertyType": "Single Family",
+      "bedrooms": 4,
+      "bathrooms": 2,
+      "squareFootage": 1874,
+      "price": 2875,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.206Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84102",
+      "propertyType": "Apartment",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "squareFootage": 550,
+      "price": 1299,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.205Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84111",
+      "propertyType": "Apartment",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "squareFootage": 600,
+      "price": 1350,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.204Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84111",
+      "propertyType": "Apartment",
+      "bedrooms": 0,
+      "bathrooms": 1,
+      "squareFootage": 400,
+      "price": 1095,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.203Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84102",
+      "propertyType": "Condo",
+      "bedrooms": 2,
+      "bathrooms": 1.5,
+      "squareFootage": 1200,
+      "price": 1495,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.201Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84115",
+      "propertyType": "Townhouse",
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "squareFootage": 1275,
+      "price": 1595,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.200Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84102",
+      "propertyType": "Apartment",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "squareFootage": null,
+      "price": 1345,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.200Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84104",
+      "propertyType": "Apartment",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "squareFootage": 750,
+      "price": 950,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.199Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84129",
+      "propertyType": "Townhouse",
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "squareFootage": 1350,
+      "price": 2299,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.198Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84102",
+      "propertyType": "Apartment",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "squareFootage": 900,
+      "price": 1595,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.197Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84104",
+      "propertyType": "Apartment",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "squareFootage": 500,
+      "price": 895,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.196Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84105",
+      "propertyType": "Apartment",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "squareFootage": 1004,
+      "price": 1500,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.191Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84103",
+      "propertyType": "Apartment",
+      "bedrooms": 0,
+      "bathrooms": 1,
+      "squareFootage": 633,
+      "price": 915,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.190Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84105",
+      "propertyType": "Apartment",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "squareFootage": 588,
+      "price": 870,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.189Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84111",
+      "propertyType": "Apartment",
+      "bedrooms": 0,
+      "bathrooms": 1,
+      "squareFootage": 400,
+      "price": 995,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.189Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84116",
+      "propertyType": "Apartment",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "squareFootage": 700,
+      "price": 995,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.188Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84102",
+      "propertyType": "Apartment",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "squareFootage": 879,
+      "price": 1545,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.187Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84111",
+      "propertyType": "Apartment",
+      "bedrooms": 0,
+      "bathrooms": 1,
+      "squareFootage": 229,
+      "price": 750,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.187Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84104",
+      "propertyType": "Apartment",
+      "bedrooms": 2,
+      "bathrooms": 1,
+      "squareFootage": 900,
+      "price": 1050,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.186Z"
+    },
+    {
+      "city": "Salt Lake City",
+      "state": "UT",
+      "zipCode": "84105",
+      "propertyType": "Apartment",
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "squareFootage": null,
+      "price": 983,
+      "listedDate": "2026-11-17T00:00:00.000Z",
+      "lastSeenDate": "2026-11-18T03:01:55.186Z"
+    }
+  ]
+}
