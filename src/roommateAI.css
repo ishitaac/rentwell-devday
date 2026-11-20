@@ -164,3 +164,26 @@
   .rai-panel .bottom-actions > * { flex: 1 1 100%; }
   .rai-panel .bottom-actions > :last-child:not(:first-child) { margin-left: 0; }
 }
+
+/* ---- Match the Living preferences look: card grid, icon tiles, pill chips ---- */
+.rai-head.page-heading { padding: 40px 20px 24px; display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 0; }
+.rai-head.page-heading .demo-tag { margin-top: 14px; }
+.rai-head.page-heading p:not(.eyebrow) { max-width: 460px; }
+.rai-main .preferences-grid { gap: 16px; }
+.preference-card.wide { grid-column: 1 / -1; }
+.rai-main .preference-card .chips { margin-top: 18px; }
+.rai-main .preference-card .chips button { padding: 10px 14px; font-size: 12px; }
+.rai-main .pref-head p { font-size: 12px; }
+.rai-main .range-labels { font-size: 11px; }
+.rai-main .budget-display { font-size: 14px; }
+.rai-stephead { display: flex; align-items: center; gap: 12px; }
+.rai-stephead .pref-head h2 { font-size: 18px; margin: 0; }
+.rai-stephead .pref-head p { font-size: 12px; margin: 2px 0 0; color: var(--muted); }
+.rai-panel { border-radius: 20px; box-shadow: 0 8px 30px rgba(25, 59, 52, 0.045); }
+.rai-main > details.rai-more { margin-top: 16px; }
+.rai-main > .bottom-actions { margin-top: 24px !important; }
+.rai-label { font-weight: 600; font-size: .85rem; }
+.rai-more .chips { margin-top: 0; }
+@media (max-width: 760px) {
+  .rai-main .preferences-grid { grid-template-columns: 1fr; }
+}

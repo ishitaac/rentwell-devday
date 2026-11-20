@@ -48,6 +48,44 @@ function valueText(key: FieldKey, value: string | number): string {
   return String(value);
 }
 
+type RIconName = "dollar" | "clock" | "home" | "people" | "sparkle" | "document" | "check";
+const R_ICON: Record<RIconName, React.ReactNode> = {
+  dollar: <><circle cx="12" cy="12" r="9" /><path d="M16 8.5c-.9-1-2-1.5-4-1.5-2.2 0-3.5 1-3.5 2.5 0 4 7 1.5 7 5 0 1.5-1.3 2.5-3.5 2.5-1.8 0-3.2-.6-4-1.8M12 5v14" /></>,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  home: <><path d="m3 11 9-8 9 8" /><path d="M5 10v10h14V10M9 20v-6h6v6" /></>,
+  people: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+  sparkle: <><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z" /></>,
+  document: <><path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M14 3v5h5M9 13h7M9 17h5" /></>,
+  check: <path d="m5 12 4 4L19 6" />,
+};
+function RIcon({ name, size = 20 }: { name: RIconName; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {R_ICON[name]}
+    </svg>
+  );
+}
+
+/** Same card look as the rest of the app: icon tile, short title, one-line hint. */
+function PrefCard({ icon, title, hint, wide = false, children }: { icon: RIconName; title: string; hint: string; wide?: boolean; children: React.ReactNode }) {
+  return (
+    <section className={`card preference-card${wide ? " wide" : ""}`}>
+      <div className="pref-icon"><RIcon name={icon} /></div>
+      <div className="pref-head"><h3>{title}</h3><p>{hint}</p></div>
+      {children}
+    </section>
+  );
+}
+
+function StepHead({ icon, title, hint }: { icon: RIconName; title: string; hint?: string }) {
+  return (
+    <div className="rai-stephead">
+      <div className="pref-icon"><RIcon name={icon} /></div>
+      <div className="pref-head"><h2>{title}</h2>{hint && <p>{hint}</p>}</div>
+    </div>
+  );
+}
+
 function Btn({ children, onClick, secondary = false, disabled = false }: { children: React.ReactNode; onClick?: () => void; secondary?: boolean; disabled?: boolean }) {
   return (
     <button type="button" className={secondary ? "btn-secondary" : "btn-primary"} onClick={onClick} disabled={disabled}>
@@ -102,12 +140,10 @@ export function RoommateAI({ onExit }: { onExit: (to: "preferences" | "matches" 
 
   return (
     <main className="app-main rai-main">
-      <div className="rai-head">
-        <div>
-          <p className="eyebrow">Roommate planning</p>
-          <h1>Describe how you live</h1>
-          <p>Find roommates who fit your routine. Nothing is saved to a server.</p>
-        </div>
+      <div className="page-heading rai-head">
+        <p className="eyebrow">Roommate planning</p>
+        <h1>Describe how you live</h1>
+        <p>Find roommates who fit your routine. Nothing is saved to a server.</p>
         <span className="demo-tag">FICTIONAL ROOMMATES</span>
       </div>
       <Stepper stage={stage} go={setStage} reachable={reachable} />
@@ -169,49 +205,48 @@ function ContextStep({ profile, setProfile, next, back }: { profile: RoommatePro
   const decisions = evaluateAll({ state: profile.location.state, city: profile.location.city });
   const chain = resolveJurisdiction(profile.location.state, profile.location.city);
   const setLoc = (patch: Partial<RoommateProfile["location"]>) => setProfile((p) => ({ ...p, location: { ...p.location, ...patch } }));
-  const setHousing = (key: FieldKey, raw: string, priority?: Priority) =>
+  const setHousing = (key: FieldKey, raw: string) =>
     setProfile((p) => {
       if (raw === "") return removeField(p, key);
-      const existing = p.fields[key];
-      return setFieldFromUser(p, key, FIELD_DEFS[key].kind === "number" ? Number(raw) : raw, priority ?? existing?.priority ?? "preferred");
+      return setFieldFromUser(p, key, FIELD_DEFS[key].kind === "number" ? Number(raw) : raw, p.fields[key]?.priority ?? "preferred");
     });
-  const months = nextMonths(8);
-  const choice = (key: FieldKey, label: string, options: Array<[string, string]>) => (
-    <div className="rai-field">
-      <label htmlFor={`h-${key}`}>{label}</label>
-      <div className="rai-inline">
-        <select id={`h-${key}`} value={String(profile.fields[key]?.value ?? "")} onChange={(e) => setHousing(key, e.target.value)}>
-          <option value="">No preference yet</option>
-          {options.map(([v, l]) => (
-            <option key={v} value={v}>{l}</option>
-          ))}
-        </select>
-        <select aria-label={`${label} importance`} disabled={!profile.fields[key]} value={profile.fields[key]?.priority ?? "preferred"} onChange={(e) => setHousing(key, String(profile.fields[key]?.value ?? ""), e.target.value as Priority)}>
-          {(Object.keys(PRIORITY_LABEL) as Priority[]).map((pr) => (
-            <option key={pr} value={pr}>{PRIORITY_LABEL[pr]}</option>
-          ))}
-        </select>
-      </div>
+  const months = nextMonths(3);
+  const budget = Number(profile.fields.budgetMax?.value ?? 1250);
+  /** Tap to choose, tap again to clear. Importance is set later, on the review step. */
+  const chips = (key: FieldKey, label: string, options: Array<[string, string]>) => (
+    <div className="chips compact" role="group" aria-label={label}>
+      {options.map(([v, l]) => {
+        const on = String(profile.fields[key]?.value ?? "") === v;
+        return (
+          <button key={v} type="button" aria-pressed={on} className={on ? "selected" : ""} onClick={() => setHousing(key, on ? "" : v)}>
+            {l}
+          </button>
+        );
+      })}
     </div>
   );
   return (
-    <section className="rai-panel">
-      <h2>The basics</h2>
-      <p className="rai-sub">About a minute. You can change anything later.</p>
-      <div className="rai-grid">
-        <div className="rai-field">
-          <label htmlFor="h-budgetMax">Monthly budget (your share)</label>
-          <div className="rai-inline">
-            <input id="h-budgetMax" type="number" min={300} max={5000} step={50} value={profile.fields.budgetMax?.value ?? ""} onChange={(e) => setHousing("budgetMax", e.target.value)} />
-            <select aria-label="Budget importance" disabled={!profile.fields.budgetMax} value={profile.fields.budgetMax?.priority ?? "preferred"} onChange={(e) => setHousing("budgetMax", String(profile.fields.budgetMax?.value ?? ""), e.target.value as Priority)}>
-              {(Object.keys(PRIORITY_LABEL) as Priority[]).map((pr) => <option key={pr} value={pr}>{PRIORITY_LABEL[pr]}</option>)}
-            </select>
+    <>
+      <div className="preferences-grid">
+        <PrefCard icon="dollar" title="Monthly budget" hint="Your share, all-in">
+          <div className="budget-display">
+            Up to <strong>${budget.toLocaleString()}</strong> <span>/ month</span>
           </div>
-        </div>
-        {choice("moveInMonth", "Move-in month", months.map((m) => [m, monthLabel(m)]))}
-        {choice("bedroom", "Bedroom", [["private", "Private"], ["shared", "Shared is fine"]])}
-        {choice("bathroom", "Bathroom", [["private", "Private"], ["shared", "Shared is fine"]])}
-        {choice("roommateCount", "Number of roommates", [["1", "1"], ["2", "2"], ["3", "3"]])}
+          <input id="h-budgetMax" aria-label="Monthly budget" className="range" type="range" min="500" max="2500" step="50" value={budget} onChange={(e) => setHousing("budgetMax", e.target.value)} style={{ "--range": `${((budget - 500) / 2000) * 100}%` } as React.CSSProperties} />
+          <div className="range-labels"><span>$500</span><span>$2,500+</span></div>
+        </PrefCard>
+        <PrefCard icon="clock" title="Move-in" hint="When do you need a place?">
+          {chips("moveInMonth", "Move-in month", months.map((m) => [m, monthLabel(m)]))}
+        </PrefCard>
+        <PrefCard icon="home" title="Bedroom" hint="Your own, or shared?">
+          {chips("bedroom", "Bedroom", [["private", "Private"], ["shared", "Shared is fine"]])}
+        </PrefCard>
+        <PrefCard icon="home" title="Bathroom" hint="Your own, or shared?">
+          {chips("bathroom", "Bathroom", [["private", "Private"], ["shared", "Shared is fine"]])}
+        </PrefCard>
+        <PrefCard icon="people" title="Roommates" hint="How many do you want?" wide>
+          {chips("roommateCount", "Number of roommates", [["1", "1"], ["2", "2"], ["3", "3"]])}
+        </PrefCard>
       </div>
       <details className="rai-more">
         <summary>More options</summary>
@@ -226,9 +261,9 @@ function ContextStep({ profile, setProfile, next, back }: { profile: RoommatePro
               <option value="yes">I have housing to share</option>
             </select>
           </div>
-          {choice("leaseMonths", "Lease length", [["6", "6 months"], ["12", "12 months"], ["24", "24 months"]])}
-          {choice("furnished", "Furnished", [["yes", "Yes"], ["no", "No"], ["either", "Either"]])}
-          {choice("parking", "Parking", [["yes", "Needed"], ["no", "Not needed"], ["either", "Either"]])}
+          <div className="rai-field"><span className="rai-label">Lease length</span>{chips("leaseMonths", "Lease length", [["6", "6 mo"], ["12", "12 mo"], ["24", "24 mo"]])}</div>
+          <div className="rai-field"><span className="rai-label">Furnished</span>{chips("furnished", "Furnished", [["yes", "Yes"], ["no", "No"], ["either", "Either"]])}</div>
+          <div className="rai-field"><span className="rai-label">Parking</span>{chips("parking", "Parking", [["yes", "Needed"], ["no", "Not needed"], ["either", "Either"]])}</div>
         </div>
       </details>
       <details className="rai-more">
@@ -248,7 +283,7 @@ function ContextStep({ profile, setProfile, next, back }: { profile: RoommatePro
         <Btn secondary onClick={back}>Back</Btn>
         <Btn onClick={next}>Continue</Btn>
       </div>
-    </section>
+    </>
   );
 }
 
@@ -259,8 +294,7 @@ function ContextStep({ profile, setProfile, next, back }: { profile: RoommatePro
 function DescribeStep({ text, setText, analyze, back, ignoredNote }: { text: string; setText: (t: string) => void; analyze: () => void; back: () => void; ignoredNote: boolean }) {
   return (
     <section className="rai-panel">
-      <h2>How do you like to live?</h2>
-      <p className="rai-sub">A sentence or two is plenty: schedule, noise, cleaning, guests.</p>
+      <StepHead icon="sparkle" title="How do you like to live?" hint="A sentence or two is plenty: schedule, noise, cleaning, guests." />
       <label htmlFor="rai-text" className="rai-sr">Your living preferences</label>
       <textarea id="rai-text" rows={6} maxLength={1500} value={text} onChange={(e) => setText(e.target.value)} placeholder={SAMPLE_TEXT} />
       <div className="rai-row">
@@ -354,8 +388,7 @@ function ConfirmStep({ profile, setProfile, onDelete, next, back }: { profile: R
   const summary = confirmedKeys.length === 0 ? "Nothing is confirmed yet." : `You confirmed ${confirmedKeys.length} preference${confirmedKeys.length === 1 ? "" : "s"}: ${required.length} required, ${confirmedKeys.length - required.length - flexible.length} preferred and ${flexible.length} flexible.`;
   return (
     <section className="rai-panel">
-      <h2>Review your preferences</h2>
-      <p className="rai-sub">Only confirmed items are used. Mark dealbreakers as "Required".</p>
+      <StepHead icon="document" title="Review your preferences" hint='Only confirmed items are used. Mark dealbreakers as "Required".' />
       {keys.length === 0 && <p className="rai-warn">No preferences yet. Go back and add a few.</p>}
       <div className="rai-table" role="table" aria-label="Your preferences">
         {keys.map((k) => {
@@ -405,8 +438,7 @@ function ResultsStep({ profile, select, back }: { profile: RoommateProfile; sele
   const results = useMemo(() => rankCandidates(profile, DEMO_CANDIDATES.map((c) => c.profile)), [profile]);
   return (
     <section className="rai-panel">
-      <h2>Your matches</h2>
-      <p className="rai-sub">Fictional demo profiles. A high score never hides a missed requirement.</p>
+      <StepHead icon="people" title="Your matches" hint="Fictional demo profiles. A high score never hides a missed requirement." />
       <div className="rai-matches">
         {results.map((r) => <MatchCard key={r.candidateId} result={r} candidate={DEMO_CANDIDATES.find((c) => c.profile.profileId === r.candidateId)!} select={select} />)}
       </div>
