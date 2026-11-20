@@ -111,6 +111,28 @@ describe("demo account persistence", () => {
       JSON.stringify({ "olena@example.com": { ...makePlan(), version: 2 } }),
     );
     expect(loadSavedPlan(incompatible, "olena@example.com")).toEqual({ ok: true, value: null });
+
+    const invalidFee = new MemoryStorage();
+    invalidFee.setItem(
+      "rentwell.demo.saved-plans.v1",
+      JSON.stringify({
+        "olena@example.com": {
+          ...makePlan(),
+          decision: { ...decision, recurringFees: [null] },
+        },
+      }),
+    );
+    expect(loadSavedPlan(invalidFee, "olena@example.com")).toEqual({ ok: true, value: null });
+  });
+
+  it("rejects a saved record whose owner does not match its lookup email", () => {
+    const storage = new MemoryStorage();
+    storage.setItem(
+      "rentwell.demo.saved-plans.v1",
+      JSON.stringify({ "olena@example.com": makePlan("other@example.com") }),
+    );
+
+    expect(loadSavedPlan(storage, "olena@example.com")).toEqual({ ok: true, value: null });
   });
 
   it("returns a failure result when storage throws", () => {

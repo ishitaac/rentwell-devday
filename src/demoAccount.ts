@@ -89,11 +89,38 @@ function isDemoSession(value: unknown, role: DemoRole): value is DemoSession {
 function isRentalDecision(value: unknown): value is RentalDecisionRecord {
   return (
     isRecord(value) &&
+    (value.source === "synthetic-demo-listing" || value.source === "user-entered-demo-analysis") &&
     typeof value.decisionId === "string" &&
     typeof value.title === "string" &&
+    typeof value.neighborhood === "string" &&
+    typeof value.city === "string" &&
     typeof value.askingRent === "number" &&
+    Number.isFinite(value.askingRent) &&
+    typeof value.bedrooms === "number" &&
+    (value.bathrooms === null || typeof value.bathrooms === "number") &&
+    (value.squareFootage === null || typeof value.squareFootage === "number") &&
+    (value.propertyType === null || typeof value.propertyType === "string") &&
     Array.isArray(value.recurringFees) &&
-    isRecord(value.capabilities)
+    value.recurringFees.every(
+      (fee) =>
+        isRecord(fee) &&
+        typeof fee.id === "string" &&
+        typeof fee.label === "string" &&
+        typeof fee.amount === "number" &&
+        Number.isFinite(fee.amount),
+    ) &&
+    typeof value.noMandatoryRecurringFees === "boolean" &&
+    (value.securityDeposit === null || typeof value.securityDeposit === "number") &&
+    (value.availableDate === null || typeof value.availableDate === "string") &&
+    (value.description === null || typeof value.description === "string") &&
+    Array.isArray(value.images) &&
+    value.images.every((image) => typeof image === "string") &&
+    Array.isArray(value.amenities) &&
+    value.amenities.every((amenity) => typeof amenity === "string") &&
+    typeof value.updatedAt === "string" &&
+    isRecord(value.capabilities) &&
+    typeof value.capabilities.canCompare === "boolean" &&
+    typeof value.capabilities.canRequestTour === "boolean"
   );
 }
 
@@ -179,8 +206,15 @@ export function loadSavedPlan(
 ): StorageReadResult<SavedRentalPlan> {
   try {
     const plans = parseRecord(storage.getItem(DEMO_STORAGE_KEYS.savedPlans));
-    const plan = plans?.[normalizeEmail(email)];
-    return { ok: true, value: isSavedRentalPlan(plan) ? plan : null };
+    const normalizedEmail = normalizeEmail(email);
+    const plan = plans?.[normalizedEmail];
+    return {
+      ok: true,
+      value:
+        isSavedRentalPlan(plan) && normalizeEmail(plan.ownerEmail) === normalizedEmail
+          ? plan
+          : null,
+    };
   } catch {
     return { ok: false, value: null, error: STORAGE_ERROR };
   }

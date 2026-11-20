@@ -91,8 +91,21 @@ describe("RentalPlanSummary", () => {
     const notStarted = render({ advisorStatus: "not-started" });
 
     expect(reviewed).toContain("Advisor review complete");
+    expect(reviewed).toContain("6 of 8 evidence topics supported");
+    expect(reviewed).toContain("4 landlord questions ready");
     expect(reviewed).toContain("View Advisor findings");
     expect(notStarted).not.toContain("Advisor review complete");
+  });
+
+  it("shows a decision checklist with fee deposit and optional-step status", () => {
+    const html = render({ roommateStatus: "skipped", advisorStatus: "reviewed" });
+
+    expect(html).toContain("Decision checklist");
+    expect(html).toContain("Rental evaluated");
+    expect(html).toContain("2 mandatory recurring fees reviewed");
+    expect(html).toContain("Deposit confirmed");
+    expect(html).toContain("Roommate intentionally skipped");
+    expect(html).toContain("Fictional lease review completed");
   });
 
   it("keeps an unknown external deposit unconfirmed", () => {
@@ -114,6 +127,8 @@ describe("RentalPlanSummary", () => {
 
     expect(html).toContain("Move-in cost needs confirmation");
     expect(html).toContain("Deposit not provided");
+    expect(html).toContain("Deposit still missing");
+    expect(html).toContain('class="is-open">Deposit still missing');
     expect(html).not.toContain("$3,045");
   });
 });

@@ -80,3 +80,20 @@ export function bindPendingRoommate(
   if (selection.decisionId === null) return { ...selection, decisionId };
   return selection.decisionId === decisionId ? selection : null;
 }
+
+export function resolveRentalSelection(
+  selection: RoommateSelection | null,
+  decisionId: string,
+): {
+  roommate: RoommateSelection | null;
+  roommateStatus: "not-started" | "selected";
+  destination: "listing-details" | "plan-summary";
+} {
+  const roommate = bindPendingRoommate(selection, decisionId);
+  const bindsPendingChoice = selection?.decisionId === null && roommate !== null;
+  return {
+    roommate,
+    roommateStatus: roommate ? "selected" : "not-started",
+    destination: bindsPendingChoice ? "plan-summary" : "listing-details",
+  };
+}

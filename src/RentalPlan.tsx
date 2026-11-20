@@ -66,6 +66,24 @@ export function RentalPlanSummary({
 }: RentalPlanSummaryProps) {
   const receipt = buildRentalDecisionReceipt(decision, RENT_SNAPSHOT);
   const perPersonShare = receipt.trueMonthlyCost / 2;
+  const supportedEvidenceTopics = decision.securityDeposit === null ? 5 : 6;
+  const recurringFeeChecklist = decision.noMandatoryRecurringFees
+    ? "No mandatory recurring fees disclosed"
+    : decision.recurringFees.length > 0
+      ? `${decision.recurringFees.length} mandatory recurring fees reviewed`
+      : "Mandatory recurring fees still need confirmation";
+  const roommateChecklist =
+    roommateStatus === "selected" && roommate
+      ? `Roommate selected: ${roommate.displayName}`
+      : roommateStatus === "skipped"
+        ? "Roommate intentionally skipped"
+        : "Roommate decision still open";
+  const advisorChecklist =
+    advisorStatus === "reviewed"
+      ? "Fictional lease review completed"
+      : advisorStatus === "skipped"
+        ? "Fictional lease review intentionally skipped"
+        : "Fictional lease review not completed";
 
   return (
     <main className="rental-plan-main">
@@ -204,7 +222,8 @@ export function RentalPlanSummary({
             <>
               <h2>Advisor review complete</h2>
               <p className="rental-plan-empty-copy">
-                Your guided sample-lease findings are connected to this rental decision.
+                Fictional sample lease reviewed · {supportedEvidenceTopics} of 8 evidence topics
+                supported · 4 landlord questions ready
               </p>
               <button className="text-button" onClick={onViewAdvisor}>
                 View Advisor findings
@@ -238,6 +257,34 @@ export function RentalPlanSummary({
             </>
           )}
         </article>
+      </section>
+
+      <section className="rental-plan-checklist" aria-labelledby="decision-checklist-title">
+        <div>
+          <p className="eyebrow">Before you decide</p>
+          <h2 id="decision-checklist-title">Decision checklist</h2>
+        </div>
+        <ul>
+          <li className="is-complete">Rental evaluated</li>
+          <li
+            className={
+              decision.noMandatoryRecurringFees || decision.recurringFees.length > 0
+                ? "is-complete"
+                : "is-open"
+            }
+          >
+            {recurringFeeChecklist}
+          </li>
+          <li className={decision.securityDeposit === null ? "is-open" : "is-complete"}>
+            {decision.securityDeposit === null ? "Deposit still missing" : "Deposit confirmed"}
+          </li>
+          <li className={roommateStatus === "not-started" ? "is-open" : "is-complete"}>
+            {roommateChecklist}
+          </li>
+          <li className={advisorStatus === "not-started" ? "is-open" : "is-complete"}>
+            {advisorChecklist}
+          </li>
+        </ul>
       </section>
 
       <section className="rental-plan-final-actions" aria-label="Save rental plan">

@@ -9,6 +9,8 @@ import App, {
   getNavSection,
   getPlanSaveDestination,
   getPlanSaveState,
+  getRenterPrivacyNotice,
+  shouldRestoreSavedPlan,
   refreshActiveDecisionFromListings,
 } from "./App";
 import { demoListingsDataset, getDemoListings, updateDemoListing } from "./demoListings";
@@ -41,6 +43,7 @@ describe("unified App navigation", () => {
     expect(html).toContain("AI Advisor");
     expect(html).toContain("How It Works");
     expect(html).toContain("For property managers");
+    expect(html.match(/Check Your Rental/g)).toHaveLength(1);
     expect(html).not.toContain("Rental check · Step 1 of 5");
     expect(html).not.toContain("Fair rent analysis · Step 2 of 5");
   });
@@ -101,6 +104,18 @@ describe("unified App navigation", () => {
 
   it("storage failure keeps the plan visible with an error", () => {
     expect(getPlanSaveState({ ok: false, error: "Browser storage is unavailable." })).toBe("error");
+  });
+
+  it("keeps the active draft instead of restoring an older saved snapshot", () => {
+    expect(shouldRestoreSavedPlan({ decisionId: "draft" })).toBe(false);
+    expect(shouldRestoreSavedPlan(null)).toBe(true);
+  });
+
+  it("reports when sign-out or reset cannot clear browser storage", () => {
+    const failure = { ok: false as const, error: "Browser storage is unavailable." };
+    expect(getRenterPrivacyNotice("sign-out", failure)).toContain("sign-out could not be saved");
+    expect(getRenterPrivacyNotice("reset", failure)).toContain("demo data may still be stored");
+    expect(getRenterPrivacyNotice("reset", { ok: true })).toBeNull();
   });
 });
 

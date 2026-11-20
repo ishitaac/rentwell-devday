@@ -47,8 +47,8 @@ import {
 } from "./roommatePlanning";
 import {
   ROOMMATE_PROFILES,
-  bindPendingRoommate,
   createRoommateSelection,
+  resolveRentalSelection,
   type RoommateProfile,
 } from "./roommateProfiles";
 import {
@@ -143,6 +143,22 @@ export function canViewSavedPlan(
 
 export function getPlanSaveState(result: StorageWriteResult): RentalPlanSaveState {
   return result.ok ? "saved" : "error";
+}
+
+export function shouldRestoreSavedPlan(
+  activeDecision: Pick<RentalDecisionRecord, "decisionId"> | null,
+): boolean {
+  return activeDecision === null;
+}
+
+export function getRenterPrivacyNotice(
+  action: "sign-out" | "reset",
+  result: StorageWriteResult,
+): string | null {
+  if (result.ok) return null;
+  return action === "sign-out"
+    ? "Your sign-out could not be saved in browser storage. Close this tab or reset browser data before sharing this device."
+    : "RentWell demo data may still be stored because browser storage could not be cleared.";
 }
 
 function getBrowserStorage(): StorageLike | null {
@@ -1355,18 +1371,27 @@ function App() {
     setScreen(next);
     setMenu(false);
   };
-  const openListing = (listing: DemoListing) => {
-    setActiveDecision(createDemoRentalDecision(listing));
-    setDecisionOrigin("listings");
+  const markPlanDirty = () => {
+    setSavedAt(null);
+    setPlanSaveState("idle");
+  };
+  const activateDecision = (decision: RentalDecisionRecord, origin: DecisionOrigin) => {
+    const resolved = resolveRentalSelection(selectedRoommate, decision.decisionId);
+    setActiveDecision(decision);
+    setDecisionOrigin(origin);
+    setSelectedRoommate(resolved.roommate);
+    setRoommateStatus(resolved.roommateStatus);
     setShowCalculation(false);
-    go("listing-details");
+    setJourneyNotice(null);
+    markPlanDirty();
+    go(resolved.destination);
+  };
+  const openListing = (listing: DemoListing) => {
+    activateDecision(createDemoRentalDecision(listing), "listings");
   };
   const openExternalDecision = (entry: ExternalRentalEntry) => {
     setExternalEntry(entry);
-    setActiveDecision(createExternalRentalDecision(entry));
-    setDecisionOrigin("rental-entry");
-    setShowCalculation(false);
-    go("listing-details");
+    activateDecision(createExternalRentalDecision(entry), "rental-entry");
   };
   const startRoommateFirst = () => {
     setRoommateContext(createRoommateFirstContext());
@@ -1383,6 +1408,7 @@ function App() {
     const selection = createRoommateSelection(profile, decisionId);
     setSelectedRoommate(selection);
     setRoommateStatus("selected");
+    markPlanDirty();
     if (decisionId && activeDecision?.decisionId === decisionId) {
       setJourneyNotice(null);
       go("plan-summary");
@@ -1393,14 +1419,6 @@ function App() {
     );
     go("home");
   };
-  useEffect(() => {
-    if (!activeDecision) return;
-    setSelectedRoommate((current) => {
-      const next = bindPendingRoommate(current, activeDecision.decisionId);
-      if (current && !next) setRoommateStatus("not-started");
-      return next;
-    });
-  }, [activeDecision?.decisionId]);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
@@ -1484,10 +1502,12 @@ function App() {
       go("plan-summary");
       return;
     }
-    const loaded = loadSavedPlan(storage, session.email);
-    if (loaded.ok && loaded.value) {
-      restoreSavedPlan(loaded.value);
-      return;
+    if (shouldRestoreSavedPlan(activeDecision)) {
+      const loaded = loadSavedPlan(storage, session.email);
+      if (loaded.ok && loaded.value) {
+        restoreSavedPlan(loaded.value);
+        return;
+      }
     }
     go(activeDecision ? "plan-summary" : "listings");
   };
@@ -1499,6 +1519,10 @@ function App() {
       go("renter-account");
       return;
     }
+    if (!shouldRestoreSavedPlan(activeDecision)) {
+      go("plan-summary");
+      return;
+    }
     const storage = getBrowserStorage();
     if (storage) {
       const loaded = loadSavedPlan(storage, renterSession.email);
@@ -1508,6 +1532,22 @@ function App() {
       }
     }
     go(activeDecision ? "plan-summary" : "listings");
+  };
+
+  const clearRenterDraft = () => {
+    setActiveDecision(null);
+    setDecisionOrigin("listings");
+    setExternalEntry({ ...INITIAL_EXTERNAL_ENTRY });
+    setRoommateContext(createRoommateFirstContext());
+    setSelectedRoommate(null);
+    setRoommateStatus("not-started");
+    setAdvisorReviewedDecisionId(null);
+    setAdvisorSkippedDecisionId(null);
+    setSavedAt(null);
+    setPlanSaveState("idle");
+    setPendingPlanSave(false);
+    setJourneyNotice(null);
+    setShowCalculation(false);
   };
 
   return (
@@ -1568,15 +1608,12 @@ function App() {
             onOpenPlan={openMyPlan}
             onSignOut={() => {
               const storage = getBrowserStorage();
-              if (storage) clearDemoSession(storage, "renter");
+              const result: StorageWriteResult = storage
+                ? clearDemoSession(storage, "renter")
+                : { ok: false, error: "Browser storage is unavailable." };
+              clearRenterDraft();
               setRenterSession(null);
-              setActiveDecision(null);
-              setSelectedRoommate(null);
-              setRoommateStatus("not-started");
-              setAdvisorReviewedDecisionId(null);
-              setAdvisorSkippedDecisionId(null);
-              setSavedAt(null);
-              setPlanSaveState("idle");
+              setJourneyNotice(getRenterPrivacyNotice("sign-out", result));
               go("home");
             }}
             onReset={() => {
@@ -1587,15 +1624,12 @@ function App() {
                 return;
               }
               const storage = getBrowserStorage();
-              if (storage) resetRentwellDemoData(storage);
+              const result: StorageWriteResult = storage
+                ? resetRentwellDemoData(storage)
+                : { ok: false, error: "Browser storage is unavailable." };
+              clearRenterDraft();
               setRenterSession(null);
-              setActiveDecision(null);
-              setSelectedRoommate(null);
-              setRoommateStatus("not-started");
-              setAdvisorReviewedDecisionId(null);
-              setAdvisorSkippedDecisionId(null);
-              setSavedAt(null);
-              setPlanSaveState("idle");
+              setJourneyNotice(getRenterPrivacyNotice("reset", result));
               go("home");
             }}
           />
@@ -1663,6 +1697,7 @@ function App() {
           }
           onPlanWithRoommates={planWithRoommates}
           onOpenAdvisor={() => go("advisor")}
+          onOpenPlan={() => go("plan-summary")}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
         />
       )}
@@ -1701,11 +1736,13 @@ function App() {
           onSkipRoommate={() => {
             setSelectedRoommate(null);
             setRoommateStatus("skipped");
+            markPlanDirty();
           }}
           onSkipAdvisor={() => {
             if (!activeDecision) return;
             setAdvisorSkippedDecisionId(activeDecision.decisionId);
             setAdvisorReviewedDecisionId(null);
+            markPlanDirty();
           }}
           onSave={requestPlanSave}
           onContinueWithoutSaving={() => go("home")}
@@ -1720,6 +1757,7 @@ function App() {
           onCompleteReview={() => {
             setAdvisorReviewedDecisionId(activeDecision.decisionId);
             setAdvisorSkippedDecisionId(null);
+            markPlanDirty();
           }}
         />
       )}
@@ -1732,6 +1770,7 @@ function App() {
           onAddToPlan={() => {
             setAdvisorReviewedDecisionId(activeDecision.decisionId);
             setAdvisorSkippedDecisionId(null);
+            markPlanDirty();
             go("plan-summary");
           }}
         />
