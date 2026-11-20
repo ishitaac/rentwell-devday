@@ -108,38 +108,6 @@
   color: var(--teal);
   border-color: var(--teal);
 }
-.site-header nav > .manager-role-entry:not(.btn-primary) {
-  padding-right: 12px;
-  padding-left: 12px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: var(--cream);
-}
-/* The manager entry is a link to the separate property-manager app. */
-.site-header nav > a.manager-role-entry,
-.site-header nav > span.manager-role-entry {
-  display: inline-block;
-  padding: 26px 12px 23px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: var(--cream);
-  color: #425653;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-.site-header nav > a.manager-role-entry:hover {
-  color: var(--teal);
-  border-color: var(--teal);
-}
-.site-header nav > a.manager-role-entry:focus-visible {
-  outline: 2px solid var(--teal);
-  outline-offset: 2px;
-}
-.site-header nav > span.manager-role-entry.is-disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
 .btn-primary,
 .btn-secondary {
   border: 1px solid var(--teal);
@@ -178,6 +146,15 @@
 .btn-secondary:hover {
   border-color: var(--teal);
   color: var(--teal);
+}
+/* "For property managers": a secondary button that is a link to the separate manager app. */
+a.btn-secondary {
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.btn-secondary:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 .menu-button {
   display: none;
@@ -3138,10 +3115,8 @@ footer {
     text-align: left;
     border-bottom: 0;
   }
-  .site-header nav > a.manager-role-entry,
-  .site-header nav > span.manager-role-entry {
-    padding: 13px 12px;
-    text-align: left;
+  .site-header nav > .manager-role-entry {
+    margin: 6px 0 2px;
   }
   .hero {
     padding: 48px 20px 65px;

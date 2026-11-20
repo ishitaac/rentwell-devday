@@ -50,8 +50,10 @@ For `dev` previews, each project gives the `dev` branch its own stable alias
 (`<project>-git-dev-<team>.vercel.app`). Set Preview-only values to those aliases so the
 two `dev` sites link to each other.
 
-If `VITE_MANAGER_URL` is missing in a deployed renter app, the header shows the
-**For property managers** label greyed out instead of a broken link.
+If `VITE_MANAGER_URL` is not set, the **For property managers** button falls back to
+`http://localhost:5174/manager.html` in local dev and to `https://rentwell-manager.vercel.app`
+in a deployed build. Set the variable on any preview you want to point at a specific manager
+deployment.
 
 ## Checks before you push
 
