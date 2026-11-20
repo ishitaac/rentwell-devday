@@ -4,6 +4,7 @@ import { DEFAULT_SCENARIO } from "./costs";
 import {
   applyWhatIf,
   fallbackRoute,
+  findingCitation,
   LEGAL_LINE,
   legalReply,
   notIncludedReply,
@@ -71,6 +72,17 @@ describe("T09 lanes", () => {
     const result = applyWhatIf(analysis, DEFAULT_SCENARIO, { occupants: null, removeCharge: "pets", includeEstimates: null });
     expect(result.scenario.excludedFindingIds).toEqual([]);
     expect(result.message).toMatch(/^Pets isn't in your monthly total, so nothing changes: \$2,348/);
+  });
+
+  test("a lease question with 'if we' is not mistaken for a what-if", () => {
+    expect(preRoute("Do we have to pay for parking if we don't have a car?")).toBeNull();
+    expect(fallbackRoute("Do we have to pay for parking if we don't have a car?")).toMatchObject({ lane: "IN_LEASE", topic: "parking" });
+  });
+
+  test("legal questions about a specific charge cite that charge's clause", () => {
+    const q = "Is it legal to charge a carpet cleaning fee no matter what?";
+    const reply = legalReply(preRoute(q)!.topic, topics, clauses, findingCitation(q, analysis.findings, clauses));
+    expect(reply.citations[0].section).toBe("§ 2.1");
   });
 
   test("what's not included lists unpriced costs and missing topics", () => {

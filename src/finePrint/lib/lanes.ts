@@ -2,7 +2,7 @@ import { notFoundSentence, TOPICS, topicById } from "./checklist.js";
 import { computeCosts } from "./costs.js";
 import { formatDollars } from "./format.js";
 import { looksLikeInjection } from "./injection.js";
-import type { AnalysisResult, Clause, CostScenario, QuoteRef, TopicStatus } from "./types";
+import type { AnalysisResult, Clause, CostScenario, Finding, QuoteRef, TopicStatus } from "./types";
 
 /**
  * Ask panel routing (spec §8). A router (model or local rules) proposes a lane; code
@@ -110,7 +110,8 @@ export function preRoute(message: string): RouteDecision | null {
   if (looksLikeInjection(text)) return { lane: "OFF_TOPIC", topic: null, whatIf: null, ack: NEUTRAL_ACK };
   if (LEGAL_RE.test(text)) return { lane: "LEGAL_JUDGMENT", topic: matchTopic(text), whatIf: null, ack: null };
   if (NOT_INCLUDED_RE.test(text)) return { lane: "IN_LEASE", topic: NOT_INCLUDED_TOPIC, whatIf: null, ack: null };
-  const whatIf = /\b(what if|if we|if i|if there|split|skip|without|drop|include)\b/i.test(text) ? parseWhatIf(text) : null;
+  // Only explicit scenario phrasing is a local what-if; "do we pay X if we don't have Y" is a lease question.
+  const whatIf = /\b(what if|what would|split|skip|without|drop|include)\b/i.test(text) ? parseWhatIf(text) : null;
   if (whatIf) return { lane: "WHAT_IF", topic: null, whatIf, ack: null };
   return null;
 }
@@ -158,6 +159,11 @@ export function offTopicReply(ack: string | null): AskReply {
   return base("OFF_TOPIC", `${sanitizeAck(ack)} ${OFF_TOPIC_REDIRECT}`, { chips: SUGGESTION_CHIPS.slice(1) });
 }
 
+/** WHAT_IF carries only the change; the confirmation line is computed by applyWhatIf. */
+export function whatIfReply(whatIf: WhatIf | null): AskReply {
+  return base("WHAT_IF", "", { whatIf });
+}
+
 export function notInLeaseReply(topicId: string): AskReply {
   const topic = topicById(topicId);
   const text = topic ? notFoundSentence(topic) : "The lease doesn't say. Worth asking before you sign.";
@@ -177,8 +183,28 @@ export function topicCitations(topicId: string | null, topics: TopicStatus[], cl
   });
 }
 
-export function legalReply(topicId: string | null, topics: TopicStatus[], clauses: Clause[]): AskReply {
-  const citations = topicCitations(topicId, topics, clauses);
+const LABEL_STOP = new Set(["fee", "fees", "charge", "deposit", "the", "and", "for", "with", "per", "month", "monthly"]);
+
+/** A verified charge whose distinctive label words appear in the question ("carpet cleaning"). */
+export function findingCitation(question: string, findings: Finding[], clauses: Clause[]): Citation[] {
+  const q = question.toLowerCase();
+  const hit = findings.find((f) => {
+    if (!f.verified) return false;
+    const words = (f.label.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter((w) => !LABEL_STOP.has(w));
+    return words.length > 0 && words.some((w) => q.includes(w));
+  });
+  const clause = hit && clauses.find((c) => c.id === hit.clauseId);
+  return hit && clause ? [{ clauseId: hit.clauseId, quote: hit.quote, section: clause.section }] : [];
+}
+
+export function legalReply(
+  topicId: string | null,
+  topics: TopicStatus[],
+  clauses: Clause[],
+  fallback: Citation[] = [],
+): AskReply {
+  const fromTopic = topicCitations(topicId, topics, clauses);
+  const citations = fromTopic.length > 0 ? fromTopic : fallback;
   const lead = citations.length > 0 ? `${LEGAL_LINE} Here's the clause:` : LEGAL_LINE;
   return base("LEGAL_JUDGMENT", lead, { topic: topicId, citations });
 }

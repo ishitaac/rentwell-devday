@@ -1,3 +1,4 @@
+import { AskPanel } from "./AskPanel";
 import type { DrawerState } from "./FinePrint";
 import { Breakdown } from "./Breakdown";
 import { Hero } from "./Hero";
@@ -49,6 +50,14 @@ export function Results(props: ResultsProps) {
           />
           <QuestionList questions={analysis.questions} added={props.addedQuestions} />
         </div>
+        <AskPanel
+          analysis={analysis}
+          scenario={props.scenario}
+          onScenario={props.onScenario}
+          onHighlight={props.onHighlight}
+          onOpenClause={openClause}
+          onAddQuestion={props.onAddQuestion}
+        />
       </div>
     </main>
   );
