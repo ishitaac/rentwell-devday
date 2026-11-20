@@ -32,6 +32,8 @@ jobs:
       - run: pnpm test:data
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
+      - name: Build manager app (existing dev build)
+        run: pnpm build:manager
       - name: Build with roommate AI flag
         run: pnpm build
         env:
