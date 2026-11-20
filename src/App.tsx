@@ -18,6 +18,7 @@ import {
   type ExternalRentalEntry,
   type RentalDecisionRecord,
 } from "./rentalDecision";
+import { RoommateAI, ROOMMATE_AI_ENABLED } from "./RoommateAI";
 import {
   createRentalFirstRoommateContext,
   createRoommateFirstContext,
@@ -42,6 +43,7 @@ type Screen =
   | "math"
   | "preferences"
   | "matches"
+  | "roommate-ai"
   | AdvisorScreen;
 type IconName =
   | "arrow"
@@ -90,7 +92,7 @@ export function getNavSection(
   decisionOrigin: DecisionOrigin,
 ): "" | "advisor" | "listings" | "manager" | "rental" | "roommates" {
   if (["advisor", "lease", "truecost", "decision"].includes(screen)) return "advisor";
-  if (["math", "preferences", "matches"].includes(screen)) return "roommates";
+  if (["math", "preferences", "matches", "roommate-ai"].includes(screen)) return "roommates";
   if (screen === "manager" || (screen === "listing-details" && decisionOrigin === "manager")) {
     return "manager";
   }
@@ -1074,6 +1076,11 @@ export function Preferences({
         >
           {context.entryPerspective === "rental-first" ? "Back to cost split" : "Back to home"}
         </Button>
+        {ROOMMATE_AI_ENABLED && (
+          <Button secondary onClick={() => go("roommate-ai")}>
+            Describe how you live (AI beta)
+          </Button>
+        )}
         <Button onClick={() => go("matches")}>
           Find my matches <Icon name="arrow" size={18} />
         </Button>
@@ -1444,6 +1451,9 @@ function App() {
       )}
       {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
       {screen === "matches" && <Matches context={roommateContext} go={go} />}
+      {screen === "roommate-ai" && ROOMMATE_AI_ENABLED && (
+        <RoommateAI onExit={(to) => go(to)} />
+      )}
       {screen === "advisor" && activeDecision && <AdvisorHome decision={activeDecision} go={go} />}
       {screen === "lease" && activeDecision && <LeaseAnalysis decision={activeDecision} go={go} />}
       {screen === "truecost" && activeDecision && (

@@ -1,0 +1,111 @@
+/* Find a Roommate (AI beta). Uses RentWell tokens from index.css; all classes are prefixed rai-. */
+.rai-main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 56px; }
+.rai-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 18px; }
+.rai-head h1 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); line-height: 1.15; margin: 4px 0 8px; }
+.rai-head p { color: var(--muted); margin: 0; max-width: 640px; }
+.rai-steps { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px; }
+.rai-steps button { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: 999px; padding: 7px 14px 7px 8px; white-space: nowrap; cursor: pointer; }
+.rai-steps button span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--mint-soft); color: var(--teal-dark); font-size: .75rem; font-weight: 700; }
+.rai-steps button.active { border-color: var(--teal); color: var(--ink); background: var(--mint-soft); }
+.rai-steps button.active span { background: var(--teal); color: #fff; }
+.rai-steps button:disabled { opacity: .5; cursor: not-allowed; }
+.rai-steps button:focus-visible, .rai-main button:focus-visible, .rai-main select:focus-visible, .rai-main input:focus-visible, .rai-main textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--teal) 45%, white); outline-offset: 2px; }
+.rai-panel { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 26px; box-shadow: 0 10px 30px rgba(23, 44, 43, .05); }
+.rai-panel h2 { margin: 0 0 6px; font-size: 1.45rem; }
+.rai-sub { color: var(--muted); margin: 0 0 18px; }
+.rai-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.rai-field label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: 5px; }
+.rai-field input, .rai-field select, .rai-panel textarea, .rai-inline select, .rai-inline input, .rai-table select, .rai-table input { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; color: var(--ink); }
+.rai-inline { display: flex; gap: 8px; align-items: center; }
+.rai-inline > :first-child { flex: 2; }
+.rai-inline > :last-child { flex: 1; min-width: 108px; }
+.rai-row { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 10px; }
+.rai-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.rai-note, .rai-muted, .rai-panel small { color: var(--muted); }
+.rai-warn { background: var(--coral); border-radius: 12px; padding: 10px 14px; margin: 10px 0; }
+.rai-ok { color: var(--teal-dark); font-weight: 600; }
+.rai-consent label { display: flex; gap: 8px; align-items: center; font-weight: 600; }
+.rai-consent small { display: block; margin-top: 4px; }
+.rai-compliance, .rai-box, .rai-consent, .rai-summary { background: var(--mint-soft); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin: 18px 0; }
+.rai-compliance ul { margin: 6px 0; padding-left: 18px; }
+.rai-status { font-size: .7rem; font-weight: 700; border-radius: 6px; padding: 2px 6px; background: #fff; border: 1px solid var(--line); }
+.rai-status.restricted { background: #fde8e8; border-color: #f3c4c4; }
+.rai-status.unverified { background: #fff3d6; border-color: #ecd9a2; }
+.rai-table { display: grid; gap: 10px; }
+.rai-row-card { display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.rai-row-card.ok { border-color: color-mix(in srgb, var(--teal) 40%, white); background: var(--mint-soft); }
+.rai-row-card small { display: block; }
+.rai-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.rai-chip { display: inline-block; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #eef3f1; color: var(--muted); }
+.rai-chip.ok { background: var(--mint); color: var(--teal-dark); }
+.rai-chip.warn { background: var(--coral); color: #8a4a1f; }
+.rai-matches { display: grid; gap: 16px; }
+.rai-match { border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: #fff; }
+.rai-match.requirement-conflict { background: #fdfaf6; }
+.rai-match header { display: flex; align-items: center; gap: 12px; }
+.rai-match header h3 { margin: 0; }
+.rai-avatar { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--mint); color: var(--teal-dark); font-weight: 700; }
+.rai-score { margin-left: auto; text-align: right; }
+.rai-score strong { display: block; font-size: 1.6rem; line-height: 1; }
+.rai-category { font-weight: 700; margin: 8px 0 4px; color: var(--teal-dark); }
+.rai-category.requirement-conflict, .rai-category.significant-differences { color: #9a4b1b; }
+.rai-meter, .rai-progress { position: relative; height: 10px; background: #edf3f0; border-radius: 99px; overflow: hidden; }
+.rai-meter i, .rai-progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--teal), #35b59f); border-radius: 99px; transition: width .35s ease; }
+.rai-progress { height: 26px; margin: 18px 0; }
+.rai-progress span { position: absolute; inset: 0; display: grid; place-items: center; font-size: .78rem; font-weight: 600; }
+.rai-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 12px 0; }
+.rai-cols h4 { margin: 0 0 4px; font-size: .85rem; }
+.rai-cols ul { margin: 0; padding-left: 18px; }
+.rai-breakdown { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+.rai-sim { display: grid; grid-template-columns: 280px 1fr; gap: 18px; }
+.rai-sim-list { display: grid; gap: 8px; align-content: start; }
+.rai-sim-list button { text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 14px; padding: 12px; display: grid; gap: 4px; cursor: pointer; }
+.rai-sim-list button.active { border-color: var(--teal); background: var(--mint-soft); }
+.rai-sim-list small { color: var(--muted); }
+.rai-sim-detail { border: 1px solid var(--line); border-radius: 18px; padding: 20px; background: linear-gradient(180deg, #fff, var(--mint-soft)); }
+.rai-sim-detail h3 { margin: 0 0 8px; font-size: 1.3rem; }
+.rai-situation { font-size: 1.05rem; line-height: 1.5; }
+.rai-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.rai-pills span { font-size: .78rem; padding: 4px 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); }
+.rai-pills span.you { border-color: var(--teal); }
+.rai-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.rai-friction, .rai-compromise { border-radius: 14px; padding: 12px 14px; }
+.rai-friction { background: var(--coral); }
+.rai-compromise { background: var(--mint); }
+.rai-friction h4, .rai-compromise h4 { margin: 0 0 4px; }
+.rai-outcome { background: #fff; border-left: 4px solid var(--teal); padding: 10px 14px; border-radius: 8px; }
+.rai-question { margin: 14px 0; padding: 12px 14px; border: 1px dashed var(--teal); border-radius: 12px; }
+.rai-timeline { margin: 14px 0; padding: 12px; background: #fff; border-radius: 14px; border: 1px solid var(--line); }
+.rai-timeline figcaption { font-size: .8rem; color: var(--muted); margin-bottom: 8px; }
+.rai-axis { display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); padding-left: 56px; }
+.rai-track { position: relative; height: 22px; margin: 6px 0; background: #f1f6f4; border-radius: 8px; margin-left: 56px; }
+.rai-track em { position: absolute; left: -56px; top: 2px; font-style: normal; font-size: .75rem; width: 50px; }
+.rai-track i { position: absolute; top: 3px; bottom: 3px; border-radius: 6px; }
+.rai-track i.you { background: var(--teal); }
+.rai-track i.match { background: #c6924c; }
+.rai-demo-banner { background: #fff3d6; border: 1px solid #ecd9a2; border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; }
+.rai-topics { display: grid; gap: 14px; margin-top: 14px; }
+.rai-topic { border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+.rai-topic h3 { margin: 0 0 8px; }
+.rai-term { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; background: #fff; }
+.rai-term.accepted-by-both { border-color: var(--teal); background: var(--mint-soft); }
+.rai-term.rejected { background: #fdf2f2; }
+.rai-term p { margin: 0 0 8px; }
+.rai-term-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: .82rem; }
+.rai-chip.st-accepted-by-both { background: var(--mint); color: var(--teal-dark); }
+.rai-chip.st-rejected { background: #fde8e8; color: #9a2f2f; }
+.rai-summary-doc { border: 2px solid var(--teal); border-radius: 18px; padding: 22px; background: #fff; }
+.rai-summary-doc h3 { margin-top: 0; }
+@media (max-width: 760px) {
+  .rai-head { flex-direction: column; }
+  .rai-row-card { grid-template-columns: 1fr; }
+  .rai-sim { grid-template-columns: 1fr; }
+  .rai-sim-list { grid-auto-flow: column; grid-auto-columns: 78%; overflow-x: auto; }
+  .rai-two { grid-template-columns: 1fr; }
+  .rai-inline { flex-wrap: wrap; }
+  .rai-panel { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .rai-meter i, .rai-progress i { transition: none; } }
+.rai-suggest { display: grid; gap: 6px; margin: 8px 0; }
+.rai-suggest button { text-align: left; border: 1px solid var(--line); background: var(--mint-soft); border-radius: 10px; padding: 8px 12px; cursor: pointer; color: var(--ink); }
+.rai-suggest button:hover { border-color: var(--teal); }
