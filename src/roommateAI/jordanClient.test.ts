@@ -40,7 +40,7 @@ describe("fictional roommate client", () => {
     ["network error", f(vi.fn(async () => { throw new Error("offline"); }))],
     ["HTML from a static host", f(vi.fn(async () => new Response("<!doctype html><html></html>", { status: 200 })))],
     ["invalid reply shape", f(ok({ source: "ai", reply: { message: "hi", stance: "yes" } }))],
-    ["unsafe reply text", f(ok({ source: "ai", reply: { ...aiReply, message: "Only people of my religion." } }))],
+    ["unsafe reply text", f(ok({ source: "ai", reply: { ...aiReply, message: "Only Christians." } }))],
   ];
   for (const [name, fetchImpl] of failures) {
     it(`falls back to the deterministic responder on ${name}`, async () => {
