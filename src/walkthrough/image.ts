@@ -92,8 +92,11 @@ function toLocalIso(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-/** Real photos are stored as bare base64; sample photos are already a data: or asset URL. */
+/**
+ * Real photos are stored as bare JPEG base64, which itself starts with "/9j/", so never guess from
+ * a leading "/". Sample photos (fileName "sample-…") already hold a data: or asset URL.
+ */
 export const photoSrc = (photo: CapturedPhoto) =>
-  /^(data:|\/|https?:)/.test(photo.base64)
+  photo.fileName.startsWith("sample-") || photo.base64.startsWith("data:")
     ? photo.base64
     : `data:image/jpeg;base64,${photo.base64}`;
