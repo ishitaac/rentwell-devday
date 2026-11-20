@@ -3,6 +3,8 @@ name: Verify
 on:
   push:
     branches: [feature/ai-roommate-intelligence]
+  pull_request:
+    branches: [main, dev]
   workflow_dispatch:
     inputs:
       run_ai_smoke:
