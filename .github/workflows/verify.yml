@@ -57,6 +57,8 @@ jobs:
           VITE_ROOMMATE_AI: "1"
       - name: Build without flag (dist-off)
         run: pnpm exec vite build --outDir dist-off
+        env:
+          VITE_ROOMMATE_AI: "0"
       - name: Install Playwright (pinned, test-only, isolated in e2e/)
         run: |
           npm install --prefix e2e --no-audit --no-fund
