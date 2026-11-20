@@ -3,8 +3,10 @@ import { expect, type Page, test } from "@playwright/test";
 /** The pitch demo path (spec §2, §13): must work with the network off. */
 
 async function openSample(page: Page) {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Read the Fine Print" }).click();
+  await page.goto("/", { waitUntil: "domcontentloaded" }); // dev home loads remote images
+  const menu = page.getByRole("button", { name: "Open menu" });
+  if (await menu.isVisible()) await menu.click(); // nav is collapsed on mobile
+  await page.getByRole("button", { name: "Fine Print", exact: true }).click();
   await page.getByRole("button", { name: "Try the sample lease" }).click();
   await expect(page.getByText("Reading the fine print...")).toBeVisible();
   await expect(page.locator("#fp-hero-title")).toHaveText("The real cost is $2,348 a month. Not $2,100.", { timeout: 8_000 });
@@ -85,8 +87,10 @@ test.describe("demo path, network off", () => {
   });
 
   test("pasted text that fails live analysis shows a retry state, not fake results", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Read the Fine Print" }).click();
+    await page.goto("/", { waitUntil: "domcontentloaded" }); // dev home loads remote images
+    const menu = page.getByRole("button", { name: "Open menu" });
+  if (await menu.isVisible()) await menu.click(); // nav is collapsed on mobile
+  await page.getByRole("button", { name: "Fine Print", exact: true }).click();
     await page.getByLabel(/Paste your lease text/).fill("SECTION 1. RENT\n\n1.1 Rent is $900 per month, due on the first of each month.");
     await page.getByRole("button", { name: "Read the fine print" }).click();
     await expect(page.getByRole("alert")).toContainText("couldn't read that lease");
@@ -100,10 +104,12 @@ test("no horizontal scroll on any screen", async ({ page }) => {
 
 async function noHorizontalScroll(page: Page) {
   await page.route("**/api/**", (route) => route.abort());
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "domcontentloaded" }); // dev home loads remote images
   const widths: number[] = [];
   widths.push(await page.evaluate(() => document.documentElement.scrollWidth));
-  await page.getByRole("button", { name: "Read the Fine Print" }).click();
+  const menu = page.getByRole("button", { name: "Open menu" });
+  if (await menu.isVisible()) await menu.click(); // nav is collapsed on mobile
+  await page.getByRole("button", { name: "Fine Print", exact: true }).click();
   widths.push(await page.evaluate(() => document.documentElement.scrollWidth));
   await page.getByRole("button", { name: "Try the sample lease" }).click();
   await expect(page.locator("#fp-hero-title")).toBeVisible({ timeout: 8_000 });
