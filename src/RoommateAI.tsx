@@ -14,9 +14,6 @@ import {
 import { buildScenarios, dayTimeline, SIMULATOR_DISCLAIMER, type Scenario } from "./roommateAI/simulator";
 import { FIELD_DEFS, FIELD_KEYS, normalizeValue, type FieldKey, type Priority, type RoommateProfile } from "./roommateAI/types";
 
-/** The guided roommate flow is the default. Set VITE_ROOMMATE_AI=0 at build time to fall back to the older flow. */
-export const ROOMMATE_AI_ENABLED = import.meta.env?.VITE_ROOMMATE_AI !== "0";
-
 type Stage = "context" | "describe" | "clarify" | "confirm" | "results" | "simulator" | "negotiator";
 const STEPS: Array<{ label: string; stages: Stage[] }> = [
   { label: "Basics", stages: ["context"] },
