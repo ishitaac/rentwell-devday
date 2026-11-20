@@ -114,3 +114,12 @@ reach it from **For property managers** in the header; managers sign in with the
 choose a local no-payment pilot action, and then see the dashboard. Run it with
 `pnpm dev:manager` and build it with `pnpm build:manager`.
 Setup and the demo credentials are in [docs/two-apps-deployment.md](docs/two-apps-deployment.md).
+
+## Fine Print (lease reader)
+
+A lease reader that finds every charge, shows the real monthly cost, and lists what the lease doesn't say. It is a separate "Fine Print" screen alongside the simulated AI Advisor.
+
+- Live analysis needs `ANTHROPIC_API_KEY` in `.env.local` (gitignored) locally, or in the Vercel project's environment variables (Preview and Production). It is read only by `api/analyze.ts` and `api/ask.ts`; never give it a `VITE_` prefix. Without a key the sample lease still works from its saved analysis.
+- Claude is used for extraction and answers (`claude-sonnet-5-5`) and routing (`claude-haiku-5-5`); override with `FINE_PRINT_MODEL` / `FINE_PRINT_ROUTER_MODEL`. All money math is in `src/finePrint/lib/costs.ts`, and every quote is verified against the lease in code. AI-generated, not legal advice.
+- The sample lease in `fixtures/` and its answer key in `eval/` are fictional.
+- `pnpm check` runs typecheck, tests, build and a bundle secret check; `pnpm test:e2e` runs Playwright; `pnpm eval` scores live output.

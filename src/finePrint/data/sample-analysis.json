@@ -1,0 +1,1309 @@
+{
+  "clauses": [
+    {
+      "id": "preamble",
+      "section": "Preamble",
+      "text": "*** FICTIONAL SAMPLE DOCUMENT FOR SOFTWARE TESTING ONLY ***\nAll names, addresses, amounts, and terms in this document are invented.\nThis is not a real lease and is not legal advice.\nRESIDENTIAL LEASE AGREEMENT\nJuniper Row Apartments\nThis Lease Agreement (\"Lease\") is entered into on December 10, 2026 between Larkspur Property Management, LLC, as agent for the owner (\"Landlord\"), and Alex Rivera and Jamie Chen (\"Resident\"), for the dwelling described below."
+    },
+    {
+      "id": "s1.1",
+      "section": "§ 1.1",
+      "heading": "Premises",
+      "text": "Premises. Unit 3B, a 2 bedroom / 1 bath apartment at 1450 Fictional Avenue, Salt Lake City, Utah (\"Premises\")."
+    },
+    {
+      "id": "s1.2",
+      "section": "§ 1.2",
+      "heading": "Term",
+      "text": "Term. This Lease begins January 1, 2027 and ends December 31, 2027 (\"Term\")."
+    },
+    {
+      "id": "s1.3",
+      "section": "§ 1.3",
+      "heading": "Occupancy",
+      "text": "Occupancy. The Premises may be occupied only by the persons named in this Lease. Maximum occupancy is two (2) persons. A guest may stay no more than 14 days in any 6-month period without Landlord's written consent."
+    },
+    {
+      "id": "s2.1",
+      "section": "§ 2.1",
+      "heading": "Security Deposit",
+      "text": "Security Deposit. Resident will pay a security deposit of $1,000.00 at signing. Landlord may deduct from the deposit a carpet cleaning charge of $150.00 at move-out regardless of the carpet's condition, plus any unpaid amounts and any damage beyond normal wear and tear."
+    },
+    {
+      "id": "s2.2",
+      "section": "§ 2.2",
+      "heading": "Administrative Fee",
+      "text": "Administrative Fee. Resident will pay a non-refundable administrative fee of $250.00 at signing."
+    },
+    {
+      "id": "s2.3",
+      "section": "§ 2.3",
+      "heading": "Application Fee",
+      "text": "Application Fee. A non-refundable application fee of $45.00 per adult applicant was paid before this Lease was signed."
+    },
+    {
+      "id": "s2.4",
+      "section": "§ 2.4",
+      "heading": "Access Devices",
+      "text": "Access Devices. Resident will receive two (2) key fobs for a deposit of $25.00 each, refundable when the fobs are returned in working condition. A lost or damaged fob will be replaced for $60.00 each."
+    },
+    {
+      "id": "s2.5",
+      "section": "§ 2.5",
+      "heading": "First Month",
+      "text": "First Month. The first month's rent and all monthly charges are due at signing."
+    },
+    {
+      "id": "s3.1",
+      "section": "§ 3.1",
+      "heading": "Base Rent",
+      "text": "Base Rent. Base rent is $2,100.00 per month, due on the first (1st) day of each month. Rent will remain fixed for the Term."
+    },
+    {
+      "id": "s3.2",
+      "section": "§ 3.2",
+      "heading": "Rent Schedule",
+      "text": "Rent Schedule. The rent schedule in Exhibit A is part of this Lease."
+    },
+    {
+      "id": "s3.3",
+      "section": "§ 3.3",
+      "heading": "Late Charges",
+      "text": "Late Charges. If rent is not received by the end of the third (3rd) day of the month, Resident will pay a late fee equal to five percent (5%) of monthly base rent, plus $15.00 for each additional day the rent remains unpaid."
+    },
+    {
+      "id": "s3.4",
+      "section": "§ 3.4",
+      "heading": "Returned Payments",
+      "text": "Returned Payments. A fee of $40.00 applies to any returned or declined payment."
+    },
+    {
+      "id": "s3.5",
+      "section": "§ 3.5",
+      "heading": "Payment Method",
+      "text": "Payment Method. Payments by credit or debit card carry a convenience fee of 2.9% of the payment. Payment by ACH or check carries no fee."
+    },
+    {
+      "id": "s4.1",
+      "section": "§ 4.1",
+      "heading": "Reserved Parking",
+      "text": "Reserved Parking. Resident must lease one (1) reserved parking space at $100.00 per month. A second space, if available, is $75.00 per month. Guest parking is limited. Unauthorized vehicles may be towed at the vehicle owner's expense."
+    },
+    {
+      "id": "s4.2",
+      "section": "§ 4.2",
+      "heading": "Community Amenity Fee",
+      "text": "Community Amenity Fee. Resident will pay $45.00 per month for use of the fitness room, clubhouse, and courtyard, whether or not Resident uses them."
+    },
+    {
+      "id": "s4.3",
+      "section": "§ 4.3",
+      "heading": "Technology Package",
+      "text": "Technology Package. Resident will pay $65.00 per month for the community internet service, which is required for all units."
+    },
+    {
+      "id": "s4.4",
+      "section": "§ 4.4",
+      "heading": "Pest Control",
+      "text": "Pest Control. Resident will pay $8.00 per month for pest control services."
+    },
+    {
+      "id": "s4.5",
+      "section": "§ 4.5",
+      "heading": "Valet Trash",
+      "text": "Valet Trash. Resident will pay $25.00 per month for doorstep trash collection."
+    },
+    {
+      "id": "s4.6",
+      "section": "§ 4.6",
+      "heading": "Utilities",
+      "text": "Utilities. Water, sewer, and storm water charges are billed back to Resident using a ratio utility billing method, currently estimated at approximately $70.00 per month for a two-person household, plus a billing service fee of $5.00 per month. Resident is responsible for electricity and natural gas, which are billed directly to Resident by the utility providers."
+    },
+    {
+      "id": "s4.7",
+      "section": "§ 4.7",
+      "heading": "Renter's Insurance",
+      "text": "Renter's Insurance. Resident must maintain renter's insurance with at least $100,000 in liability coverage and provide proof before move-in. If proof is not provided, Landlord may enroll Resident in a Landlord-placed policy at $14.00 per month."
+    },
+    {
+      "id": "s4.8",
+      "section": "§ 4.8",
+      "heading": "Additional Charges",
+      "text": "Additional Charges. Landlord may add or change fees for services such as package handling, amenity upgrades, or technology enhancements upon thirty (30) days' written notice to Resident."
+    },
+    {
+      "id": "s5.1",
+      "section": "§ 5.1",
+      "heading": "Pets",
+      "text": "No pets are allowed without a signed Pet Addendum. If a pet is approved, pet rent is $35.00 per month per pet and a refundable pet deposit of $300.00 per pet applies."
+    },
+    {
+      "id": "s6.1",
+      "section": "§ 6.1",
+      "heading": "Community Rules",
+      "text": "Resident agrees to follow the Community Rules, as amended by Landlord from time to time. The Community Rules are available at the leasing office. Violations may result in fines set by Landlord."
+    },
+    {
+      "id": "s7.1",
+      "section": "§ 7.1",
+      "heading": "Maintenance and Entry",
+      "text": "Landlord will make repairs to the Premises in a reasonable time after written notice. Resident will pay for repairs needed because of damage caused by Resident or Resident's guests."
+    },
+    {
+      "id": "s7.2",
+      "section": "§ 7.2",
+      "heading": "Maintenance and Entry",
+      "text": "Landlord may enter the Premises with at least twenty-four (24) hours' notice, or at any time in an emergency."
+    },
+    {
+      "id": "s8.1",
+      "section": "§ 8.1",
+      "heading": "Subletting and Assignment",
+      "text": "Resident may not sublet the Premises or assign this Lease without Landlord's prior written consent, which Landlord may withhold in its discretion. If Landlord consents, a transfer fee of $150.00 applies."
+    },
+    {
+      "id": "s9.1",
+      "section": "§ 9.1",
+      "heading": "Liability of Residents",
+      "text": "If more than one person signs this Lease, each is jointly and severally liable for the full rent and all other obligations under this Lease. If one Resident moves out, the remaining Resident(s) remain responsible for the entire amount."
+    },
+    {
+      "id": "s10.1",
+      "section": "§ 10.1",
+      "heading": "Early Termination",
+      "text": "Resident may end this Lease before the end of the Term by giving at least sixty (60) days' written notice and paying an early termination fee equal to two (2) months' base rent. Resident remains responsible for rent and charges through the end of the notice period."
+    },
+    {
+      "id": "s10.2",
+      "section": "§ 10.2",
+      "heading": "Early Termination",
+      "text": "The early termination fee is in addition to any unpaid charges and deposit deductions."
+    },
+    {
+      "id": "s11.1",
+      "section": "§ 11.1",
+      "heading": "Renewal and Holdover",
+      "text": "At the end of the Term, this Lease converts to a month-to-month tenancy unless Resident gives written notice of intent to vacate at least sixty (60) days before the end of the Term. Month-to-month base rent is the then-current base rent plus $250.00 per month."
+    },
+    {
+      "id": "s12.1",
+      "section": "§ 12.1",
+      "heading": "General",
+      "text": "This Lease is the entire agreement between Landlord and Resident. Changes must be in writing and signed by both parties, except as stated in Section 4.8."
+    },
+    {
+      "id": "exA",
+      "section": "Exhibit A",
+      "heading": "Rent Schedule",
+      "text": "Months 1 through 6 (January 2027 to June 2027): $2,100.00 per month\nMonths 7 through 12 (July 2027 to December 2027): $2,150.00 per month"
+    },
+    {
+      "id": "signatures",
+      "section": "Signatures (fictional)",
+      "text": "Landlord: ______________________ (Larkspur Property Management, LLC, fictional)\nResident: ______________________ (Alex Rivera, fictional)\nResident: ______________________ (Jamie Chen, fictional)\n*** END OF FICTIONAL SAMPLE DOCUMENT ***"
+    }
+  ],
+  "findings": [
+    {
+      "label": "Base rent",
+      "clauseId": "s3.1",
+      "quote": "Base rent is $2,100.00 per month, due on the first (1st) day of each month.",
+      "kind": "base_rent",
+      "type": "mandatory",
+      "frequency": "monthly",
+      "amount": 2100,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "notes": "Exhibit A shows a different rent for months 7-12.",
+      "id": "f1",
+      "verified": true
+    },
+    {
+      "label": "Security deposit",
+      "clauseId": "s2.1",
+      "quote": "Resident will pay a security deposit of $1,000.00 at signing.",
+      "kind": "deposit",
+      "type": "refundable",
+      "frequency": "one_time",
+      "amount": 1000,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "notes": "Deductions may include carpet cleaning, unpaid amounts, and damage beyond normal wear and tear.",
+      "id": "f2",
+      "verified": true
+    },
+    {
+      "label": "Carpet cleaning deduction",
+      "clauseId": "s2.1",
+      "quote": "Landlord may deduct from the deposit a carpet cleaning charge of $150.00 at move-out regardless of the carpet's condition",
+      "kind": "deposit_deduction",
+      "type": "mandatory",
+      "frequency": "one_time",
+      "amount": 150,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "condition": "At move-out, regardless of carpet condition",
+      "id": "f3",
+      "verified": true
+    },
+    {
+      "label": "Administrative fee",
+      "clauseId": "s2.2",
+      "quote": "Resident will pay a non-refundable administrative fee of $250.00 at signing.",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "one_time",
+      "amount": 250,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "notes": "Non-refundable",
+      "id": "f4",
+      "verified": true
+    },
+    {
+      "label": "Application fee",
+      "clauseId": "s2.3",
+      "quote": "A non-refundable application fee of $45.00 per adult applicant was paid before this Lease was signed.",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "one_time",
+      "amount": 45,
+      "perPerson": true,
+      "isRequired": true,
+      "paidEarlier": true,
+      "notes": "Already paid before signing",
+      "id": "f5",
+      "verified": true
+    },
+    {
+      "label": "Key fob deposit",
+      "clauseId": "s2.4",
+      "quote": "Resident will receive two (2) key fobs for a deposit of $25.00 each, refundable when the fobs are returned in working condition.",
+      "kind": "deposit",
+      "type": "refundable",
+      "frequency": "one_time",
+      "amount": 25,
+      "quantity": 2,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "notes": "Refundable when fobs are returned in working condition",
+      "id": "f6",
+      "verified": true
+    },
+    {
+      "label": "Lost or damaged fob replacement",
+      "clauseId": "s2.4",
+      "quote": "A lost or damaged fob will be replaced for $60.00 each.",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "per_event",
+      "amount": 60,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "If a fob is lost or damaged",
+      "id": "f7",
+      "verified": true
+    },
+    {
+      "label": "Late fee",
+      "clauseId": "s3.3",
+      "quote": "a late fee equal to five percent (5%) of monthly base rent, plus $15.00 for each additional day the rent remains unpaid",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "percent",
+      "amount": null,
+      "percent": 5,
+      "perDayAmount": 15,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "If rent is not received by the end of the third (3rd) day of the month",
+      "id": "f8",
+      "verified": true
+    },
+    {
+      "label": "Returned payment fee",
+      "clauseId": "s3.4",
+      "quote": "A fee of $40.00 applies to any returned or declined payment.",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "per_event",
+      "amount": 40,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "If a payment is returned or declined",
+      "id": "f9",
+      "verified": true
+    },
+    {
+      "label": "Card payment convenience fee",
+      "clauseId": "s3.5",
+      "quote": "Payments by credit or debit card carry a convenience fee of 2.9% of the payment.",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "percent",
+      "amount": null,
+      "percent": 2.9,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "If paying by credit or debit card",
+      "notes": "ACH or check carries no fee",
+      "id": "f10",
+      "verified": true
+    },
+    {
+      "label": "Reserved parking",
+      "clauseId": "s4.1",
+      "quote": "Resident must lease one (1) reserved parking space at $100.00 per month.",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "monthly",
+      "amount": 100,
+      "quantity": 1,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "id": "f11",
+      "verified": true
+    },
+    {
+      "label": "Second parking space",
+      "clauseId": "s4.1",
+      "quote": "A second space, if available, is $75.00 per month.",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "monthly",
+      "amount": 75,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "If resident chooses a second space and one is available",
+      "id": "f12",
+      "verified": true
+    },
+    {
+      "label": "Community amenity fee",
+      "clauseId": "s4.2",
+      "quote": "Resident will pay $45.00 per month for use of the fitness room, clubhouse, and courtyard, whether or not Resident uses them.",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "monthly",
+      "amount": 45,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "id": "f13",
+      "verified": true
+    },
+    {
+      "label": "Technology package",
+      "clauseId": "s4.3",
+      "quote": "Resident will pay $65.00 per month for the community internet service, which is required for all units.",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "monthly",
+      "amount": 65,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "id": "f14",
+      "verified": true
+    },
+    {
+      "label": "Pest control",
+      "clauseId": "s4.4",
+      "quote": "Resident will pay $8.00 per month for pest control services.",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "monthly",
+      "amount": 8,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "id": "f15",
+      "verified": true
+    },
+    {
+      "label": "Valet trash",
+      "clauseId": "s4.5",
+      "quote": "Resident will pay $25.00 per month for doorstep trash collection.",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "monthly",
+      "amount": 25,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "id": "f16",
+      "verified": true
+    },
+    {
+      "label": "Water, sewer, storm water (RUBS)",
+      "clauseId": "s4.6",
+      "quote": "currently estimated at approximately $70.00 per month for a two-person household",
+      "kind": "fee",
+      "type": "estimate",
+      "frequency": "monthly",
+      "amount": 70,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "notes": "Billed back using ratio utility billing; estimate only",
+      "id": "f17",
+      "verified": true
+    },
+    {
+      "label": "Utility billing service fee",
+      "clauseId": "s4.6",
+      "quote": "plus a billing service fee of $5.00 per month",
+      "kind": "fee",
+      "type": "mandatory",
+      "frequency": "monthly",
+      "amount": 5,
+      "perPerson": false,
+      "isRequired": true,
+      "paidEarlier": false,
+      "id": "f18",
+      "verified": true
+    },
+    {
+      "label": "Electricity and natural gas",
+      "clauseId": "s4.6",
+      "quote": "Resident is responsible for electricity and natural gas, which are billed directly to Resident by the utility providers.",
+      "kind": "fee",
+      "type": "unknown_cost",
+      "frequency": "monthly",
+      "amount": null,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "notes": "Billed directly by providers; no amount stated",
+      "id": "f19",
+      "verified": true
+    },
+    {
+      "label": "Renter's insurance (resident-purchased)",
+      "clauseId": "s4.7",
+      "quote": "renter's insurance with at least $100,000 in liability coverage",
+      "kind": "fee",
+      "type": "unknown_cost",
+      "frequency": "monthly",
+      "amount": null,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "notes": "Resident must buy own policy; premium not stated. Quote shortened below.",
+      "id": "f20",
+      "verified": true
+    },
+    {
+      "label": "Landlord-placed insurance",
+      "clauseId": "s4.7",
+      "quote": "Landlord may enroll Resident in a Landlord-placed policy at $14.00 per month.",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "monthly",
+      "amount": 14,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if proof of renter's insurance is not provided",
+      "id": "f21",
+      "verified": true
+    },
+    {
+      "label": "Added or changed service fees",
+      "clauseId": "s4.8",
+      "quote": "Landlord may add or change fees for services such as package handling, amenity upgrades, or technology enhancements",
+      "kind": "fee",
+      "type": "unknown_cost",
+      "frequency": "monthly",
+      "amount": null,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if Landlord adds or changes fees on thirty (30) days' written notice",
+      "notes": "No amounts stated",
+      "id": "f22",
+      "verified": true
+    },
+    {
+      "label": "Pet rent",
+      "clauseId": "s5.1",
+      "quote": "pet rent is $35.00 per month per pet",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "monthly",
+      "amount": 35,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if a pet is approved with a signed Pet Addendum",
+      "notes": "Charged per pet",
+      "id": "f23",
+      "verified": true
+    },
+    {
+      "label": "Pet deposit",
+      "clauseId": "s5.1",
+      "quote": "a refundable pet deposit of $300.00 per pet applies",
+      "kind": "deposit",
+      "type": "refundable",
+      "frequency": "one_time",
+      "amount": 300,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if a pet is approved",
+      "notes": "Charged per pet",
+      "id": "f24",
+      "verified": true
+    },
+    {
+      "label": "Fines for Community Rules violations",
+      "clauseId": "s6.1",
+      "quote": "Violations may result in fines set by Landlord.",
+      "kind": "fee",
+      "type": "unknown_cost",
+      "frequency": "per_event",
+      "amount": null,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if Community Rules are violated",
+      "notes": "Amount not stated",
+      "id": "f25",
+      "verified": true
+    },
+    {
+      "label": "Repair costs for resident-caused damage",
+      "clauseId": "s7.1",
+      "quote": "Resident will pay for repairs needed because of damage caused by Resident or Resident's guests.",
+      "kind": "fee",
+      "type": "unknown_cost",
+      "frequency": "per_event",
+      "amount": null,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if damage is caused by Resident or guests",
+      "notes": "Amount not stated",
+      "id": "f26",
+      "verified": true
+    },
+    {
+      "label": "Sublet/assignment transfer fee",
+      "clauseId": "s8.1",
+      "quote": "If Landlord consents, a transfer fee of $150.00 applies.",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "one_time",
+      "amount": 150,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if Landlord consents to sublet or assignment",
+      "id": "f27",
+      "verified": true
+    },
+    {
+      "label": "Early termination fee",
+      "clauseId": "s10.1",
+      "quote": "an early termination fee equal to two (2) months' base rent",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "one_time",
+      "amount": null,
+      "rentMultiple": 2,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if Resident ends the Lease early with at least sixty (60) days' written notice",
+      "id": "f28",
+      "verified": true
+    },
+    {
+      "label": "Month-to-month rent premium",
+      "clauseId": "s11.1",
+      "quote": "Month-to-month base rent is the then-current base rent plus $250.00 per month.",
+      "kind": "fee",
+      "type": "conditional",
+      "frequency": "monthly",
+      "amount": 250,
+      "perPerson": false,
+      "isRequired": false,
+      "paidEarlier": false,
+      "condition": "if Lease converts to month-to-month after the Term",
+      "notes": "Added on top of then-current base rent",
+      "id": "f29",
+      "verified": true
+    }
+  ],
+  "topics": [
+    {
+      "topic": "pets",
+      "label": "Pets",
+      "status": "found",
+      "clauseIds": [
+        "s5.1"
+      ]
+    },
+    {
+      "topic": "parking",
+      "label": "Parking",
+      "status": "found",
+      "clauseIds": [
+        "s4.1"
+      ]
+    },
+    {
+      "topic": "utilities",
+      "label": "Utilities",
+      "status": "found",
+      "clauseIds": [
+        "s4.6"
+      ]
+    },
+    {
+      "topic": "internet",
+      "label": "Internet",
+      "status": "found",
+      "clauseIds": [
+        "s4.3"
+      ]
+    },
+    {
+      "topic": "renters_insurance",
+      "label": "Renter's insurance",
+      "status": "found",
+      "clauseIds": [
+        "s4.7"
+      ]
+    },
+    {
+      "topic": "security_deposit",
+      "label": "Security deposit",
+      "status": "found",
+      "clauseIds": [
+        "s2.1"
+      ]
+    },
+    {
+      "topic": "late_fees",
+      "label": "Late fees",
+      "status": "found",
+      "clauseIds": [
+        "s3.3"
+      ]
+    },
+    {
+      "topic": "early_termination",
+      "label": "Moving out early",
+      "status": "found",
+      "clauseIds": [
+        "s10.1",
+        "s10.2",
+        "s11.1"
+      ]
+    },
+    {
+      "topic": "subletting",
+      "label": "Subletting",
+      "status": "found",
+      "clauseIds": [
+        "s8.1"
+      ]
+    },
+    {
+      "topic": "guests",
+      "label": "Guests",
+      "status": "found",
+      "clauseIds": [
+        "s1.3",
+        "s4.1",
+        "s7.1"
+      ]
+    },
+    {
+      "topic": "occupancy",
+      "label": "Occupancy limit",
+      "status": "found",
+      "clauseIds": [
+        "s1.3"
+      ]
+    },
+    {
+      "topic": "maintenance",
+      "label": "Repairs",
+      "status": "found",
+      "clauseIds": [
+        "s7.1",
+        "s7.2"
+      ]
+    },
+    {
+      "topic": "entry",
+      "label": "Landlord entry",
+      "status": "found",
+      "clauseIds": [
+        "s7.1",
+        "s7.2"
+      ]
+    },
+    {
+      "topic": "renewal",
+      "label": "Renewal",
+      "status": "found",
+      "clauseIds": [
+        "s11.1"
+      ]
+    },
+    {
+      "topic": "rent_increase",
+      "label": "Rent increases",
+      "status": "found",
+      "clauseIds": [
+        "s3.2",
+        "exA"
+      ]
+    },
+    {
+      "topic": "liability",
+      "label": "Roommate liability",
+      "status": "found",
+      "clauseIds": [
+        "s9.1"
+      ]
+    },
+    {
+      "topic": "move_out",
+      "label": "Move-out",
+      "status": "found",
+      "clauseIds": [
+        "s2.1",
+        "s11.1"
+      ]
+    },
+    {
+      "topic": "smoking",
+      "label": "Smoking",
+      "status": "not_found",
+      "clauseIds": []
+    },
+    {
+      "topic": "furnished",
+      "label": "Furnishings",
+      "status": "not_found",
+      "clauseIds": []
+    },
+    {
+      "topic": "laundry",
+      "label": "Laundry",
+      "status": "not_found",
+      "clauseIds": []
+    },
+    {
+      "topic": "appliances",
+      "label": "Appliances",
+      "status": "not_found",
+      "clauseIds": []
+    },
+    {
+      "topic": "heating_cooling",
+      "label": "Heating and A/C",
+      "status": "not_found",
+      "clauseIds": []
+    },
+    {
+      "topic": "quiet_hours",
+      "label": "Quiet hours",
+      "status": "not_found",
+      "clauseIds": []
+    },
+    {
+      "topic": "snow_removal",
+      "label": "Snow removal",
+      "status": "not_found",
+      "clauseIds": []
+    },
+    {
+      "topic": "storage",
+      "label": "Storage",
+      "status": "not_found",
+      "clauseIds": []
+    }
+  ],
+  "conflicts": [
+    {
+      "text": "Section 3.1 says rent is fixed at $2,100 for the whole term, but Exhibit A raises it to $2,150 per month for months 7 through 12.",
+      "refs": [
+        {
+          "clauseId": "s3.1",
+          "quote": "Rent will remain fixed for the Term."
+        },
+        {
+          "clauseId": "exA",
+          "quote": "Months 7 through 12 (July 2027 to December 2027): $2,150.00 per month"
+        }
+      ],
+      "clauseIds": [
+        "s3.1",
+        "exA"
+      ]
+    },
+    {
+      "text": "The lease says all monthly charges are due at signing, while rent is also described as due on the 1st of each month, so it is unclear what is owed at signing.",
+      "refs": [
+        {
+          "clauseId": "s2.5",
+          "quote": "The first month's rent and all monthly charges are due at signing."
+        },
+        {
+          "clauseId": "s3.1",
+          "quote": "due on the first (1st) day of each month"
+        }
+      ],
+      "clauseIds": [
+        "s2.5",
+        "s3.1"
+      ]
+    },
+    {
+      "text": "The lease says changes must be signed by both parties, but Section 4.8 lets the landlord add or change fees with only notice.",
+      "refs": [
+        {
+          "clauseId": "s12.1",
+          "quote": "Changes must be in writing and signed by both parties, except as stated in Section 4.8."
+        },
+        {
+          "clauseId": "s4.8",
+          "quote": "Landlord may add or change fees for services such as package handling, amenity upgrades, or technology enhancements upon thirty (30) days' written notice to Resident."
+        }
+      ],
+      "clauseIds": [
+        "s12.1",
+        "s4.8"
+      ]
+    }
+  ],
+  "rentSchedule": [
+    {
+      "fromMonth": 1,
+      "toMonth": 6,
+      "amount": 2100,
+      "clauseId": "exA",
+      "quote": "Months 1 through 6 (January 2027 to June 2027): $2,100.00 per month"
+    },
+    {
+      "fromMonth": 7,
+      "toMonth": 12,
+      "amount": 2150,
+      "clauseId": "exA",
+      "quote": "Months 7 through 12 (July 2027 to December 2027): $2,150.00 per month"
+    }
+  ],
+  "clarifications": [
+    {
+      "text": "The late fee keeps adding $15 a day with no stated cap.",
+      "refs": [
+        {
+          "clauseId": "s3.3",
+          "quote": "a late fee equal to five percent (5%) of monthly base rent, plus $15.00 for each additional day the rent remains unpaid"
+        }
+      ],
+      "clauseIds": [
+        "s3.3"
+      ]
+    },
+    {
+      "text": "The early termination fee is 2 months' base rent: $4,200 or $4,300 depending on which rate applies.",
+      "refs": [
+        {
+          "clauseId": "s10.1",
+          "quote": "an early termination fee equal to two (2) months' base rent"
+        }
+      ],
+      "clauseIds": [
+        "s10.1"
+      ]
+    },
+    {
+      "text": "Ask which rent applies, since the lease states a fixed rent but also includes a rent schedule with an increase.",
+      "refs": [
+        {
+          "clauseId": "s3.2",
+          "quote": "The rent schedule in Exhibit A is part of this Lease."
+        }
+      ],
+      "clauseIds": [
+        "s3.2"
+      ]
+    },
+    {
+      "text": "The landlord can add or change fees on 30 days' notice, with no cap and no list of what they might be.",
+      "refs": [
+        {
+          "clauseId": "s4.8",
+          "quote": "Landlord may add or change fees for services such as package handling, amenity upgrades, or technology enhancements"
+        }
+      ],
+      "clauseIds": [
+        "s4.8"
+      ]
+    },
+    {
+      "text": "The Community Rules can be changed by the landlord at any time, are not attached, and violations can bring fines with no stated amount.",
+      "refs": [
+        {
+          "clauseId": "s6.1",
+          "quote": "Community Rules, as amended by Landlord from time to time."
+        },
+        {
+          "clauseId": "s6.1",
+          "quote": "Violations may result in fines set by Landlord."
+        }
+      ],
+      "clauseIds": [
+        "s6.1"
+      ]
+    },
+    {
+      "text": "Either resident can be held responsible for the full rent and all obligations, even after the other moves out.",
+      "refs": [
+        {
+          "clauseId": "s9.1",
+          "quote": "each is jointly and severally liable for the full rent and all other obligations under this Lease"
+        },
+        {
+          "clauseId": "s9.1",
+          "quote": "the remaining Resident(s) remain responsible for the entire amount"
+        }
+      ],
+      "clauseIds": [
+        "s9.1"
+      ]
+    },
+    {
+      "text": "The lease automatically becomes month-to-month unless you give 60 days' notice, and month-to-month rent is $250 per month higher than the current rent.",
+      "refs": [
+        {
+          "clauseId": "s11.1",
+          "quote": "this Lease converts to a month-to-month tenancy unless Resident gives written notice of intent to vacate at least sixty (60) days before the end of the Term"
+        },
+        {
+          "clauseId": "s11.1",
+          "quote": "Month-to-month base rent is the then-current base rent plus $250.00 per month."
+        }
+      ],
+      "clauseIds": [
+        "s11.1"
+      ]
+    },
+    {
+      "text": "Occupancy is capped at two people and guest stays are limited to 14 days in 6 months without written consent.",
+      "refs": [
+        {
+          "clauseId": "s1.3",
+          "quote": "Maximum occupancy is two (2) persons."
+        },
+        {
+          "clauseId": "s1.3",
+          "quote": "A guest may stay no more than 14 days in any 6-month period without Landlord's written consent."
+        }
+      ],
+      "clauseIds": [
+        "s1.3"
+      ]
+    },
+    {
+      "text": "The carpet cleaning charge is taken from the deposit no matter the carpet's condition, so ask whether it can be avoided.",
+      "refs": [
+        {
+          "clauseId": "s2.1",
+          "quote": "a carpet cleaning charge of $150.00 at move-out regardless of the carpet's condition"
+        }
+      ],
+      "clauseIds": [
+        "s2.1"
+      ]
+    },
+    {
+      "text": "Water, sewer and storm water costs are only estimated and could vary, and electricity and gas costs are not stated.",
+      "refs": [
+        {
+          "clauseId": "s4.6",
+          "quote": "currently estimated at approximately $70.00 per month for a two-person household"
+        },
+        {
+          "clauseId": "s4.6",
+          "quote": "Resident is responsible for electricity and natural gas, which are billed directly to Resident by the utility providers."
+        }
+      ],
+      "clauseIds": [
+        "s4.6"
+      ]
+    },
+    {
+      "text": "The lease requires renter's insurance, and if you do not show proof the landlord may enroll you in a landlord-placed policy; the cost of your own policy is not stated.",
+      "refs": [
+        {
+          "clauseId": "s4.7",
+          "quote": "Resident must maintain renter's insurance with at least $100,000 in liability coverage"
+        },
+        {
+          "clauseId": "s4.7",
+          "quote": "Landlord may enroll Resident in a Landlord-placed policy at $14.00 per month."
+        }
+      ],
+      "clauseIds": [
+        "s4.7"
+      ]
+    },
+    {
+      "text": "Pet fees only apply if a pet is approved through a Pet Addendum that is not attached.",
+      "refs": [
+        {
+          "clauseId": "s5.1",
+          "quote": "No pets are allowed without a signed Pet Addendum."
+        }
+      ],
+      "clauseIds": [
+        "s5.1"
+      ]
+    },
+    {
+      "text": "Parking is required at $100 per month, but a second space depends on availability, guest parking is limited, and towing costs are unstated.",
+      "refs": [
+        {
+          "clauseId": "s4.1",
+          "quote": "A second space, if available, is $75.00 per month."
+        },
+        {
+          "clauseId": "s4.1",
+          "quote": "Unauthorized vehicles may be towed at the vehicle owner's expense."
+        }
+      ],
+      "clauseIds": [
+        "s4.1"
+      ]
+    },
+    {
+      "text": "Subletting needs consent that the landlord can refuse at its discretion, and a transfer fee applies if it is allowed.",
+      "refs": [
+        {
+          "clauseId": "s8.1",
+          "quote": "which Landlord may withhold in its discretion"
+        }
+      ],
+      "clauseIds": [
+        "s8.1"
+      ]
+    },
+    {
+      "text": "Repair costs for damage caused by you or your guests have no stated cap or amount.",
+      "refs": [
+        {
+          "clauseId": "s7.1",
+          "quote": "Resident will pay for repairs needed because of damage caused by Resident or Resident's guests."
+        }
+      ],
+      "clauseIds": [
+        "s7.1"
+      ]
+    }
+  ],
+  "costs": {
+    "scenario": {
+      "occupants": 2,
+      "includeEstimates": false,
+      "excludedFindingIds": []
+    },
+    "baseRentCents": 210000,
+    "monthlyLines": [
+      {
+        "findingId": "f11",
+        "label": "Reserved parking",
+        "cents": 10000
+      },
+      {
+        "findingId": "f13",
+        "label": "Community amenity fee",
+        "cents": 4500
+      },
+      {
+        "findingId": "f14",
+        "label": "Technology package",
+        "cents": 6500
+      },
+      {
+        "findingId": "f15",
+        "label": "Pest control",
+        "cents": 800
+      },
+      {
+        "findingId": "f16",
+        "label": "Valet trash",
+        "cents": 2500
+      },
+      {
+        "findingId": "f18",
+        "label": "Utility billing service fee",
+        "cents": 500
+      }
+    ],
+    "headlineCents": 234800,
+    "estimateLines": [
+      {
+        "findingId": "f17",
+        "label": "Water, sewer, storm water (RUBS)",
+        "cents": 7000
+      }
+    ],
+    "estimateCents": 7000,
+    "headlineWithEstimatesCents": 241800,
+    "displayedMonthlyCents": 234800,
+    "perPersonDollars": [
+      1174,
+      1174
+    ],
+    "phases": [
+      {
+        "fromMonth": 1,
+        "toMonth": 6,
+        "rentCents": 210000,
+        "totalCents": 234800
+      },
+      {
+        "fromMonth": 7,
+        "toMonth": 12,
+        "rentCents": 215000,
+        "totalCents": 239800
+      }
+    ],
+    "unknowns": [
+      {
+        "findingId": "f19",
+        "label": "Electricity and natural gas"
+      },
+      {
+        "findingId": "f20",
+        "label": "Renter's insurance (resident-purchased)"
+      },
+      {
+        "findingId": "f22",
+        "label": "Added or changed service fees"
+      },
+      {
+        "findingId": "f25",
+        "label": "Fines for Community Rules violations"
+      },
+      {
+        "findingId": "f26",
+        "label": "Repair costs for resident-caused damage"
+      }
+    ],
+    "moveIn": {
+      "refundableCents": 105000,
+      "nonRefundableDueAtSigningCents": 25000,
+      "firstMonthCents": 234800,
+      "dueAtSigningCents": 364800,
+      "paidEarlierCents": 9000,
+      "totalCashOutCents": 373800,
+      "nonRefundableSubtotalCents": 49000,
+      "depositReturns": [
+        {
+          "findingId": "f2",
+          "label": "Security deposit",
+          "depositCents": 100000,
+          "deductionCents": 15000,
+          "maxReturnCents": 85000
+        },
+        {
+          "findingId": "f6",
+          "label": "Key fob deposit",
+          "depositCents": 5000,
+          "deductionCents": 0,
+          "maxReturnCents": 5000
+        }
+      ]
+    },
+    "percentExamples": [
+      {
+        "findingId": "f8",
+        "label": "Late fee",
+        "percent": 5,
+        "exampleCents": 10500,
+        "perDayCents": 1500
+      },
+      {
+        "findingId": "f10",
+        "label": "Card payment convenience fee",
+        "percent": 2.9,
+        "exampleCents": 6090
+      }
+    ],
+    "rentMultiples": [
+      {
+        "findingId": "f28",
+        "label": "Early termination fee",
+        "multiple": 2,
+        "centsByPhase": [
+          420000,
+          430000
+        ]
+      }
+    ],
+    "occupancyLimit": {
+      "max": 2,
+      "clauseId": "s1.3"
+    }
+  },
+  "questions": [
+    "These terms disagree (§ 3.1, Exhibit A): Section 3.1 says rent is fixed at $2,100 for the whole term, but Exhibit A raises it to $2,150 per month for months 7 through 12. Which one applies?",
+    "These terms disagree (§ 2.5, § 3.1): The lease says all monthly charges are due at signing, while rent is also described as due on the 1st of each month, so it is unclear what is owed at signing. Which one applies?",
+    "These terms disagree (§ 12.1, § 4.8): The lease says changes must be signed by both parties, but Section 4.8 lets the landlord add or change fees with only notice. Which one applies?",
+    "Electricity and natural gas isn't priced in the lease. What has it cost for this unit over the last 12 months?",
+    "Renter's insurance (resident-purchased) isn't priced in the lease. What has it cost for this unit over the last 12 months?",
+    "Added or changed service fees isn't priced in the lease. What has it cost for this unit over the last 12 months?",
+    "Fines for Community Rules violations isn't priced in the lease. What has it cost for this unit over the last 12 months?",
+    "Repair costs for resident-caused damage isn't priced in the lease. What has it cost for this unit over the last 12 months?",
+    "Can you clarify this (§ 3.3)? The late fee keeps adding $15 a day with no stated cap.",
+    "Can you clarify this (§ 10.1)? The early termination fee is 2 months' base rent: $4,200 or $4,300 depending on which rate applies.",
+    "Can you clarify this (§ 3.2)? Ask which rent applies, since the lease states a fixed rent but also includes a rent schedule with an increase.",
+    "Can you clarify this (§ 4.8)? The landlord can add or change fees on 30 days' notice, with no cap and no list of what they might be.",
+    "Can you clarify this (§ 6.1)? The Community Rules can be changed by the landlord at any time, are not attached, and violations can bring fines with no stated amount.",
+    "Can you clarify this (§ 9.1)? Either resident can be held responsible for the full rent and all obligations, even after the other moves out.",
+    "Can you clarify this (§ 11.1)? The lease automatically becomes month-to-month unless you give 60 days' notice, and month-to-month rent is $250 per month higher than the current rent.",
+    "Can you clarify this (§ 1.3)? Occupancy is capped at two people and guest stays are limited to 14 days in 6 months without written consent.",
+    "Can you clarify this (§ 2.1)? The carpet cleaning charge is taken from the deposit no matter the carpet's condition, so ask whether it can be avoided.",
+    "Can you clarify this (§ 4.6)? Water, sewer and storm water costs are only estimated and could vary, and electricity and gas costs are not stated.",
+    "Can you clarify this (§ 4.7)? The lease requires renter's insurance, and if you do not show proof the landlord may enroll you in a landlord-placed policy; the cost of your own policy is not stated.",
+    "Can you clarify this (§ 5.1)? Pet fees only apply if a pet is approved through a Pet Addendum that is not attached.",
+    "Can you clarify this (§ 4.1)? Parking is required at $100 per month, but a second space depends on availability, guest parking is limited, and towing costs are unstated.",
+    "Can you clarify this (§ 8.1)? Subletting needs consent that the landlord can refuse at its discretion, and a transfer fee applies if it is allowed.",
+    "Can you clarify this (§ 7.1)? Repair costs for damage caused by you or your guests have no stated cap or amount.",
+    "What is the smoking and vaping policy?",
+    "Is the unit furnished? What is included?",
+    "Is there laundry in the unit or building, and what does it cost?",
+    "Which appliances are included, and who repairs them?",
+    "How is the unit heated and cooled, and who pays for it?",
+    "Are there quiet hours or noise rules?",
+    "Who handles snow removal for walkways and parking?",
+    "Is there storage space, and does it cost extra?"
+  ],
+  "isFictionalSample": true,
+  "meta": {
+    "model": "claude-sonnet-5-5",
+    "source": "cached",
+    "ms": 16213,
+    "unverifiedCount": 0
+  }
+}

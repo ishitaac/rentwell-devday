@@ -12,6 +12,7 @@ import {
   type DemoAccountMode,
   type DemoAccountSubmitPayload,
 } from "./DemoAccountAccess";
+import { FinePrint } from "./finePrint/FinePrint";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { RentalPlanSummary, type RentalPlanSaveState } from "./RentalPlan";
@@ -72,6 +73,7 @@ type Screen =
   | "plan-summary"
   | "renter-account"
   | "roommate-ai"
+  | "fineprint"
   | AdvisorScreen;
 type IconName =
   | "arrow"
@@ -79,6 +81,7 @@ type IconName =
   | "check"
   | "chevron"
   | "clock"
+  | "document"
   | "dollar"
   | "home"
   | "info"
@@ -186,12 +189,13 @@ export function refreshActiveDecisionFromListings(
 export function getNavSection(
   screen: Screen,
   decisionOrigin: DecisionOrigin,
-): "" | "advisor" | "listings" | "rental" | "roommates" {
+): "" | "advisor" | "fineprint" | "listings" | "rental" | "roommates" {
   if (["advisor", "lease", "truecost", "decision"].includes(screen)) return "advisor";
   if (["math", "preferences", "matches", "roommate-ai"].includes(screen)) return "roommates";
   if (screen === "listings" || (screen === "listing-details" && decisionOrigin === "listings")) {
     return "listings";
   }
+  if (screen === "fineprint") return "fineprint";
   if (["home", "plan-summary", "renter-account"].includes(screen)) return "";
   return "rental";
 }
@@ -226,6 +230,12 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
+    </>
+  ),
+  document: (
+    <>
+      <path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M14 3v5h5M9 13h7M9 17h5" />
     </>
   ),
   dollar: (
@@ -1593,6 +1603,12 @@ function App() {
           >
             AI Advisor
           </button>
+          <button
+            className={navActive === "fineprint" ? "active" : ""}
+            onClick={() => go("fineprint")}
+          >
+            Fine Print
+          </button>
           <button onClick={() => go("home")}>How It Works</button>
           <button className={screen === "plan-summary" ? "active" : ""} onClick={openMyPlan}>
             My Plan
@@ -1650,6 +1666,7 @@ function App() {
         </button>
       </header>
       {screen === "home" && <Home go={go} journeyNotice={journeyNotice} />}
+      {screen === "fineprint" && <FinePrint />}
       {screen === "renter-account" && (
         <DemoAccountAccess
           role="renter"
