@@ -8,7 +8,6 @@ import {
 } from "./Advisor";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
-import { ManagerWorkspace } from "./ManagerWorkspace";
 import { RentalEntry } from "./RentalEntry";
 import rentSnapshotData from "./data/rentcast-slc.json";
 import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
@@ -35,7 +34,6 @@ type Screen =
   | "home"
   | "listings"
   | "listing-details"
-  | "manager"
   | "rental-entry"
   | "rental"
   | "analysis"
@@ -62,7 +60,15 @@ export const HERO_IMAGE = "/listings/interior-warm.jpg";
 export const APARTMENT_IMAGE = "/listings/interior-blue.jpg";
 const RENT_SNAPSHOT = rentSnapshotData as RentSnapshot;
 
-export type DecisionOrigin = "listings" | "rental-entry" | "manager";
+export type DecisionOrigin = "listings" | "rental-entry";
+
+/**
+ * The property-manager workspace is a separate application with its own URL
+ * (see manager.html and docs/two-apps-deployment.md). Set VITE_MANAGER_URL in
+ * the renter project's environment to the manager app's address.
+ */
+export const MANAGER_APP_URL: string =
+  import.meta.env.VITE_MANAGER_URL || (import.meta.env.DEV ? "http://localhost:5174/manager.html" : "");
 
 export function getDecisionBackScreen(origin: DecisionOrigin): DecisionOrigin {
   return origin;
@@ -88,12 +94,9 @@ export function refreshActiveDecisionFromListings(
 export function getNavSection(
   screen: Screen,
   decisionOrigin: DecisionOrigin,
-): "" | "advisor" | "listings" | "manager" | "rental" | "roommates" {
+): "" | "advisor" | "listings" | "rental" | "roommates" {
   if (["advisor", "lease", "truecost", "decision"].includes(screen)) return "advisor";
   if (["math", "preferences", "matches"].includes(screen)) return "roommates";
-  if (screen === "manager" || (screen === "listing-details" && decisionOrigin === "manager")) {
-    return "manager";
-  }
   if (screen === "listings" || (screen === "listing-details" && decisionOrigin === "listings")) {
     return "listings";
   }
@@ -1261,9 +1264,7 @@ export function Matches({
 }
 
 function App() {
-  const [demoListings, setDemoListings] = useState<DemoListing[]>(() =>
-    getDemoListings(demoListingsDataset),
-  );
+  const [demoListings] = useState<DemoListing[]>(() => getDemoListings(demoListingsDataset));
   const [screen, setScreen] = useState<Screen>("home");
   const [menu, setMenu] = useState(false);
   const [listingQuery, setListingQuery] = useState("");
@@ -1284,9 +1285,9 @@ function App() {
     setScreen(next);
     setMenu(false);
   };
-  const openListing = (listing: DemoListing, returnScreen: "listings" | "manager" = "listings") => {
+  const openListing = (listing: DemoListing) => {
     setActiveDecision(createDemoRentalDecision(listing));
-    setDecisionOrigin(returnScreen);
+    setDecisionOrigin("listings");
     setShowCalculation(false);
     go("listing-details");
   };
@@ -1348,12 +1349,23 @@ function App() {
             AI Advisor
           </button>
           <button onClick={() => go("home")}>How It Works</button>
-          <button
-            className={`manager-role-entry ${navActive === "manager" ? "active" : ""}`}
-            onClick={() => go("manager")}
-          >
-            For property managers
-          </button>
+          {MANAGER_APP_URL ? (
+            <a
+              className="manager-role-entry"
+              href={MANAGER_APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              For property managers <span aria-hidden="true">↗</span>
+            </a>
+          ) : (
+            <span
+              className="manager-role-entry is-disabled"
+              title="The property-manager app address is not configured for this deployment."
+            >
+              For property managers
+            </span>
+          )}
           <Button onClick={() => go(getAdvisorEntryScreen(activeDecision))}>
             Try Advisor <Icon name="sparkle" size={16} />
           </Button>
@@ -1370,7 +1382,7 @@ function App() {
       {screen === "listings" && (
         <ListingsBrowser
           listings={demoListings}
-          onViewDetails={(listing) => openListing(listing, "listings")}
+          onViewDetails={openListing}
           query={listingQuery}
           onQueryChange={setListingQuery}
           filters={listingFilters}
@@ -1384,13 +1396,7 @@ function App() {
           compared={comparedDecisionIds.includes(activeDecision.decisionId)}
           tourRequested={tourRequestedIds.includes(activeDecision.decisionId)}
           showCalculation={showCalculation}
-          backLabel={
-            decisionOrigin === "manager"
-              ? "Back to manager workspace"
-              : decisionOrigin === "rental-entry"
-                ? "Back to rental entry"
-                : "Back to listings"
-          }
+          backLabel={decisionOrigin === "rental-entry" ? "Back to rental entry" : "Back to listings"}
           onBack={() => go(getDecisionBackScreen(decisionOrigin))}
           onToggleSaved={() =>
             setSavedDecisionIds((current) =>
@@ -1416,16 +1422,6 @@ function App() {
           onPlanWithRoommates={planWithRoommates}
           onOpenAdvisor={() => go("advisor")}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
-        />
-      )}
-      {screen === "manager" && (
-        <ManagerWorkspace
-          listings={demoListings}
-          onListingsChange={(listings) => {
-            setDemoListings(listings);
-            setActiveDecision((current) => refreshActiveDecisionFromListings(current, listings));
-          }}
-          onPreviewListing={(listing) => openListing(listing, "manager")}
         />
       )}
       {screen === "rental-entry" && (

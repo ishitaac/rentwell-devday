@@ -40,15 +40,22 @@ describe("unified App navigation", () => {
     expect(html).not.toContain("Fair rent analysis · Step 2 of 5");
   });
 
+  it("opens the property-manager role as a separate app in a new tab", () => {
+    const html = renderToStaticMarkup(<App />);
+
+    expect(html).toContain('class="manager-role-entry"');
+    expect(html).toContain('target="_blank"');
+    expect(html).toContain('rel="noopener noreferrer"');
+  });
+
   it("returns each Decision Receipt to the entrance that opened it", () => {
     expect(getDecisionBackScreen("listings")).toBe("listings");
     expect(getDecisionBackScreen("rental-entry")).toBe("rental-entry");
-    expect(getDecisionBackScreen("manager")).toBe("manager");
   });
 
   it("keeps the roommate section active throughout cost split and matching", () => {
     expect(getNavSection("math", "listings")).toBe("roommates");
     expect(getNavSection("preferences", "rental-entry")).toBe("roommates");
-    expect(getNavSection("matches", "manager")).toBe("roommates");
+    expect(getNavSection("matches", "listings")).toBe("roommates");
   });
 });
