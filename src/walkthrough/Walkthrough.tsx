@@ -26,7 +26,14 @@ import { SAMPLE, sampleAnalysis } from "./sample";
 import { Tour, type ShotStatus } from "./Tour";
 import { TypePicker } from "./TypePicker";
 import type { RentalContext, ResultsView } from "./view";
-import type { SavedWalkthrough } from "../cloud/walkthroughs";
+import {
+  mustHaveResults,
+  mustHaveStops,
+  SAMPLE_MUST_HAVES,
+  type MustHaveAnswer,
+} from "./lib/mustHaves";
+import type { SavedWalkthrough } from "./lib/profile";
+import type { SavedWalkthrough as CloudSavedWalkthrough } from "../cloud/walkthroughs";
 import "./walkthrough.css";
 import "./tour.css";
 
@@ -46,12 +53,14 @@ interface Persisted {
   staticView: ResultsView | null;
   tourIndex: number;
   isDemo: boolean;
+  mustHaves: string[];
+  mustAnswers: Record<string, MustHaveAnswer>;
 }
 
 // Kept in memory only, so leaving for the Decision Receipt and coming back keeps the walkthrough.
 let memory: Persisted | null = null;
 
-const isSamplePhoto = (photo: CapturedPhoto) => photo.base64.startsWith("data:");
+const isSamplePhoto = (photo: CapturedPhoto) => photo.fileName.startsWith("sample-");
 
 function liveView(
   capture: CaptureState,
@@ -140,16 +149,30 @@ function recordPhotos(view: ResultsView): {
 /** A signed-in renter (Supabase). Null keeps the original download-only behaviour. */
 export type WalkthroughAccount = { userId: string; displayName: string };
 
-export function Walkthrough({
-  rental = null,
-  account = null,
-  onSignIn,
-}: {
+interface WalkthroughProps {
   rental?: RentalContext | null;
   account?: WalkthroughAccount | null;
   /** Shown as "Sign in to save to your account" when accounts exist but nobody is signed in. */
   onSignIn?: () => void;
-}) {
+  /** Saves findings and questions to the renter's profile; the app handles sign-in first if needed. */
+  onSaveToProfile?: (snapshot: SavedWalkthrough) => void;
+  profileMessage?: string | null;
+  /** Set after a guest signs in (or saves while signed in): upload the ZIP to the account once. */
+  autoSaveToAccount?: boolean;
+  onAutoSaveDone?: () => void;
+}
+
+const SAMPLE_ANSWERS: Record<string, MustHaveAnswer> = { kitchen: "yes", light: "unsure" };
+
+export function Walkthrough({
+  rental = null,
+  account = null,
+  onSignIn,
+  onSaveToProfile,
+  profileMessage = null,
+  autoSaveToAccount = false,
+  onAutoSaveDone,
+}: WalkthroughProps) {
   const [stage, setStage] = useState<Stage>(
     memory?.stage === "analyzing" ? "results" : (memory?.stage ?? "intro"),
   );
@@ -161,12 +184,16 @@ export function Walkthrough({
   const [staticView, setStaticView] = useState<ResultsView | null>(memory?.staticView ?? null);
   const [tourIndex, setTourIndex] = useState(memory?.tourIndex ?? 0);
   const [isDemo, setIsDemo] = useState(memory?.isDemo ?? false);
+  const [mustHaves, setMustHaves] = useState<string[]>(memory?.mustHaves ?? SAMPLE_MUST_HAVES);
+  const [mustAnswers, setMustAnswers] = useState<Record<string, MustHaveAnswer>>(
+    memory?.mustAnswers ?? {},
+  );
   const [progress, setProgress] = useState<Record<string, ProgressState>>({});
   const [preparing, setPreparing] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [savedList, setSavedList] = useState<SavedWalkthrough[] | null>(null);
+  const [savedList, setSavedList] = useState<CloudSavedWalkthrough[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [openingId, setOpeningId] = useState<string | null>(null);
   const accountId = account?.userId ?? null;
@@ -174,14 +201,15 @@ export function Walkthrough({
   const latest = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    memory = { stage, capture, analyses, staticView, tourIndex, isDemo };
-  }, [stage, capture, analyses, staticView, tourIndex, isDemo]);
+    memory = { stage, capture, analyses, staticView, tourIndex, isDemo, mustHaves, mustAnswers };
+  }, [stage, capture, analyses, staticView, tourIndex, isDemo, mustHaves, mustAnswers]);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [stage, tourIndex]);
 
   const stops = useMemo(() => [...tourShots(capture.unitType), MISC_SHOTS[0]], [capture.unitType]);
+  const mustStops = useMemo(() => mustHaveStops(mustHaves, stops), [mustHaves, stops]);
 
   const view = useMemo(
     () => staticView ?? liveView(capture, analyses, pending, rental, isDemo),
@@ -355,7 +383,7 @@ export function Walkthrough({
 
   const openSaved = async (file: File) => openRecordBytes(new Uint8Array(await file.arrayBuffer()));
 
-  const openFromAccount = async (saved: SavedWalkthrough) => {
+  const openFromAccount = async (saved: CloudSavedWalkthrough) => {
     setError(null);
     setOpeningId(saved.id);
     try {
@@ -371,7 +399,7 @@ export function Walkthrough({
     }
   };
 
-  const deleteFromAccount = async (saved: SavedWalkthrough) => {
+  const deleteFromAccount = async (saved: CloudSavedWalkthrough) => {
     if (
       typeof window !== "undefined" &&
       !window.confirm("Delete this saved walkthrough from your account?")
@@ -478,6 +506,16 @@ export function Walkthrough({
     }
   };
 
+  // A guest chose "Save walkthrough", signed in, and came back: upload once, after photos finish reading.
+  const autoSaved = useRef(false);
+  useEffect(() => {
+    if (!autoSaveToAccount || !account || stage !== "results" || view.pending.length > 0) return;
+    if (autoSaved.current) return;
+    autoSaved.current = true;
+    void save("account").finally(() => onAutoSaveDone?.());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSaveToAccount, account, stage, view.pending.length]);
+
   const onNote = (shotId: string, note: string) => {
     if (staticView) {
       setStaticView({ ...staticView, notes: { ...staticView.notes, [shotId]: note } });
@@ -493,6 +531,7 @@ export function Walkthrough({
     setStaticView(null);
     setTourIndex(0);
     setIsDemo(false);
+    setMustAnswers({});
     setError(null);
     setSaveMessage(null);
     setStage("intro");
@@ -523,6 +562,12 @@ export function Walkthrough({
           onChange={chooseType}
           onContinue={() => setStage("tour")}
           onBack={() => setStage("intro")}
+          mustHaves={mustHaves}
+          onToggleMustHave={(id) =>
+            setMustHaves((list) =>
+              list.includes(id) ? list.filter((x) => x !== id) : [...list, id],
+            )
+          }
         />
       )}
       {stage === "tour" && (
@@ -544,6 +589,9 @@ export function Walkthrough({
             forget(shotId);
           }}
           onPrompt={(shotId, prompt) => setCapture((state) => setPrompt(state, shotId, prompt))}
+          mustHaveStops={mustStops}
+          mustAnswers={mustAnswers}
+          onMustAnswer={(id, answer) => setMustAnswers((map) => ({ ...map, [id]: answer }))}
           onRemove={(shotId) => {
             setCapture((state) => clearSlot(state, shotId));
             forget(shotId);
@@ -597,6 +645,12 @@ export function Walkthrough({
           onSignIn={onSignIn}
           onBack={() => setStage("tour")}
           onStartOver={startOver}
+          mustHaves={mustHaveResults(
+            view.source === "record" ? [] : mustHaves,
+            staticView?.source === "sample" ? SAMPLE_ANSWERS : mustAnswers,
+          )}
+          profileMessage={profileMessage}
+          onSaveToProfile={(snapshot) => onSaveToProfile?.(snapshot)}
         />
       )}
     </main>

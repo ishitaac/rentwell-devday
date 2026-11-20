@@ -685,3 +685,7 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Intro is a two-column grid; the account notes and saved list span the full width. */
+.wt-intro > .wt-saved,
+.wt-intro > .wt-micro { grid-column: 1 / -1; }

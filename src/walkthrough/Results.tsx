@@ -1,3 +1,4 @@
+import { buildSnapshot, type SavedWalkthrough } from "./lib/profile";
 import { useCallback, useMemo, useState } from "react";
 import { PhotoTile, SEVERITY_META, ShotDetail } from "./PhotoCard";
 import { QuestionsPanel } from "./QuestionsPanel";
@@ -24,6 +25,9 @@ interface ResultsProps {
   onSignIn?: () => void;
   onBack: () => void;
   onStartOver: () => void;
+  mustHaves: { id: string; label: string; answer: string; isNo: boolean }[];
+  profileMessage: string | null;
+  onSaveToProfile: (snapshot: SavedWalkthrough) => void;
 }
 
 function Banner({ view }: { view: ResultsView }) {
@@ -61,6 +65,9 @@ export function Results({
   onSignIn,
   onBack,
   onStartOver,
+  mustHaves,
+  profileMessage,
+  onSaveToProfile,
 }: ResultsProps) {
   const config = UNIT_TYPES[view.unitType];
   const summary = useMemo(
@@ -147,6 +154,25 @@ export function Results({
             </section>
           )}
 
+          {mustHaves.length > 0 && (
+            <section className="wt-panel">
+              <h2>
+                Your must-haves <span className="wt-tag">Sample</span>
+              </h2>
+              <ul className="wt-compact">
+                {mustHaves.map((item) => (
+                  <li key={item.id}>
+                    <span aria-hidden="true">
+                      {item.isNo ? "✕" : item.answer === "Yes" ? "✓" : "○"}
+                    </span>{" "}
+                    {item.label}: <strong>{item.answer}</strong>
+                  </li>
+                ))}
+              </ul>
+              <p className="wt-micro">Your call, not the AI's.</p>
+            </section>
+          )}
+
           {summary.gaps.length > 0 && (
             <section className="wt-panel">
               <h2>Gaps ({summary.gaps.length})</h2>
@@ -171,46 +197,52 @@ export function Results({
 
           {view.source !== "record" && (
             <section className="wt-panel">
-              <h2>Keep a copy for move-out</h2>
+              <h2>Keep this walkthrough</h2>
               <p className="wt-micro">
                 {signedIn
-                  ? "Photos, dates, your notes and checks. Save them privately to your RentWell account, or as a ZIP on your device."
-                  : "Photos, dates, your notes and checks, in a ZIP on your device. RentWell keeps nothing."}
+                  ? "Findings and questions go to My Plan. Photos, dates and your notes are saved privately to your account."
+                  : onSignIn
+                    ? "Findings and questions go to My Plan. Sign in to save, and your tour stays right here. Photos upload privately once you're signed in."
+                    : "Findings and questions go to My Plan (sign-in). The ZIP adds your photos and dates, on your device only."}
               </p>
-              <div className="wt-save-actions">
-                {signedIn && (
-                  <button
-                    className="wt-btn wt-btn-primary"
-                    onClick={() => onSave("account")}
-                    disabled={saving || view.pending.length > 0}
-                  >
-                    {saving
-                      ? "Saving…"
-                      : view.pending.length > 0
-                        ? "Finishing photos…"
-                        : "Save to my account"}
-                  </button>
-                )}
+              <div className="wt-save-row">
                 <button
-                  className={signedIn ? "wt-btn" : "wt-btn wt-btn-primary"}
+                  className="wt-btn wt-btn-primary"
+                  onClick={() =>
+                    onSaveToProfile(
+                      buildSnapshot({
+                        summary,
+                        questions,
+                        standard: standardQuestions(view.unitType),
+                        rentalName: view.rental?.name ?? null,
+                        mustHaves: mustHaves.map(({ label, answer }) => ({ label, answer })),
+                        isSample: view.source === "sample",
+                      }),
+                    )
+                  }
+                  disabled={saving || view.pending.length > 0}
+                >
+                  {saving
+                    ? "Saving…"
+                    : view.pending.length > 0
+                      ? "Finishing photos…"
+                      : signedIn
+                        ? "Save to my account"
+                        : onSignIn
+                          ? "Save walkthrough"
+                          : "Save to my profile"}
+                </button>
+                <button
+                  className="wt-btn"
                   onClick={() => onSave("download")}
                   disabled={saving || view.pending.length > 0}
                 >
-                  {saving && !signedIn
-                    ? "Saving…"
-                    : view.pending.length > 0 && !signedIn
-                      ? "Finishing photos…"
-                      : signedIn
-                        ? "Download (.zip)"
-                        : "Save walkthrough (.zip)"}
+                  Download ZIP
                 </button>
               </div>
-              {!signedIn && onSignIn && (
-                <p className="wt-micro">
-                  <button className="wt-link" onClick={onSignIn}>
-                    Sign in
-                  </button>{" "}
-                  to keep it in your account instead.
+              {profileMessage && (
+                <p className="wt-micro" role="status">
+                  {profileMessage}
                 </p>
               )}
               {saveMessage && (

@@ -37,7 +37,10 @@ test("demo tour: sample photo at every stop, quick checks, then condensed result
   for (let stop = 0; stop < 6; stop += 1) {
     await page.getByRole("button", { name: "Use sample photo (demo)" }).click();
     const isWindow = await page.getByRole("heading", { name: "Window" }).isVisible();
-    await page.getByRole("button", { name: isWindow ? "No" : "Yes", exact: true }).click();
+    await page
+      .getByRole("group", { name: /^Quick check/ })
+      .getByRole("button", { name: isWindow ? "No" : "Yes", exact: true })
+      .click();
     await page.getByRole("button", { name: "Next stop" }).click();
   }
   await expect(page.getByRole("heading", { name: "Anything else?" })).toBeVisible();
@@ -140,7 +143,7 @@ test("a saved walkthrough downloads as a ZIP and reopens view-only", async ({ pa
   await page.getByRole("button", { name: "See sample results" }).click();
   await expect(page.getByRole("heading", { name: "Follow-up needed" })).toBeVisible();
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Save walkthrough (.zip)" }).click();
+  await page.getByRole("button", { name: "Download ZIP" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^rentwell-walkthrough-\d{4}-\d{2}-\d{2}\.zip$/);
   const saved = test.info().outputPath("record.zip");
@@ -151,5 +154,53 @@ test("a saved walkthrough downloads as a ZIP and reopens view-only", async ({ pa
   await expect(page.getByText(/Saved walkthrough/).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Follow-up needed" })).toBeVisible();
   await expect(page.getByText("1 you noticed")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Save walkthrough (.zip)" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Download ZIP" })).toHaveCount(0);
+});
+
+test("save to profile when signed out: sign in, land on My Plan with it saved, no redo", async ({
+  page,
+}, info) => {
+  await openWalkthrough(page);
+  await page.getByRole("button", { name: "See sample results" }).click();
+  await expect(page.getByRole("heading", { name: "Follow-up needed" })).toBeVisible();
+  await page.getByRole("button", { name: "Save to my profile" }).click();
+
+  await page.getByLabel("Email").fill("renter@example.com");
+  await page.getByRole("button", { name: "Continue to demo" }).click();
+
+  await expect(
+    page.getByRole("status").filter({ hasText: "Walkthrough saved to your profile." }),
+  ).toBeVisible();
+  const card = page.locator(".wt-saved");
+  await expect(card).toContainText("Follow-up needed");
+  await expect(card).toContainText("Ceiling stain");
+  await expect(card).toContainText("Spacious kitchen");
+  await page.screenshot({
+    path: `test-results/walkthrough-myplan-${info.project.name}.png`,
+    fullPage: true,
+  });
+
+  // Back in Walkthrough the results are still there, and a signed-in save goes straight through.
+  await card.getByRole("button", { name: "Open Walkthrough" }).click();
+  await expect(page.getByRole("heading", { name: "Follow-up needed" })).toBeVisible();
+  await page.getByRole("button", { name: "Save to my profile" }).click();
+  await expect(page.locator(".wt-saved")).toContainText("1 earlier walkthrough also saved");
+});
+
+test("must-haves: chosen on the picker, reminded at the right stop, shown in results", async ({
+  page,
+}) => {
+  await openWalkthrough(page);
+  await startTour(page, true);
+  await expect(page.getByText("Your must-have: Spacious kitchen")).toBeVisible();
+  await page
+    .getByRole("group", { name: "Your must-have: Spacious kitchen" })
+    .getByRole("button", { name: "No", exact: true })
+    .click();
+  for (let i = 0; i < 6; i += 1)
+    await page.getByRole("button", { name: /Next stop|Skip for now/ }).click();
+  await page.getByRole("button", { name: "See results" }).click();
+  const panel = page.getByRole("heading", { name: /Your must-haves/ }).locator("..");
+  await expect(panel).toContainText("Spacious kitchen: No");
+  await expect(panel).toContainText("Lots of natural light: Not checked");
 });

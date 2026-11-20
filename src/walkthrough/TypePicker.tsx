@@ -1,3 +1,4 @@
+import { MUST_HAVES } from "./lib/mustHaves";
 import { UNIT_TYPES } from "./lib/shots";
 import { UNIT_TYPE_IDS, type UnitType } from "./lib/types";
 
@@ -27,9 +28,18 @@ interface TypePickerProps {
   onChange: (unitType: UnitType) => void;
   onContinue: () => void;
   onBack: () => void;
+  mustHaves: string[];
+  onToggleMustHave: (id: string) => void;
 }
 
-export function TypePicker({ value, onChange, onContinue, onBack }: TypePickerProps) {
+export function TypePicker({
+  value,
+  onChange,
+  onContinue,
+  onBack,
+  mustHaves,
+  onToggleMustHave,
+}: TypePickerProps) {
   return (
     <section className="wt-section">
       <button className="wt-link" onClick={onBack}>
@@ -68,6 +78,26 @@ export function TypePicker({ value, onChange, onContinue, onBack }: TypePickerPr
             </button>
           );
         })}
+      </div>
+      <div className="wt-musthave-pick">
+        <h3>
+          What matters to you? <span className="wt-tag">Sample</span>
+        </h3>
+        <p className="wt-muted">
+          We'll remind you at the right stop. You decide if it's met, not the AI.
+        </p>
+        <div className="wt-quick-buttons" role="group" aria-label="Your must-haves">
+          {MUST_HAVES.map((item) => (
+            <button
+              key={item.id}
+              className={`wt-pill${mustHaves.includes(item.id) ? " is-on" : ""}`}
+              aria-pressed={mustHaves.includes(item.id)}
+              onClick={() => onToggleMustHave(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="wt-actions">
         <button className="wt-btn wt-btn-primary" onClick={onContinue}>

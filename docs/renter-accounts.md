@@ -48,3 +48,13 @@ viewer and can still be downloaded.
 - The property-manager app still uses its demo gate (`src/manager/auth.ts`).
 - Saving a plan keeps one plan per renter (the newest replaces the previous one).
 - No password-reset screen yet; reset from the Supabase dashboard (Authentication → Users).
+
+## Saving a walkthrough as a guest
+
+On the results screen, **Save walkthrough** works whether or not the renter is signed in:
+
+1. Guest taps **Save walkthrough** → sent to sign-in; the tour stays in memory.
+2. After sign-in, the findings and questions are saved to My Plan and, for a Supabase account, the ZIP (photos, dates, notes) uploads to the private `walkthroughs` bucket automatically.
+3. Already signed in: the same button saves to the account right away.
+
+Without Supabase configured, the button reads **Save to my profile** and saves the findings and questions to the browser-only demo profile.

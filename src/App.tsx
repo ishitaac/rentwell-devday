@@ -25,6 +25,12 @@ import {
 } from "./cloud/auth";
 import { loadCloudPlan, saveCloudPlan } from "./cloud/plans";
 import type { RentalContext } from "./walkthrough/view";
+import { SavedWalkthroughs } from "./walkthrough/SavedWalkthroughs";
+import {
+  loadSavedWalkthroughs,
+  saveWalkthroughToProfile,
+  type SavedWalkthrough,
+} from "./walkthrough/lib/profile";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { RentalPlanSummary, type RentalPlanSaveState } from "./RentalPlan";
@@ -1417,6 +1423,14 @@ function App() {
   const [showCalculation, setShowCalculation] = useState(false);
   // Display-only context for Walkthrough. Walkthrough never writes back to Fair Rent or costs.
   const [walkthroughRental, setWalkthroughRental] = useState<RentalContext | null>(null);
+  // A walkthrough waiting to be saved once the renter signs in, so they never redo the tour.
+  const [pendingWalkthroughSave, setPendingWalkthroughSave] = useState<SavedWalkthrough | null>(
+    null,
+  );
+  const [walkthroughMessage, setWalkthroughMessage] = useState<string | null>(null);
+  const [walkthroughJustSaved, setWalkthroughJustSaved] = useState(false);
+  const [walkthroughAutoSave, setWalkthroughAutoSave] = useState(false);
+  const [walkthroughVersion, setWalkthroughVersion] = useState(0);
   const go = (next: Screen) => {
     setScreen(next);
     setMenu(false);
@@ -1473,6 +1487,11 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
   const navActive = useMemo(() => getNavSection(screen, decisionOrigin), [decisionOrigin, screen]);
+  const savedWalkthroughs = useMemo(() => {
+    const storage = getBrowserStorage();
+    return renterSession && storage ? loadSavedWalkthroughs(storage, renterSession.email) : [];
+    // walkthroughVersion re-reads storage after a save.
+  }, [renterSession, walkthroughVersion, screen]);
   const advisorStatus = getAdvisorPlanStatus(
     activeDecision?.decisionId ?? null,
     advisorReviewedDecisionId,
@@ -1564,6 +1583,38 @@ function App() {
     saveCurrentPlan(renterSession);
   };
 
+  const persistWalkthrough = (session: DemoSession, snapshot: SavedWalkthrough): boolean => {
+    const storage = getBrowserStorage();
+    const result = storage
+      ? saveWalkthroughToProfile(storage, session.email, snapshot)
+      : { ok: false as const, error: "Browser storage is unavailable." };
+    if (!result.ok) {
+      setWalkthroughMessage(result.error);
+      return false;
+    }
+    setWalkthroughMessage(null);
+    setWalkthroughJustSaved(true);
+    setWalkthroughVersion((v) => v + 1);
+    return true;
+  };
+
+  const requestWalkthroughSave = (snapshot: SavedWalkthrough) => {
+    if (!renterSession) {
+      setPendingWalkthroughSave(snapshot);
+      setPendingPlanSave(false);
+      setAccountError(null);
+      go("renter-account");
+      return;
+    }
+    if (!persistWalkthrough(renterSession, snapshot)) return;
+    if (cloudUserId(renterSession)) {
+      // Signed in to a real account: also upload the ZIP (photos). Stay here so the result shows.
+      setWalkthroughAutoSave(true);
+      return;
+    }
+    go("plan-summary");
+  };
+
   const completeRenterAccess = (payload: DemoAccountSubmitPayload) => {
     const session = createDemoSession(payload.email, "renter");
     const storage = getBrowserStorage();
@@ -1583,6 +1634,20 @@ function App() {
 
   /** After any successful sign-in: finish a pending save, or reopen the saved plan. */
   const afterRenterSignIn = async (session: DemoSession | CloudSession) => {
+    if (pendingWalkthroughSave) {
+      // A guest chose "Save walkthrough" before signing in: finish it now, so they never redo the tour.
+      const snapshot = pendingWalkthroughSave;
+      setPendingWalkthroughSave(null);
+      persistWalkthrough(session, snapshot);
+      if (cloudUserId(session)) {
+        // The ZIP with photos uploads from the Walkthrough screen, which still holds the tour.
+        setWalkthroughAutoSave(true);
+        go("walkthrough");
+      } else {
+        go("plan-summary");
+      }
+      return;
+    }
     if (pendingPlanSave && activeDecision) {
       setPendingPlanSave(false);
       saveCurrentPlan(session);
@@ -1820,7 +1885,24 @@ function App() {
                 }
               : undefined
           }
+          onSaveToProfile={requestWalkthroughSave}
+          profileMessage={walkthroughMessage}
+          autoSaveToAccount={walkthroughAutoSave}
+          onAutoSaveDone={() => setWalkthroughAutoSave(false)}
         />
+      )}
+      {screen === "plan-summary" && savedWalkthroughs.length > 0 && (
+        <div className="wt-saved-wrap">
+          {!activeDecision && <h1 className="wt-saved-page-title">My Plan</h1>}
+          <SavedWalkthroughs
+            items={savedWalkthroughs}
+            justSaved={walkthroughJustSaved}
+            onOpenWalkthrough={() => {
+              setWalkthroughJustSaved(false);
+              go("walkthrough");
+            }}
+          />
+        </div>
       )}
       {screen === "renter-account" && (
         <DemoAccountAccess

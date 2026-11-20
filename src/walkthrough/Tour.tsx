@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { exampleArt } from "./art";
 import { photoSrc } from "./image";
+import type { MustHave, MustHaveAnswer } from "./lib/mustHaves";
 import type { CaptureState, QuickAnswer } from "./lib/session";
 import { MAX_PROMPT_CHARS } from "./lib/session";
 import { MISC_SHOTS, UNIT_TYPES, type Shot } from "./lib/shots";
@@ -23,6 +24,9 @@ interface TourProps {
   onSkip: (shotId: string, reason: string) => void;
   onPrompt: (shotId: string, prompt: string) => void;
   onRemove: (shotId: string) => void;
+  mustHaveStops: Record<string, MustHave[]>;
+  mustAnswers: Record<string, MustHaveAnswer>;
+  onMustAnswer: (id: string, answer: MustHaveAnswer) => void;
   onGo: (index: number) => void;
   onFinish: () => void;
   onExit: () => void;
@@ -107,13 +111,52 @@ function QuickCheckRow({
   );
 }
 
+function MustHaveRows({ items, props }: { items: MustHave[]; props: TourProps }) {
+  if (items.length === 0) return null;
+  const options: [MustHaveAnswer, string][] = [
+    ["yes", "Yes"],
+    ["unsure", "Not sure"],
+    ["no", "No"],
+  ];
+  return (
+    <>
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="wt-quick wt-musthave"
+          role="group"
+          aria-label={`Your must-have: ${item.label}`}
+        >
+          <p>
+            <strong>Your must-have: {item.label}</strong> <span className="wt-tag">Sample</span>
+            <br />
+            {item.question}
+          </p>
+          <div className="wt-quick-buttons">
+            {options.map(([value, label]) => (
+              <button
+                key={value}
+                className={`wt-pill${props.mustAnswers[item.id] === value ? " is-on" : ""}`}
+                aria-pressed={props.mustAnswers[item.id] === value}
+                onClick={() => props.onMustAnswer(item.id, value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
 function StopView({ shot, props }: { shot: Shot; props: TourProps }) {
   const [skipping, setSkipping] = useState(false);
   const photo = props.state.photos[props.state.slots[shot.id] ?? ""];
   const status = props.status[shot.id];
   const skipped = props.state.skipped[shot.id];
   return (
-    <>
+    <div className="wt-stop-grid">
       <figure className="wt-stop-figure">
         <img
           src={photo ? photoSrc(photo) : exampleArt(shot.art)}
@@ -124,61 +167,63 @@ function StopView({ shot, props }: { shot: Shot; props: TourProps }) {
         )}
         {!photo && <figcaption className="wt-stop-hint">{shot.hint}</figcaption>}
       </figure>
-
-      <div className="wt-lookfor">
-        <strong>Look for</strong>
-        <ul>
-          {shot.lookFor.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </div>
-
-      <QuickCheckRow
-        shot={shot}
-        answer={props.state.quickChecks[shot.id]}
-        onAnswer={(a) => props.onQuickCheck(shot.id, a)}
-      />
-
-      {skipped && !photo && (
-        <p className="wt-skip-note">Skipped: {skipped}. It will show as a gap.</p>
-      )}
-
-      <div className="wt-stop-actions">
-        <PhotoButton
-          label={photo ? "Retake photo" : "Take photo"}
-          primary={!photo}
-          onFile={(file) => props.onPhoto(shot.id, file)}
-        />
-        {props.isDemo && !photo && (
-          <button className="wt-btn wt-btn-wide" onClick={() => props.onSamplePhoto(shot.id)}>
-            Use sample photo (demo)
-          </button>
-        )}
-        {!photo && !skipping && (
-          <button className="wt-link" onClick={() => setSkipping(true)}>
-            Can't access this?
-          </button>
-        )}
-      </div>
-      {skipping && !photo && (
-        <div className="wt-skip" role="group" aria-label="Why can't you take this photo?">
-          {SKIP_REASONS.map((reason) => (
-            <button
-              key={reason}
-              className={`wt-pill${skipped === reason ? " is-on" : ""}`}
-              onClick={() => {
-                props.onSkip(shot.id, reason);
-                setSkipping(false);
-                props.onGo(props.index + 1);
-              }}
-            >
-              {reason}
-            </button>
-          ))}
+      <div className="wt-stop-side">
+        <div className="wt-lookfor">
+          <strong>Look for</strong>
+          <ul>
+            {shot.lookFor.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </div>
-      )}
-    </>
+
+        <QuickCheckRow
+          shot={shot}
+          answer={props.state.quickChecks[shot.id]}
+          onAnswer={(a) => props.onQuickCheck(shot.id, a)}
+        />
+        <MustHaveRows items={props.mustHaveStops[shot.id] ?? []} props={props} />
+
+        {skipped && !photo && (
+          <p className="wt-skip-note">Skipped: {skipped}. It will show as a gap.</p>
+        )}
+
+        <div className="wt-stop-actions">
+          <PhotoButton
+            label={photo ? "Retake photo" : "Take photo"}
+            primary={!photo}
+            onFile={(file) => props.onPhoto(shot.id, file)}
+          />
+          {props.isDemo && !photo && (
+            <button className="wt-btn wt-btn-wide" onClick={() => props.onSamplePhoto(shot.id)}>
+              Use sample photo (demo)
+            </button>
+          )}
+          {!photo && !skipping && (
+            <button className="wt-link" onClick={() => setSkipping(true)}>
+              Can't access this?
+            </button>
+          )}
+        </div>
+        {skipping && !photo && (
+          <div className="wt-skip" role="group" aria-label="Why can't you take this photo?">
+            {SKIP_REASONS.map((reason) => (
+              <button
+                key={reason}
+                className={`wt-pill${skipped === reason ? " is-on" : ""}`}
+                onClick={() => {
+                  props.onSkip(shot.id, reason);
+                  setSkipping(false);
+                  props.onGo(props.index + 1);
+                }}
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -188,6 +233,7 @@ function AnythingElse({ props }: { props: TourProps }) {
   const [draft, setDraft] = useState("");
   return (
     <>
+      <MustHaveRows items={props.mustHaveStops[props.stops[props.index].id] ?? []} props={props} />
       <p className="wt-lede-small">
         Noticed something we didn't ask about? Snap it and say what caught your eye. You'll get a
         second opinion from the photo, not a verdict.
