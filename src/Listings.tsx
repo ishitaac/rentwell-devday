@@ -251,6 +251,7 @@ export function RentalDecisionDetails({
   onPlanWithRoommates,
   onOpenAdvisor,
   onOpenPlan = () => undefined,
+  onCheckPlace,
   onToggleCalculation,
 }: {
   decision: RentalDecisionRecord;
@@ -266,6 +267,7 @@ export function RentalDecisionDetails({
   onPlanWithRoommates: () => void;
   onOpenAdvisor: () => void;
   onOpenPlan?: () => void;
+  onCheckPlace?: () => void;
   onToggleCalculation: () => void;
 }) {
   const receipt = buildRentalDecisionReceipt(decision, RENT_SNAPSHOT);
@@ -486,6 +488,11 @@ export function RentalDecisionDetails({
             <button className="advisor-review-action" onClick={onOpenAdvisor}>
               Review sample lease with Advisor
             </button>
+            {onCheckPlace && (
+              <button className="walkthrough-action" onClick={onCheckPlace}>
+                Check this place on a tour
+              </button>
+            )}
             <button className="view-plan-action" onClick={onOpenPlan}>
               View my rental plan
             </button>
