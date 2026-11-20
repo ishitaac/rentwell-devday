@@ -11,3 +11,6 @@ dist/
 dist-*/
 playwright-report/
 test-results/
+
+.scratch/
+test-results/
