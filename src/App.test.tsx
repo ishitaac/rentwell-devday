@@ -40,8 +40,10 @@ describe("unified App navigation", () => {
     expect(html).toContain("Browse Rentals");
     expect(html).toContain("Check Your Rental");
     expect(html).toContain("Roommate Planning");
-    expect(html).toContain("AI Advisor");
-    expect(html).toContain("How It Works");
+    expect(html).toContain("Fine Print");
+    expect(html).toContain("Try Advisor");
+    expect(html).not.toContain("How It Works");
+    expect(html.match(/AI Advisor/g) ?? []).toHaveLength(0);
     expect(html).toContain("For property managers");
     expect(html.match(/Check Your Rental/g)).toHaveLength(1);
     expect(html).not.toContain("Rental check · Step 1 of 5");
