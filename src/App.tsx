@@ -6,7 +6,9 @@ import {
   TrueHousingCost,
   type AdvisorScreen,
 } from "./Advisor";
+import { ListingDetails, ListingsBrowser } from "./Listings";
 import rentSnapshotData from "./data/rentcast-slc.json";
+import { demoListingsDataset, getDemoListings, type DemoListing } from "./demoListings";
 import {
   calculateRentComparison,
   describeComparisonMethod,
@@ -14,7 +16,16 @@ import {
   type RentSnapshot,
 } from "./rentMarket";
 
-type Screen = "home" | "rental" | "analysis" | "math" | "preferences" | "matches" | AdvisorScreen;
+type Screen =
+  | "home"
+  | "listings"
+  | "listing-details"
+  | "rental"
+  | "analysis"
+  | "math"
+  | "preferences"
+  | "matches"
+  | AdvisorScreen;
 type IconName =
   | "arrow"
   | "building"
@@ -1119,8 +1130,15 @@ function Matches({ rental, go }: { rental: RentalData; go: (screen: Screen) => v
 }
 
 function App() {
+  const demoListings = useMemo(() => getDemoListings(demoListingsDataset).slice(0, 6), []);
   const [screen, setScreen] = useState<Screen>("home");
   const [menu, setMenu] = useState(false);
+  const [listingQuery, setListingQuery] = useState("");
+  const [selectedListing, setSelectedListing] = useState<DemoListing | null>(null);
+  const [savedListingIds, setSavedListingIds] = useState<string[]>([]);
+  const [comparedListingIds, setComparedListingIds] = useState<string[]>([]);
+  const [showCalculation, setShowCalculation] = useState(false);
+  const [tourRequested, setTourRequested] = useState(false);
   const [rental, setRental] = useState<RentalData>({
     neighborhood: "The Avenues",
     rent: 2100,
@@ -1133,6 +1151,12 @@ function App() {
     setScreen(next);
     setMenu(false);
   };
+  const openListing = (listing: DemoListing) => {
+    setSelectedListing(listing);
+    setShowCalculation(false);
+    setTourRequested(false);
+    go("listing-details");
+  };
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
@@ -1142,9 +1166,11 @@ function App() {
         ? "advisor"
         : screen === "preferences" || screen === "matches"
           ? "roommates"
-          : screen === "home"
-            ? ""
-            : "rental",
+          : screen === "listings" || screen === "listing-details"
+            ? "listings"
+            : screen === "home"
+              ? ""
+              : "rental",
     [screen],
   );
 
@@ -1160,6 +1186,12 @@ function App() {
           </span>
         </button>
         <nav className={menu ? "open" : ""}>
+          <button
+            className={navActive === "listings" ? "active" : ""}
+            onClick={() => go("listings")}
+          >
+            Browse Rentals
+          </button>
           <button className={navActive === "rental" ? "active" : ""} onClick={() => go("rental")}>
             Check a Rental
           </button>
@@ -1186,6 +1218,40 @@ function App() {
         </button>
       </header>
       {screen === "home" && <Home go={go} />}
+      {screen === "listings" && (
+        <ListingsBrowser
+          listings={demoListings}
+          onViewDetails={openListing}
+          query={listingQuery}
+          onQueryChange={setListingQuery}
+        />
+      )}
+      {screen === "listing-details" && selectedListing && (
+        <ListingDetails
+          listing={selectedListing}
+          saved={savedListingIds.includes(selectedListing.synthetic.listingId)}
+          compared={comparedListingIds.includes(selectedListing.synthetic.listingId)}
+          tourRequested={tourRequested}
+          showCalculation={showCalculation}
+          onBack={() => go("listings")}
+          onToggleSaved={() =>
+            setSavedListingIds((current) =>
+              current.includes(selectedListing.synthetic.listingId)
+                ? current.filter((id) => id !== selectedListing.synthetic.listingId)
+                : [...current, selectedListing.synthetic.listingId],
+            )
+          }
+          onToggleCompared={() =>
+            setComparedListingIds((current) =>
+              current.includes(selectedListing.synthetic.listingId)
+                ? current.filter((id) => id !== selectedListing.synthetic.listingId)
+                : [...current, selectedListing.synthetic.listingId],
+            )
+          }
+          onRequestTour={() => setTourRequested(true)}
+          onToggleCalculation={() => setShowCalculation((current) => !current)}
+        />
+      )}
       {screen === "rental" && <RentalInput rental={rental} setRental={setRental} go={go} />}
       {screen === "analysis" && <Analysis rental={rental} go={go} />}
       {screen === "math" && <RoommateMath rental={rental} setRental={setRental} go={go} />}
