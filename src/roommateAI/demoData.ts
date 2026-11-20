@@ -56,6 +56,16 @@ export const DEMO_CANDIDATES: DemoCandidate[] = [
     tagline: "Fictional · researcher · room is a shared bedroom, fewer details shared",
     sharedKeys: ["sleep", "cleanliness", "cookwareSharing", "guestFrequency", "expenseSplit"],
   },
+  {
+    profile: demoProfile("demo-jordan", "Jordan (fictional)", true, {
+      budgetMax: 1200, moveInMonth: "2026-12", bedroom: "private", bathroom: "shared",
+      sleep: "standard", quietStartHour: 22, noiseTolerance: 2, workFromHome: "some", cleanliness: 4,
+      cookwareSharing: "separate", cookingFrequency: "sometimes", temperature: "moderate",
+      guestFrequency: "sometimes", overnightGuests: "sometimes", expenseSplit: "equal", conflictStyle: "talk-soon",
+    }),
+    tagline: "Fictional · remote analyst · AI roommate you can talk to",
+    sharedKeys: ALL_SHARED,
+  },
 ];
 
 // -- negotiator demo fixtures -------------------------------------------------------

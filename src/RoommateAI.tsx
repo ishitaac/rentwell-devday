@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import "./roommateAI.css";
 import { COMPLIANCE_RULES, complianceDisclosure, evaluateAll, resolveJurisdiction } from "./roommateAI/compliance";
-import { DEMO_CANDIDATES, DEMO_ROOMMATE_COUNTER, DEMO_ROOMMATE_TOPICS, SCENARIO_TOPIC, TOPIC_SUGGESTIONS, type DemoCandidate } from "./roommateAI/demoData";
+import { DEMO_CANDIDATES, DEMO_ROOMMATE_TOPICS, SCENARIO_TOPIC, TOPIC_SUGGESTIONS, type DemoCandidate } from "./roommateAI/demoData";
 import { applyExtractions, confirmField, describeUnresolved, extractFromText, MAX_CLARIFYING_QUESTIONS, nextClarifyingQuestion, removeField, setFieldFromUser } from "./roommateAI/intake";
+import { applyJordanTurn, jordanWouldApproveFinal, MAX_HISTORY, personaFor, type ScenarioContext } from "./roommateAI/jordan";
+import { requestJordanReply, type ReplySource } from "./roommateAI/jordanClient";
 import { CATEGORY_LABEL, rankCandidates, type MatchResult } from "./roommateAI/matching";
 import {
   ALL_TOPICS, approveFinal, approveTerm, buildSummary, createSession, editTerm, NegotiationError, openTopics, proposeTerm, rejectTerm,
@@ -81,8 +83,13 @@ export function RoommateAI({ onExit }: { onExit: (to: "preferences" | "matches" 
   const [ignoredNote, setIgnoredNote] = useState(false);
   const [candidateId, setCandidateId] = useState(DEMO_CANDIDATES[0].profile.profileId);
   const [suggestedTopics, setSuggestedTopics] = useState<NegotiationTopic[]>([]);
+  const [chatScenario, setChatScenario] = useState<ScenarioContext | undefined>(undefined);
 
   const candidate = DEMO_CANDIDATES.find((c) => c.profile.profileId === candidateId) ?? DEMO_CANDIDATES[0];
+  const compatibility = useMemo(() => {
+    const r = rankCandidates(profile, [candidate.profile])[0];
+    return [r.score !== null ? `Overlap ${r.score} out of 100 (fictional demo data)` : "Overlap not scored", ...r.strengths.slice(0, 2).map((x) => `Strength: ${x}`), ...r.friction.slice(0, 3).map((x) => `Friction: ${x}`)];
+  }, [profile, candidate]);
   const confirmedCount = FIELD_KEYS.filter((k) => profile.fields[k]?.confirmed).length;
   const reachable: Stage[] = useMemo(() => {
     const base: Stage[] = ["context", "describe", "clarify", "confirm"];
@@ -140,13 +147,14 @@ export function RoommateAI({ onExit }: { onExit: (to: "preferences" | "matches" 
           profile={profile}
           candidate={candidate}
           back={() => setStage("results")}
-          negotiate={(topics) => {
+          negotiate={(topics, scenario) => {
             setSuggestedTopics(topics);
+            setChatScenario(scenario);
             setStage("negotiator");
           }}
         />
       )}
-      {stage === "negotiator" && <NegotiatorDemo candidate={candidate} suggested={suggestedTopics} back={() => setStage("simulator")} />}
+      {stage === "negotiator" && <NegotiatorDemo candidate={candidate} suggested={suggestedTopics} chat={{ scenario: chatScenario, flagged: suggestedTopics, compatibility }} back={() => setStage("simulator")} />}
 
       <div className="prototype-note">
         <span>
@@ -445,7 +453,7 @@ function clock(label: string): number {
   return h + Number(m[2]) / 60;
 }
 
-function SimulatorStep({ profile, candidate, back, negotiate }: { profile: RoommateProfile; candidate: DemoCandidate; back: () => void; negotiate: (topics: NegotiationTopic[]) => void }) {
+function SimulatorStep({ profile, candidate, back, negotiate }: { profile: RoommateProfile; candidate: DemoCandidate; back: () => void; negotiate: (topics: NegotiationTopic[], scenario?: ScenarioContext) => void }) {
   const [useShared, setUseShared] = useState(true);
   const [selected, setSelected] = useState(0);
   const [picked, setPicked] = useState<Record<string, number>>({});
@@ -507,7 +515,8 @@ function SimulatorStep({ profile, candidate, back, negotiate }: { profile: Roomm
       )}
       <div className="bottom-actions">
         <Btn secondary onClick={back}>Back to matches</Btn>
-        <Btn onClick={() => negotiate(flagged.map((id) => SCENARIO_TOPIC[id]).filter(Boolean))}>{flagged.length ? `Negotiate ${flagged.length} marked topic${flagged.length === 1 ? "" : "s"}` : "Continue to roommate agreement"}</Btn>
+        {current && <Btn secondary onClick={() => negotiate(flagged.map((id) => SCENARIO_TOPIC[id]).filter(Boolean), { id: current.id, title: current.title, situation: current.situation, friction: current.friction })}>Talk to {name.split(" ")[0]}</Btn>}
+        <Btn onClick={() => negotiate(flagged.map((id) => SCENARIO_TOPIC[id]).filter(Boolean), current ? { id: current.id, title: current.title, situation: current.situation, friction: current.friction } : undefined)}>{flagged.length ? `Negotiate ${flagged.length} marked topic${flagged.length === 1 ? "" : "s"}` : "Continue to roommate agreement"}</Btn>
       </div>
     </section>
   );
@@ -545,7 +554,13 @@ function Timeline({ rows, name }: { rows: Array<{ label: string; you: string; ma
 
 const ME = "you";
 
-function NegotiatorDemo({ candidate, suggested, back }: { candidate: DemoCandidate; suggested: NegotiationTopic[]; back: () => void }) {
+interface ChatContext {
+  scenario?: ScenarioContext;
+  flagged: NegotiationTopic[];
+  compatibility: string[];
+}
+
+function NegotiatorDemo({ candidate, suggested, chat, back }: { candidate: DemoCandidate; suggested: NegotiationTopic[]; chat: ChatContext; back: () => void }) {
   const DEMO = candidate.profile.profileId;
   const first = candidate.profile.displayName.split(" ")[0];
   const names = { [ME]: "You", [DEMO]: `${first} (fictional)` };
@@ -571,7 +586,7 @@ function NegotiatorDemo({ candidate, suggested, back }: { candidate: DemoCandida
   return (
     <section className="rai-panel">
       <div className="rai-demo-banner" role="note">
-        <b>DEMO — scripted fictional roommate.</b> {first} is not a real person. Nothing happens on their side unless you press a button marked "Play {first}". In the real product, invitations, consent and approvals would come from a signed-in second person and be enforced on a server; that backend is not built yet.
+        <b>DEMO — AI-simulated fictional roommate.</b> {first} is not a real person. Their replies are generated by an AI (or a scripted fallback), and any "acceptance" or "approval" from {first} is simulated: it is not real consent and nothing here is a legally binding agreement. Please don't enter real personal information. In the real product, invitations, consent and approvals would come from a signed-in second person and be enforced on a server; that backend is not built yet.
       </div>
       <h2>Roommate agreement</h2>
       <p className="rai-sub">Neutral household expectations you both agree to, one term at a time. It is not a lease or a legal contract.</p>
@@ -580,18 +595,7 @@ function NegotiatorDemo({ candidate, suggested, back }: { candidate: DemoCandida
       {!session && (
         <div className="rai-box">
           <label><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> I consent to invite {first} and to share only what I approve here.</label>
-          <Btn disabled={!consent} onClick={() => { try { setSession(createSession("demo-session", ME, DEMO, consent)); setError(null); } catch (e) { setError((e as Error).message); } }}>Start Roommate Agreement</Btn>
-        </div>
-      )}
-
-      {session?.status === "invited" && (
-        <div className="rai-box">
-          <p>Invitation sent to {first} (fictional). They must accept before anything is shared.</p>
-          <div className="rai-actions">
-            <Btn secondary onClick={() => run((s) => respondToInvitation(s, DEMO, true, rev))}>Play {first}: accepts</Btn>
-            <Btn secondary onClick={() => run((s) => respondToInvitation(s, DEMO, false, rev))}>Play {first}: declines</Btn>
-            <Btn secondary onClick={() => run((s) => withdraw(s, ME))}>Cancel invitation</Btn>
-          </div>
+          <Btn disabled={!consent} onClick={() => { try { { const invited = createSession("demo-session", ME, DEMO, consent); const joined = respondToInvitation(invited, DEMO, true, invited.revision); setSession(setTopicOptIn(joined, DEMO, DEMO_ROOMMATE_TOPICS, joined.revision)); } setError(null); } catch (e) { setError((e as Error).message); } }}>Start Roommate Agreement</Btn>
         </div>
       )}
 
@@ -608,10 +612,10 @@ function NegotiatorDemo({ candidate, suggested, back }: { candidate: DemoCandida
             </div>
             <div className="rai-actions">
               <Btn secondary onClick={() => run((s) => setTopicOptIn(s, ME, myTopics, s.revision))}>Save my topics</Btn>
-              <Btn secondary onClick={() => run((s) => setTopicOptIn(s, DEMO, DEMO_ROOMMATE_TOPICS, s.revision))}>Play {first}: opts in to 5 topics</Btn>
             </div>
-            <small>A topic opens only when you both opt in.</small>
+            <small>A topic opens only when you both opt in. For this demo, {first} (fictional) was simulated as having accepted and opted in to 5 topics automatically; that is not real consent.</small>
           </div>
+          <ChatPanel session={session} setSession={setSession} me={ME} demo={DEMO} first={first} chat={chat} />
           {openTopics(session).length === 0 && <p className="rai-muted">No topics are open yet.</p>}
           <div className="rai-topics">
             {openTopics(session).map((topic) => (
@@ -631,6 +635,7 @@ function NegotiatorDemo({ candidate, suggested, back }: { candidate: DemoCandida
         const summary = buildSummary(session, names, today);
         return (
           <article className="rai-summary-doc">
+            <p className="rai-demo-banner" role="note"><b>SIMULATED DEMO SUMMARY.</b> {first} is a fictional AI roommate. Their "approval" is simulated, it is not real consent, and this is not a lease or a legally binding agreement.</p>
             <h3>{summary.title}</h3>
             <p><b>Participants:</b> {summary.participants.map((p) => p.name).join(" and ")} · <b>Date:</b> {summary.date}</p>
             <h4>Agreed by both</h4>
@@ -640,11 +645,15 @@ function NegotiatorDemo({ candidate, suggested, back }: { candidate: DemoCandida
             <h4>Confirmation</h4>
             <ul>{summary.participants.map((p) => <li key={p.id}>{p.name}: {summary.confirmation[p.id] === "approved" ? "approved this version ✓" : "has not approved this version"}</li>)}</ul>
             <p className="rai-muted">{summary.disclaimer}</p>
-            {session.status === "finalized" && <p className="rai-ok" role="status">Both of you approved this version.</p>}
+            {session.status === "finalized" && <p className="rai-ok" role="status">Both of you approved this version (simulated: {first} is fictional).</p>}
+            {summary.unresolved.length > 0 && session.finalApprovals[ME] && session.status !== "finalized" && <p className="rai-muted">{first} (fictional) would like to settle the unresolved items before approving.</p>}
             <div className="rai-actions">
               <Btn secondary onClick={() => setReview(false)}>Keep editing</Btn>
-              <Btn disabled={session.status === "finalized"} onClick={() => run((s) => approveFinal(s, ME, summary.digest, names, today, s.revision))}>I approve this version</Btn>
-              <Btn secondary disabled={session.status === "finalized"} onClick={() => run((s) => approveFinal(s, DEMO, summary.digest, names, today, s.revision))}>Play {first}: approves this version</Btn>
+              <Btn disabled={session.status === "finalized"} onClick={() => run((s) => {
+                const mine = approveFinal(s, ME, summary.digest, names, today, s.revision);
+                // Simulated: the fictional roommate "approves" only when everything proposed is already agreed by both.
+                return jordanWouldApproveFinal(mine, summary.unresolved.length, summary.agreed.length) ? approveFinal(mine, DEMO, summary.digest, names, today, mine.revision) : mine;
+              })}>I approve this version</Btn>
             </div>
           </article>
         );
@@ -680,7 +689,6 @@ function TopicCard({ topic, session, names, me, demo, first, draft, setDraft, ru
         <div className="rai-suggest" role="group" aria-label="Neutral suggested wording"><small>Neutral suggestions — tap one to use it, then edit if you like:</small>{TOPIC_SUGGESTIONS[topic].map((s) => <button key={s} type="button" onClick={() => setDraft(s)}>{s}</button>)}</div>
         <div className="rai-actions">
           <Btn secondary disabled={!draft.trim()} onClick={() => { run((s) => proposeTerm(s, me, topic, draft, s.revision)); setDraft(""); }}>Propose</Btn>
-          {DEMO_ROOMMATE_COUNTER[topic] && <Btn secondary onClick={() => run((s) => proposeTerm(s, demo, topic, DEMO_ROOMMATE_COUNTER[topic] as string, s.revision))}>Play {first}: proposes their wording</Btn>}
         </div>
       </div>
     </article>
@@ -715,11 +723,94 @@ function TermRow({ term, session, names, me, demo, first, run }: { term: Term; s
           <Btn secondary onClick={() => run((s) => approveTerm(s, me, term.id, term.version, s.revision))}>I accept</Btn>
           <Btn secondary onClick={() => run((s) => rejectTerm(s, me, term.id, s.revision))}>I reject</Btn>
           <Btn secondary onClick={() => { setText(term.text); setEditing(true); }}>Edit</Btn>
-          <Btn secondary onClick={() => run((s) => approveTerm(s, demo, term.id, term.version, s.revision))}>Play {first}: accepts</Btn>
-          <Btn secondary onClick={() => run((s) => rejectTerm(s, demo, term.id, s.revision))}>Play {first}: rejects</Btn>
         </div>
       )}
     </div>
   );
 }
 
+
+// ---------------------------------------------------------------------------
+// Chat with the fictional AI roommate (Claude via the restricted demo endpoint, else deterministic fallback)
+// ---------------------------------------------------------------------------
+
+interface ChatMsg {
+  role: "user" | "jordan";
+  text: string;
+  source?: ReplySource;
+  notes?: string[];
+  overridden?: boolean;
+}
+
+const STARTERS = ["How about quiet hours start at 11:30 PM on weeknights?", "Can we have overnight guests up to 3 nights in a row?", "What if we rotate dishes and bathroom cleaning weekly?"];
+
+function ChatPanel({ session, setSession, me, demo, first, chat }: { session: Session; setSession: (s: Session) => void; me: string; demo: string; first: string; chat: ChatContext }) {
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const latest = useRef(session);
+  latest.current = session;
+  const persona = personaFor(demo);
+  if (!persona) return null;
+  const last = [...messages].reverse().find((m) => m.role === "jordan");
+  const status = last?.source === "ai" ? "Replies: Claude (live AI)" : last?.source === "scripted-fallback" && code ? "Replies: scripted fallback (live AI unavailable)" : "Replies: scripted (enter the presenter access code for live Claude)";
+
+  const send = async (raw: string) => {
+    const message = raw.trim();
+    if (!message || busy) return;
+    setBusy(true);
+    setInput("");
+    const history = messages.slice(-MAX_HISTORY).map(({ role, text }) => ({ role, text }));
+    setMessages((m) => [...m, { role: "user", text: message }]);
+    try {
+      const result = await requestJordanReply({ personaId: demo, message, history, openTopics: openTopics(latest.current), scenario: chat.scenario, flaggedTopics: chat.flagged, compatibility: chat.compatibility }, { code: code.trim() || undefined });
+      const applied = applyJordanTurn(latest.current, me, demo, result.reply);
+      setSession(applied.session);
+      setMessages((m) => [...m, { role: "jordan", text: result.reply.message, source: result.source, notes: applied.notes, overridden: result.reply.overridden }]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rai-box rai-chat">
+      <h3>Chat with {first} (fictional AI roommate)</h3>
+      <p className="rai-muted">{first} is an AI character, not a person. Propose quiet hours, cleaning, guests, kitchen rules or bills in your own words; {first} may agree, disagree or suggest something else, within their own fictional preferences. Proposals you make become terms below.</p>
+      <details>
+        <summary>About {first} (fictional)</summary>
+        <ul>{persona.about.map((a) => <li key={a}>{a}</li>)}</ul>
+      </details>
+      {chat.scenario && <p className="rai-muted"><b>From the simulator:</b> {chat.scenario.title}. {chat.scenario.friction}</p>}
+      <div className="rai-chatlog" role="log" aria-live="polite" aria-label={`Conversation with ${first}`}>
+        {messages.length === 0 && <p className="rai-muted">No messages yet. Try one of the starters or write your own.</p>}
+        {messages.map((m, i) => (
+          <div key={i} className={`rai-msg ${m.role}`}>
+            <b>{m.role === "user" ? "You" : first}</b>
+            {m.role === "jordan" && <><span className="rai-chip warn">FICTIONAL AI</span><span className="rai-chip">{m.source === "ai" ? "Claude" : "Scripted fallback"}</span></>}
+            <p>{m.text}</p>
+            {m.overridden && <small className="rai-muted">Reply adjusted by the demo's safety rules to stay within {first}'s boundaries.</small>}
+            {m.notes?.map((n) => <small key={n} className="rai-muted">{n}</small>)}
+          </div>
+        ))}
+        {busy && <p className="rai-muted" role="status">{first} is typing…</p>}
+      </div>
+      <div className="rai-suggest" role="group" aria-label="Conversation starters">
+        {STARTERS.map((s) => <button key={s} type="button" onClick={() => setInput(s)}>{s}</button>)}
+      </div>
+      <form onSubmit={(e) => { e.preventDefault(); void send(input); }}>
+        <label htmlFor="rai-chat-input" className="rai-sr">Message to {first}</label>
+        <input id="rai-chat-input" value={input} maxLength={400} onChange={(e) => setInput(e.target.value)} placeholder={`Say something to ${first}`} disabled={busy} />
+        <div className="rai-actions">
+          <button type="submit" className="btn-primary" disabled={busy || !input.trim()}>Send</button>
+        </div>
+      </form>
+      <small className="rai-muted" role="status">{status}</small>
+      <div className="rai-field">
+        <label htmlFor="rai-demo-code">Presenter access code (optional)</label>
+        <input id="rai-demo-code" type="password" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
+        <small>Only the demo operator has this. It is kept in memory only and sent to RentWell's own server, never to a third party.</small>
+      </div>
+    </div>
+  );
+}
