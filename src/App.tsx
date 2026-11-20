@@ -13,6 +13,8 @@ import {
   type DemoAccountSubmitPayload,
 } from "./DemoAccountAccess";
 import { FinePrint } from "./finePrint/FinePrint";
+import { Walkthrough } from "./walkthrough/Walkthrough";
+import type { RentalContext } from "./walkthrough/view";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { RentalPlanSummary, type RentalPlanSaveState } from "./RentalPlan";
@@ -75,6 +77,7 @@ type Screen =
   | "renter-account"
   | "roommate-ai"
   | "fineprint"
+  | "walkthrough"
   | AdvisorScreen;
 type IconName =
   | "arrow"
@@ -190,13 +193,14 @@ export function refreshActiveDecisionFromListings(
 export function getNavSection(
   screen: Screen,
   decisionOrigin: DecisionOrigin,
-): "" | "advisor" | "fineprint" | "listings" | "rental" | "roommates" {
+): "" | "advisor" | "fineprint" | "walkthrough" | "listings" | "rental" | "roommates" {
   if (["advisor", "lease", "truecost", "decision"].includes(screen)) return "advisor";
   if (["math", "preferences", "matches", "roommate-ai"].includes(screen)) return "roommates";
   if (screen === "listings" || (screen === "listing-details" && decisionOrigin === "listings")) {
     return "listings";
   }
   if (screen === "fineprint") return "fineprint";
+  if (screen === "walkthrough") return "walkthrough";
   if (["home", "plan-summary", "renter-account"].includes(screen)) return "";
   return "rental";
 }
@@ -1394,6 +1398,8 @@ function App() {
   const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
   const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
   const [showCalculation, setShowCalculation] = useState(false);
+  // Display-only context for Walkthrough. Walkthrough never writes back to Fair Rent or costs.
+  const [walkthroughRental, setWalkthroughRental] = useState<RentalContext | null>(null);
   const go = (next: Screen) => {
     setScreen(next);
     setMenu(false);
@@ -1613,6 +1619,15 @@ function App() {
           >
             Fine Print
           </button>
+          <button
+            className={navActive === "walkthrough" ? "active" : ""}
+            onClick={() => {
+              setWalkthroughRental(null);
+              go("walkthrough");
+            }}
+          >
+            Walkthrough
+          </button>
           <button className={screen === "plan-summary" ? "active" : ""} onClick={openMyPlan}>
             My Plan
           </button>
@@ -1670,6 +1685,7 @@ function App() {
       </header>
       {screen === "home" && <Home go={go} journeyNotice={journeyNotice} />}
       {screen === "fineprint" && <FinePrint />}
+      {screen === "walkthrough" && <Walkthrough rental={walkthroughRental} />}
       {screen === "renter-account" && (
         <DemoAccountAccess
           role="renter"
@@ -1725,6 +1741,10 @@ function App() {
           onPlanWithRoommates={planWithRoommates}
           onOpenAdvisor={() => go("advisor")}
           onOpenPlan={() => go("plan-summary")}
+          onCheckPlace={() => {
+            setWalkthroughRental({ name: activeDecision.title, rent: activeDecision.askingRent || null });
+            go("walkthrough");
+          }}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
         />
       )}
