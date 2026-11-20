@@ -211,6 +211,19 @@ a.btn-secondary:focus-visible {
   font-size: 10px;
   font-weight: 700;
 }
+.demo-account-menu {
+  flex-shrink: 0;
+}
+.demo-account-menu > button.demo-account-signin {
+  white-space: nowrap;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--line, #d9e3e0);
+  border-radius: 999px;
+  color: var(--ink, #1d2b29);
+  font-size: 14px;
+  cursor: pointer;
+}
 .demo-account-person {
   display: flex;
   align-items: center;
@@ -313,8 +326,19 @@ a.btn-secondary:focus-visible {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.1);
 }
-.demo-access-form .btn-primary {
+.demo-access-form .btn-primary,
+.demo-access-form .btn-secondary {
   width: 100%;
+  justify-content: center;
+}
+.demo-access-form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.demo-access-notice {
+  color: var(--green, #1f6f5c);
+  font-size: 12px;
+  line-height: 1.45;
 }
 .demo-access-form > .text-button {
   align-self: center;
@@ -3950,5 +3974,13 @@ footer {
   }
   .bottom-actions > button {
     width: 100%;
+  }
+}
+
+/* Full desktop nav is tight between the mobile-menu breakpoint and wide screens; there,
+   "My Plan" already opens sign-in, so the extra header pill is hidden. */
+@media (min-width: 1181px) and (max-width: 1379px) {
+  .demo-account-menu > button.demo-account-signin {
+    display: none;
   }
 }

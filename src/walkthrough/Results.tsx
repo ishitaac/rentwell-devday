@@ -18,7 +18,11 @@ interface ResultsProps {
   saveMessage: string | null;
   onNote: (shotId: string, note: string) => void;
   onRetry: (shotId: string) => void;
-  onSave: () => void;
+  onSave: (target: "download" | "account") => void;
+  /** Signed in with a RentWell account: offer "Save to my account". */
+  signedIn?: boolean;
+  /** Accounts exist but nobody is signed in: offer a sign-in link. */
+  onSignIn?: () => void;
   onBack: () => void;
   onStartOver: () => void;
   mustHaves: { id: string; label: string; answer: string; isNo: boolean }[];
@@ -57,6 +61,8 @@ export function Results({
   onNote,
   onRetry,
   onSave,
+  signedIn = false,
+  onSignIn,
   onBack,
   onStartOver,
   mustHaves,
@@ -193,8 +199,11 @@ export function Results({
             <section className="wt-panel">
               <h2>Keep this walkthrough</h2>
               <p className="wt-micro">
-                Profile: findings and questions in My Plan (sign-in). ZIP: adds your photos and
-                dates, on your device only.
+                {signedIn
+                  ? "Findings and questions go to My Plan. Photos, dates and your notes are saved privately to your account."
+                  : onSignIn
+                    ? "Findings and questions go to My Plan. Sign in to save, and your tour stays right here. Photos upload privately once you're signed in."
+                    : "Findings and questions go to My Plan (sign-in). The ZIP adds your photos and dates, on your device only."}
               </p>
               <div className="wt-save-row">
                 <button
@@ -211,20 +220,24 @@ export function Results({
                       }),
                     )
                   }
-                  disabled={view.pending.length > 0}
-                >
-                  Save to my profile
-                </button>
-                <button
-                  className="wt-btn"
-                  onClick={onSave}
                   disabled={saving || view.pending.length > 0}
                 >
                   {saving
                     ? "Saving…"
                     : view.pending.length > 0
                       ? "Finishing photos…"
-                      : "Download ZIP"}
+                      : signedIn
+                        ? "Save to my account"
+                        : onSignIn
+                          ? "Save walkthrough"
+                          : "Save to my profile"}
+                </button>
+                <button
+                  className="wt-btn"
+                  onClick={() => onSave("download")}
+                  disabled={saving || view.pending.length > 0}
+                >
+                  Download ZIP
                 </button>
               </div>
               {profileMessage && (
