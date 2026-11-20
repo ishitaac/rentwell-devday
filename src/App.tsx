@@ -43,7 +43,7 @@ import {
   type ExternalRentalEntry,
   type RentalDecisionRecord,
 } from "./rentalDecision";
-import { RoommateAI, ROOMMATE_AI_ENABLED } from "./RoommateAI";
+import { RoommateAI } from "./RoommateAI";
 import {
   createRentalFirstRoommateContext,
   createRoommateFirstContext,
@@ -1197,11 +1197,6 @@ export function Preferences({
         >
           {context.entryPerspective === "rental-first" ? "Back to cost split" : "Back to home"}
         </Button>
-        {ROOMMATE_AI_ENABLED && (
-          <Button secondary onClick={() => go("roommate-ai")}>
-            Describe how you live (AI beta)
-          </Button>
-        )}
         <Button onClick={() => go("matches")}>
           Find my matches <Icon name="arrow" size={18} />
         </Button>
@@ -1429,7 +1424,7 @@ function App() {
   const startRoommateFirst = () => {
     setRoommateContext(createRoommateFirstContext());
     setJourneyNotice(null);
-    go("preferences");
+    go("roommate-ai");
   };
   const planWithRoommates = () => {
     if (!activeDecision) return;
@@ -1762,11 +1757,9 @@ function App() {
           onBackToDecision={() => go("listing-details")}
         />
       )}
-      {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
-      {screen === "matches" && (
-        <Matches context={roommateContext} go={go} onChooseRoommate={chooseRoommate} />
+      {(screen === "roommate-ai" || screen === "preferences" || screen === "matches") && (
+        <RoommateAI onExit={() => go("home")} />
       )}
-      {screen === "roommate-ai" && ROOMMATE_AI_ENABLED && <RoommateAI onExit={(to) => go(to)} />}
       {screen === "plan-summary" && activeDecision && (
         <RentalPlanSummary
           decision={activeDecision}

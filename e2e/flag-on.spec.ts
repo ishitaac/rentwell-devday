@@ -12,10 +12,9 @@ test("full journey: flag, safeguards, onboarding, matching, simulator, then chat
 
   await page.goto("/");
   await page.getByRole("button", { name: "Roommate Planning" }).click();
-  await page.getByRole("button", { name: "Describe how you live (AI beta)" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /Describe how you live/ })).toBeVisible();
   await expect(page.getByText("FICTIONAL ROOMMATES")).toBeVisible();
-  const policy = page.getByRole("note").filter({ hasText: "Policy check" });
+  const policy = page.locator('[role="note"]').filter({ hasText: "Policy check" });
   await expect(policy).toContainText("UNVERIFIED");
   await expect(policy).toContainText("RESTRICTED");
   await expect(policy).not.toContainText("gender filter — enabled");

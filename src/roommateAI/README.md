@@ -1,5 +1,7 @@
 # Find a Roommate — RentWell
 
+> **Update:** the guided roommate flow is now the only Roommate Planning experience. The `VITE_ROOMMATE_AI` flag no longer exists; ignore the flag instructions below.
+
 > **Feature documentation | DevDay 2026 | Beta / demonstration**  
 > **Repository:** [`ishitaac/rentwell-devday`](https://github.com/ishitaac/rentwell-devday)  
 > **Integration:** merged into `dev` through [PR #15](https://github.com/ishitaac/rentwell-devday/pull/15), merge commit `e9ca950`  
