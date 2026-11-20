@@ -6,7 +6,7 @@ const PORT = 4317;
 export default defineConfig({
   testDir: "e2e",
   // e2e/playwright.config.ts runs the roommate-AI specs against their own flag builds.
-  testMatch: "demo.spec.ts",
+  testMatch: ["demo.spec.ts", "walkthrough.spec.ts"],
   timeout: 30_000,
   workers: 2,
   use: { baseURL: `http://localhost:${PORT}` },

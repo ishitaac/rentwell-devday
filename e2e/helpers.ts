@@ -4,24 +4,22 @@ import { expect, type Page } from "@playwright/test";
 export async function reachJordanChat(page: Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Roommate Planning" }).click();
-  await page.getByRole("button", { name: "Describe how you live (AI beta)" }).click();
-  await page.getByLabel("State", { exact: true }).fill("UT");
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Use an example" }).click();
-  await page.getByRole("button", { name: "Find my preferences" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
 
-  const confirm = page.getByRole("heading", { name: "Confirm your compatibility profile" });
+  const confirm = page.getByRole("heading", { name: "Review your preferences" });
   for (let i = 0; i < 12 && !(await confirm.isVisible()); i++) {
     const next = page.getByRole("button", { name: /I'm done|Review my profile/ });
     if (await next.count()) await next.first().click();
     else await page.waitForTimeout(200);
   }
   await expect(confirm).toBeVisible();
-  await page.getByRole("button", { name: /Confirm all/ }).click();
+  await page.getByRole("button", { name: "See matches" }).click();
 
   await expect(page.getByRole("heading", { name: "Your matches" })).toBeVisible();
   const jordan = page.locator("article.rai-match").filter({ hasText: "Jordan (fictional)" });
-  await jordan.getByRole("button", { name: "See What Living Together Could Look Like" }).click();
+  await jordan.getByRole("button", { name: "Try a day together" }).click();
 
   await expect(page.getByRole("heading", { name: "What living together could look like" })).toBeVisible();
   await page.getByRole("button", { name: "Talk to Jordan" }).click();

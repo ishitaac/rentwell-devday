@@ -117,3 +117,106 @@
 .rai-msg p { margin: 4px 0; }
 .rai-msg small { display: block; }
 .rai-msg .rai-chip { margin-left: 6px; }
+
+/* ---- Layout polish: one spacing scale (8/16/24), aligned fields, calmer steps ---- */
+.rai-main { max-width: 920px; padding: 40px 24px 64px; }
+.rai-head { align-items: center; gap: 24px; margin-bottom: 24px; }
+.rai-head h1 { font-size: clamp(1.7rem, 3vw, 2.2rem); margin: 4px 0 8px; }
+.rai-head p { max-width: 520px; }
+.rai-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; overflow: visible; padding: 0; margin-bottom: 24px; }
+.rai-steps button { justify-content: center; padding: 10px 12px; font-weight: 600; font-size: .9rem; min-width: 0; }
+.rai-panel { display: flex; flex-direction: column; gap: 16px; padding: 32px; }
+.rai-panel > * { margin-top: 0; margin-bottom: 0; }
+.rai-panel h2 { font-size: 1.5rem; }
+.rai-sub { margin: -8px 0 0; }
+.rai-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.rai-field { display: flex; flex-direction: column; gap: 6px; }
+.rai-field label { margin: 0; }
+.rai-field input, .rai-field select, .rai-panel textarea, .rai-inline select, .rai-inline input, .rai-table select, .rai-table input { min-height: 44px; }
+.rai-inline > :first-child { flex: 2; }
+.rai-more { border: 1px solid var(--line); border-radius: 14px; padding: 0 16px; background: #fff; }
+.rai-more > summary { cursor: pointer; padding: 14px 0; font-weight: 600; color: var(--ink); }
+.rai-more[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.rai-more[open] { padding-bottom: 16px; }
+.rai-more .rai-compliance { margin: 0 0 4px; background: none; border: 0; padding: 0; }
+.rai-about { color: var(--muted); font-size: .85rem; margin-top: 24px; text-align: center; }
+.rai-about > summary { cursor: pointer; display: inline-block; }
+.rai-about p { margin: 8px auto 0; max-width: 640px; }
+.rai-panel .bottom-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding-top: 24px; border-top: 1px solid var(--line); }
+.rai-panel .bottom-actions > :last-child:not(:first-child) { margin-left: auto; }
+.rai-row-card { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 16px; padding: 16px; }
+.rai-row-card > div { min-width: 0; }
+.rai-actions { margin-top: 0; }
+.rai-matches { gap: 24px; }
+.rai-match { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.rai-match > * { margin: 0; }
+.rai-cols { margin: 0; gap: 16px 24px; }
+.rai-summary, .rai-box, .rai-consent { margin: 0; }
+.rai-sim { gap: 24px; }
+.rai-topics { gap: 16px; margin-top: 0; }
+.rai-chat .rai-chatlog { padding: 8px 0; }
+@media (max-width: 760px) {
+  .rai-main { padding: 24px 16px 48px; }
+  .rai-steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .rai-steps button { flex-direction: column; gap: 4px; padding: 8px 4px; font-size: .75rem; border-radius: 14px; }
+  .rai-panel { padding: 20px; }
+  .rai-grid { grid-template-columns: 1fr; }
+  .rai-panel .bottom-actions > * { flex: 1 1 100%; }
+  .rai-panel .bottom-actions > :last-child:not(:first-child) { margin-left: 0; }
+}
+
+/* ---- Match the Living preferences look: card grid, icon tiles, pill chips ---- */
+.rai-head.page-heading { padding: 40px 20px 24px; display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 0; }
+.rai-head.page-heading .demo-tag { margin-top: 14px; }
+.rai-head.page-heading p:not(.eyebrow) { max-width: 460px; }
+.rai-main .preferences-grid { gap: 16px; }
+.preference-card.wide { grid-column: 1 / -1; }
+.rai-main .preference-card .chips { margin-top: 18px; }
+.rai-main .preference-card .chips button { padding: 10px 14px; font-size: 12px; }
+.rai-main .pref-head p { font-size: 12px; }
+.rai-main .range-labels { font-size: 11px; }
+.rai-main .budget-display { font-size: 14px; }
+.rai-stephead { display: flex; align-items: center; gap: 12px; }
+.rai-stephead .pref-head h2 { font-size: 18px; margin: 0; }
+.rai-stephead .pref-head p { font-size: 12px; margin: 2px 0 0; color: var(--muted); }
+.rai-panel { border-radius: 20px; box-shadow: 0 8px 30px rgba(25, 59, 52, 0.045); }
+.rai-main > details.rai-more { margin-top: 16px; }
+.rai-main > .bottom-actions { margin-top: 24px !important; }
+.rai-label { font-weight: 600; font-size: .85rem; }
+.rai-more .chips { margin-top: 0; }
+@media (max-width: 760px) {
+  .rai-main .preferences-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Matches: same card look as the original matches page ---- */
+.rai-results { display: flex; flex-direction: column; gap: 20px; }
+.rai-results > .bottom-actions { border-top: 0; padding-top: 0; }
+.rai-match.match-card { padding: 0; display: block; gap: 0; border-radius: 17px; }
+.rai-match.match-card > * { margin: 0; }
+.rai-match.match-card:first-child { border-color: #98cfc2; }
+.rai-match .match-body { display: flex; flex-direction: column; gap: 14px; padding: 20px 24px 22px; }
+.rai-match .match-body > * { margin: 0; }
+.rai-match .profile-meta { margin: 0; }
+.rai-match .profile-name h2 { margin: 0; }
+.rai-match .profile-name p { font-size: 12px; }
+.rai-match .score span { font-size: 11px; }
+.rai-match .profile-meta small { font-size: 10px; }
+.rai-match .profile-meta b { font-size: 13px; }
+.rai-match .reasons h4 { font-size: 13px; margin: 0 0 8px; }
+.rai-match .reasons p { font-size: 13px; line-height: 1.5; }
+.rai-match .reasons .rai-muted { display: block; }
+.rai-match .difference-box { padding: 14px 16px; }
+.rai-match .rai-category { font-size: 13px; }
+.rai-match .match-actions { margin-top: 4px; }
+.rai-match .match-actions .btn-primary { font-size: 13px; padding: 10px 18px; }
+.rai-match .match-actions .text-button { font-size: 13px; }
+.rai-match .match-actions .text-button:disabled { opacity: .5; cursor: not-allowed; }
+.rai-fine { color: var(--muted); font-size: 12px; }
+.rai-fine > summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.rai-fine[open] .rai-breakdown { margin: 10px 0 6px; }
+@media (max-width: 760px) {
+  .rai-match .reasons { grid-template-columns: 1fr; }
+  .rai-match .profile-core { grid-template-columns: auto 1fr; }
+  .rai-match .profile-core .score { grid-column: 1 / -1; text-align: left; }
+  .rai-match .match-actions { flex-direction: column; align-items: stretch; gap: 10px; }
+}

@@ -13,6 +13,14 @@ import {
   type DemoAccountSubmitPayload,
 } from "./DemoAccountAccess";
 import { FinePrint } from "./finePrint/FinePrint";
+import { Walkthrough } from "./walkthrough/Walkthrough";
+import type { RentalContext } from "./walkthrough/view";
+import { SavedWalkthroughs } from "./walkthrough/SavedWalkthroughs";
+import {
+  loadSavedWalkthroughs,
+  saveWalkthroughToProfile,
+  type SavedWalkthrough,
+} from "./walkthrough/lib/profile";
 import { ListingsBrowser, RentalDecisionDetails } from "./Listings";
 import { DEFAULT_LISTING_FILTERS, type ListingFilters } from "./listingFilters";
 import { RentalPlanSummary, type RentalPlanSaveState } from "./RentalPlan";
@@ -41,7 +49,7 @@ import {
   type ExternalRentalEntry,
   type RentalDecisionRecord,
 } from "./rentalDecision";
-import { RoommateAI, ROOMMATE_AI_ENABLED } from "./RoommateAI";
+import { RoommateAI } from "./RoommateAI";
 import {
   createRentalFirstRoommateContext,
   createRoommateFirstContext,
@@ -75,6 +83,7 @@ type Screen =
   | "renter-account"
   | "roommate-ai"
   | "fineprint"
+  | "walkthrough"
   | AdvisorScreen;
 type IconName =
   | "arrow"
@@ -190,13 +199,14 @@ export function refreshActiveDecisionFromListings(
 export function getNavSection(
   screen: Screen,
   decisionOrigin: DecisionOrigin,
-): "" | "advisor" | "fineprint" | "listings" | "rental" | "roommates" {
+): "" | "advisor" | "fineprint" | "walkthrough" | "listings" | "rental" | "roommates" {
   if (["advisor", "lease", "truecost", "decision"].includes(screen)) return "advisor";
   if (["math", "preferences", "matches", "roommate-ai"].includes(screen)) return "roommates";
   if (screen === "listings" || (screen === "listing-details" && decisionOrigin === "listings")) {
     return "listings";
   }
   if (screen === "fineprint") return "fineprint";
+  if (screen === "walkthrough") return "walkthrough";
   if (["home", "plan-summary", "renter-account"].includes(screen)) return "";
   return "rental";
 }
@@ -1193,11 +1203,6 @@ export function Preferences({
         >
           {context.entryPerspective === "rental-first" ? "Back to cost split" : "Back to home"}
         </Button>
-        {ROOMMATE_AI_ENABLED && (
-          <Button secondary onClick={() => go("roommate-ai")}>
-            Describe how you live (AI beta)
-          </Button>
-        )}
         <Button onClick={() => go("matches")}>
           Find my matches <Icon name="arrow" size={18} />
         </Button>
@@ -1394,6 +1399,15 @@ function App() {
   const [comparedDecisionIds, setComparedDecisionIds] = useState<string[]>([]);
   const [tourRequestedIds, setTourRequestedIds] = useState<string[]>([]);
   const [showCalculation, setShowCalculation] = useState(false);
+  // Display-only context for Walkthrough. Walkthrough never writes back to Fair Rent or costs.
+  const [walkthroughRental, setWalkthroughRental] = useState<RentalContext | null>(null);
+  // A walkthrough waiting to be saved once the renter signs in, so they never redo the tour.
+  const [pendingWalkthroughSave, setPendingWalkthroughSave] = useState<SavedWalkthrough | null>(
+    null,
+  );
+  const [walkthroughMessage, setWalkthroughMessage] = useState<string | null>(null);
+  const [walkthroughJustSaved, setWalkthroughJustSaved] = useState(false);
+  const [walkthroughVersion, setWalkthroughVersion] = useState(0);
   const go = (next: Screen) => {
     setScreen(next);
     setMenu(false);
@@ -1423,7 +1437,7 @@ function App() {
   const startRoommateFirst = () => {
     setRoommateContext(createRoommateFirstContext());
     setJourneyNotice(null);
-    go("preferences");
+    go("roommate-ai");
   };
   const planWithRoommates = () => {
     if (!activeDecision) return;
@@ -1450,6 +1464,11 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [screen]);
   const navActive = useMemo(() => getNavSection(screen, decisionOrigin), [decisionOrigin, screen]);
+  const savedWalkthroughs = useMemo(() => {
+    const storage = getBrowserStorage();
+    return renterSession && storage ? loadSavedWalkthroughs(storage, renterSession.email) : [];
+    // walkthroughVersion re-reads storage after a save.
+  }, [renterSession, walkthroughVersion, screen]);
   const advisorStatus = getAdvisorPlanStatus(
     activeDecision?.decisionId ?? null,
     advisorReviewedDecisionId,
@@ -1509,6 +1528,32 @@ function App() {
     saveCurrentPlan(renterSession);
   };
 
+  const persistWalkthrough = (session: DemoSession, snapshot: SavedWalkthrough): boolean => {
+    const storage = getBrowserStorage();
+    const result = storage
+      ? saveWalkthroughToProfile(storage, session.email, snapshot)
+      : { ok: false as const, error: "Browser storage is unavailable." };
+    if (!result.ok) {
+      setWalkthroughMessage(result.error);
+      return false;
+    }
+    setWalkthroughMessage(null);
+    setWalkthroughJustSaved(true);
+    setWalkthroughVersion((v) => v + 1);
+    return true;
+  };
+
+  const requestWalkthroughSave = (snapshot: SavedWalkthrough) => {
+    if (!renterSession) {
+      setPendingWalkthroughSave(snapshot);
+      setPendingPlanSave(false);
+      setAccountError(null);
+      go("renter-account");
+      return;
+    }
+    if (persistWalkthrough(renterSession, snapshot)) go("plan-summary");
+  };
+
   const completeRenterAccess = (payload: DemoAccountSubmitPayload) => {
     const session = createDemoSession(payload.email, "renter");
     const storage = getBrowserStorage();
@@ -1523,6 +1568,13 @@ function App() {
     }
     setRenterSession(session);
     setAccountError(null);
+    if (pendingWalkthroughSave) {
+      const snapshot = pendingWalkthroughSave;
+      setPendingWalkthroughSave(null);
+      persistWalkthrough(session, snapshot);
+      go("plan-summary");
+      return;
+    }
     if (pendingPlanSave && activeDecision) {
       setPendingPlanSave(false);
       saveCurrentPlan(session);
@@ -1613,6 +1665,15 @@ function App() {
           >
             Fine Print
           </button>
+          <button
+            className={navActive === "walkthrough" ? "active" : ""}
+            onClick={() => {
+              setWalkthroughRental(null);
+              go("walkthrough");
+            }}
+          >
+            Walkthrough
+          </button>
           <button className={screen === "plan-summary" ? "active" : ""} onClick={openMyPlan}>
             My Plan
           </button>
@@ -1670,6 +1731,26 @@ function App() {
       </header>
       {screen === "home" && <Home go={go} journeyNotice={journeyNotice} />}
       {screen === "fineprint" && <FinePrint />}
+      {screen === "walkthrough" && (
+        <Walkthrough
+          rental={walkthroughRental}
+          onSaveToProfile={requestWalkthroughSave}
+          profileMessage={walkthroughMessage}
+        />
+      )}
+      {screen === "plan-summary" && savedWalkthroughs.length > 0 && (
+        <div className="wt-saved-wrap">
+          {!activeDecision && <h1 className="wt-saved-page-title">My Plan</h1>}
+          <SavedWalkthroughs
+            items={savedWalkthroughs}
+            justSaved={walkthroughJustSaved}
+            onOpenWalkthrough={() => {
+              setWalkthroughJustSaved(false);
+              go("walkthrough");
+            }}
+          />
+        </div>
+      )}
       {screen === "renter-account" && (
         <DemoAccountAccess
           role="renter"
@@ -1725,6 +1806,13 @@ function App() {
           onPlanWithRoommates={planWithRoommates}
           onOpenAdvisor={() => go("advisor")}
           onOpenPlan={() => go("plan-summary")}
+          onCheckPlace={() => {
+            setWalkthroughRental({
+              name: activeDecision.title,
+              rent: activeDecision.askingRent || null,
+            });
+            go("walkthrough");
+          }}
           onToggleCalculation={() => setShowCalculation((current) => !current)}
         />
       )}
@@ -1742,11 +1830,9 @@ function App() {
           onBackToDecision={() => go("listing-details")}
         />
       )}
-      {screen === "preferences" && <Preferences context={roommateContext} go={go} />}
-      {screen === "matches" && (
-        <Matches context={roommateContext} go={go} onChooseRoommate={chooseRoommate} />
+      {(screen === "roommate-ai" || screen === "preferences" || screen === "matches") && (
+        <RoommateAI onExit={() => go("home")} />
       )}
-      {screen === "roommate-ai" && ROOMMATE_AI_ENABLED && <RoommateAI onExit={(to) => go(to)} />}
       {screen === "plan-summary" && activeDecision && (
         <RentalPlanSummary
           decision={activeDecision}

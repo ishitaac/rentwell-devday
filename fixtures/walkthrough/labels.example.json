@@ -1,0 +1,10 @@
+[
+  { "file": "photos/ceiling-stain.jpg", "unitType": "apartment", "shotId": "A2", "expected": "priority", "note": "brown stain, upper right corner" },
+  { "file": "photos/sink-clean.jpg", "unitType": "apartment", "shotId": "A1", "expected": "none" },
+  { "file": "photos/caulk-worn.jpg", "unitType": "apartment", "shotId": "A3", "expected": "follow_up" },
+  { "file": "photos/window-clean.jpg", "unitType": "apartment", "shotId": "A4", "expected": "none" },
+  { "file": "photos/blurry-floor.jpg", "unitType": "apartment", "shotId": "A5", "expected": "not_assessable" },
+  { "file": "photos/dark-kitchen.jpg", "unitType": "apartment", "shotId": "A6", "expected": "not_assessable" },
+  { "file": "photos/off-topic.jpg", "unitType": "apartment", "shotId": "A1", "expected": "not_assessable" },
+  { "file": "photos/house-exterior.jpg", "unitType": "single_family", "shotId": "H4", "expected": "none" }
+]

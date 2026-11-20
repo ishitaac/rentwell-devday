@@ -1,13 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { RoommateAI, ROOMMATE_AI_ENABLED } from "./RoommateAI";
+import { RoommateAI } from "./RoommateAI";
 
 describe("RoommateAI entry", () => {
-  it("is off unless the build flag is set", () => {
-    expect(ROOMMATE_AI_ENABLED).toBe(false);
-  });
-
   it("renders the housing step with policy disclosures, fictional labeling and accessible controls", () => {
     const html = renderToStaticMarkup(<RoommateAI onExit={() => undefined} />);
     expect(html).toContain("Describe how you live");
