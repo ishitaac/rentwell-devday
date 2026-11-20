@@ -1,6 +1,6 @@
 # RentWell
 
-RentWell is a React and Vite prototype for exploring rental affordability and roommate decisions. It includes a fair-rent comparison, roommate cost planning, preference-based roommate matching, and a simulated AI rental advisor.
+RentWell is a React and Vite prototype for exploring rental affordability and roommate decisions. It includes a fair-rent comparison, roommate cost planning, preference-based roommate matching, a simulated AI rental advisor, and a unified **My Rental Plan** summary.
 
 ## Requirements
 
@@ -23,6 +23,8 @@ pnpm dev
 
 Open the local URL printed by Vite.
 
+No RentCast key or `.env.local` file is needed for the competition demo. The repository includes the cached market snapshot, 20 enriched synthetic demo listings, and four local illustrative images, so every teammate sees the same data.
+
 ## Production build
 
 Create and preview a production build:
@@ -36,6 +38,88 @@ The compiled site is written to `dist/`.
 
 ## Project notes
 
-- The rental comparison data is fictional demo data, not live market data.
-- AI rental advisor responses are simulated.
+- Fair-rent comparisons use a dated, cached snapshot of active Salt Lake City rentals retrieved from the [RentCast API](https://developers.rentcast.io/reference/rental-listings-long-term). They are not live market coverage, appraisals, or guarantees.
+- The renter and property-manager screens use 20 synthetic **Demo listings** generated from the cached snapshot. They are not active properties available to rent.
+- Fair Rent compares advertised base rent with the dated snapshot range. Mandatory recurring fees are shown separately and included in true monthly cost.
+- Listing-link extraction remains simulated; users can edit the extracted fields.
+- AI rental advisor responses and the sample lease are simulated. The Advisor uses the active rental's shared Decision Receipt for costs and market evidence; selected local files are not transmitted or analyzed.
+- Renter and property-manager accounts are browser-local demo profiles, not real authentication. Password fields are never submitted or stored. Saved renter plans are scoped to the matching demo email and preserve the exact approved decision snapshot.
+- **Start free pilot** and **Request a demo** are local property-manager prototype choices. No payment is collected, and subscription pricing has not been finalized.
 - The project runs as a standalone Vite application and does not require Figma Make files or plugins.
+
+## Recommended demo path
+
+1. Select **Browse rentals** or **Check a rental you found**.
+2. Open the shared **Decision Receipt** to explain advertised rent, mandatory fees, true monthly cost, and the dated Fair Rent comparison.
+3. Select **Review sample lease with Advisor**, complete the guided summary, and add the findings to **My Rental Plan**.
+4. Optionally select **Plan costs with roommates**, choose a fictional profile, and show the receipt-derived per-person share in **My Rental Plan**.
+5. Select **Save my plan**, create a renter demo profile, and reopen the exact plan from **My Plan** in the header.
+6. Use **For property managers**, sign in to the separate manager demo app, choose **Start free pilot** or **Request a demo**, then edit a synthetic listing and preview the same renter-facing Decision Receipt.
+
+The app initially displays six cards for readability, but search and filters operate across all 20 committed demo listings. **Show more rentals** progressively reveals the remaining results.
+
+## Demo accounts and local reset
+
+Demo sessions, saved plans, and manager pilot choices use the browser's local storage so every teammate can present the complete flow without configuring a backend. Data does not sync between browsers or devices. Signing out hides plan details but keeps that email's saved plan; **Reset demo data** removes only RentWell's local demo keys after confirmation.
+
+## Demo listing data
+
+The demo keeps source facts and fictional presentation content separate:
+
+- `src/data/rentcast-slc.json` contains the sanitized RentCast market fields: city, state, zip code, property type, bedrooms, bathrooms, optional square footage, price, and snapshot dates.
+- `src/data/demo-listing-enrichment.json` contains synthetic renter-facing content: fictional IDs, titles, neighborhoods, descriptions, recurring fees, deposits, availability, amenities, and local image references.
+- `src/data/demo-listings.json` is the generated dataset used by the listing and manager screens. Each record contains separate `market`, `synthetic`, and `provenance` sections; `src/demoListings.ts` provides the typed selector and edit helper.
+- `public/listings/ASSETS.md` records image creators, source pages, and license information. The images are illustrative and are not photographs of the listed properties.
+
+Rebuild the committed demo dataset for free, without making a RentCast request:
+
+```bash
+pnpm data:demo
+```
+
+The generator matches every enrichment record to a stable combination of market fields, validates the full fixture and local images, and replaces the generated file only after every check succeeds.
+
+## Optional: refresh the RentCast snapshot
+
+This refresh is not required for the competition demo. It makes a RentCast API request and may use paid quota depending on the account plan.
+
+The committed snapshot contains only the fields needed for market comparison. It excludes listing agents, offices, owners, contact details, and the API key.
+
+1. Copy the secret template:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. Add your RentCast key to `.env.local`:
+
+   ```text
+   RENTCAST_API_KEY=your_key_here
+   ```
+
+3. Retrieve up to 20 active Salt Lake City rentals:
+
+   ```bash
+   pnpm data:rentcast
+   ```
+
+The command makes one API request and replaces `src/data/rentcast-slc.json` only after receiving and sanitizing a valid response. RentCast keys are secrets: never commit `.env.local`, place a key in frontend code, or paste it into a pull request.
+
+A refreshed snapshot may contain a different set or order of records. After refreshing, update `src/data/demo-listing-enrichment.json` so each source key still matches exactly once, then run `pnpm data:demo` and `pnpm test:data`. A mismatch fails without replacing the last valid generated dataset.
+
+## Property-manager app (separate site)
+
+The property-manager workspace is a second app in this repo with its own URL. Renters
+reach it from **For property managers** in the header; managers sign in with the demo account,
+choose a local no-payment pilot action, and then see the dashboard. Run it with
+`pnpm dev:manager` and build it with `pnpm build:manager`.
+Setup and the demo credentials are in [docs/two-apps-deployment.md](docs/two-apps-deployment.md).
+
+## Fine Print (lease reader)
+
+A lease reader that finds every charge, shows the real monthly cost, and lists what the lease doesn't say. It is a separate "Fine Print" screen alongside the simulated AI Advisor.
+
+- Live analysis needs `ANTHROPIC_API_KEY` in `.env.local` (gitignored) locally, or in the Vercel project's environment variables (Preview and Production). It is read only by `api/analyze.ts` and `api/ask.ts`; never give it a `VITE_` prefix. Without a key the sample lease still works from its saved analysis.
+- Claude is used for extraction and answers (`claude-sonnet-5-5`) and routing (`claude-haiku-5-5`); override with `FINE_PRINT_MODEL` / `FINE_PRINT_ROUTER_MODEL`. All money math is in `src/finePrint/lib/costs.ts`, and every quote is verified against the lease in code. AI-generated, not legal advice.
+- The sample lease in `fixtures/` and its answer key in `eval/` are fictional.
+- `pnpm check` runs typecheck, tests, build and a bundle secret check; `pnpm test:e2e` runs Playwright; `pnpm eval` scores live output.
