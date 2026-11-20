@@ -13,7 +13,7 @@ export class ApiError extends Error {
   }
 }
 
-const ANALYZE_TIMEOUT_MS = 35_000; // server calls run in parallel, each capped at 20 s
+const ANALYZE_TIMEOUT_MS = 50_000; // parallel calls capped at 20 s each, plus one possible retry
 const ASK_TIMEOUT_MS = 30_000;
 
 async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {

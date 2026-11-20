@@ -26,7 +26,7 @@ export function splitDollars(totalDollars: number, n: number): number[] {
 
 // ---- Classification. Code, not the model, decides where each verified finding lands. ----
 
-const hasAmount = (f: Finding): f is Finding & { amount: number } => f.verified && f.amount !== null;
+const hasAmount = (f: Finding): f is Finding & { amount: number } => f.verified && typeof f.amount === "number";
 
 export const isBaseRent = (f: Finding) => hasAmount(f) && f.kind === "base_rent";
 export const isMandatoryMonthly = (f: Finding) =>
@@ -48,7 +48,7 @@ export function unitsFor(f: Finding, occupants: number): number {
 }
 
 export function lineCents(f: Finding, occupants: number): number {
-  return f.amount === null ? 0 : toCents(f.amount) * unitsFor(f, occupants);
+  return typeof f.amount !== "number" ? 0 : toCents(f.amount) * unitsFor(f, occupants);
 }
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);

@@ -60,7 +60,11 @@ export const RouterSchema = z.object({
   topic: z.string().nullable().describe("A topic id from the provided list, or null"),
   whatIf: z
     .object({
-      occupants: z.number().nullable(),
+      occupants: z.number().nullable().describe("Total people, only when the user states a total ('3 roommates')"),
+      addOccupants: z
+        .number()
+        .nullable()
+        .describe("People joining (+) or leaving (-) relative to now ('my friend moves in too' = 1)"),
       removeCharge: z.string().nullable().describe("Name of a charge to leave out, e.g. 'parking'"),
       includeEstimates: z.boolean().nullable(),
     })

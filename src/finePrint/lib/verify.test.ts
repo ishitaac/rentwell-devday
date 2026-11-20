@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { Clause } from "./types";
 import { findQuote, normalizeForMatch, quoteInClause, verifyFinding, verifyQuoteRef } from "./verify";
-import { verifyPhases } from "./verifyExtraction";
+import { verifyExtraction, verifyPhases } from "./verifyExtraction";
+import { formatFindingAmount } from "./format";
+import { lineCents } from "./costs";
 
 const clauses: Clause[] = [
   {
@@ -85,6 +87,22 @@ describe("T02 verify", () => {
     const text = "Pets.  No pets\n are allowed without a “Pet Addendum.”";
     const span = findQuote('no pets are allowed without a "Pet Addendum', text)!;
     expect(text.slice(span.start, span.end)).toBe("No pets\n are allowed without a “Pet Addendum");
+  });
+
+  test("an unpriced finding keeps amount: null through verification (review #1)", () => {
+    const raw = {
+      findings: [{
+        ...base, amount: null, type: "conditional" as const, quote: "A second space, if available",
+        percent: null, perDayAmount: null, rentMultiple: null, quantity: null, condition: null, notes: null,
+      }],
+      rentSchedule: [], conflicts: [], clarifications: [],
+    };
+    const [f] = verifyExtraction(raw, clauses).findings;
+    expect(f.verified).toBe(true);
+    expect(f.amount).toBeNull();
+    expect("percent" in f).toBe(false);
+    expect(formatFindingAmount(f)).toBe("Not stated in lease");
+    expect(lineCents({ ...f, amount: undefined as unknown as null }, 2)).toBe(0); // legacy cached data
   });
 
   test("rent phases verify their months and amount, and dedupe", () => {

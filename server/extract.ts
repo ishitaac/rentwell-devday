@@ -47,11 +47,10 @@ export async function extractFromClauses(clauses: Clause[]): Promise<{ extractio
 
   const findingsFor = async (scope: Clause[]): Promise<FindingsPart> => {
     if (scope.length === 0) return { findings: [], rentSchedule: [] };
-    const part: FindingsPart = await callStructured({
-      ...base,
-      user: `${leaseBlock}\n\n${findingsTask(scope)}`,
-      schema: FindingsPartSchema,
-    });
+    const request = () =>
+      callStructured({ ...base, user: `${leaseBlock}\n\n${findingsTask(scope)}`, schema: FindingsPartSchema });
+    // One retry. Never return partial findings: a missing half would show a falsely LOW cost.
+    const part: FindingsPart = await request().catch(() => request());
     // Each call may only report clauses in its own scope; this prevents double counting.
     const inScope = new Set(scope.map((c) => c.id));
     return { ...part, findings: part.findings.filter((f) => inScope.has(f.clauseId)) };

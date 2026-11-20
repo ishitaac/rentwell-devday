@@ -10,7 +10,7 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 // Server-only variables the dev /api handlers read from .env.local. They are copied into
 // process.env for the dev server only; none of them has a VITE_ prefix, so Vite never
 // exposes them to client code.
-const SERVER_ENV_KEYS = ["ANTHROPIC_API_KEY", "FINE_PRINT_MODEL", "FINE_PRINT_ROUTER_MODEL"];
+const SERVER_ENV_KEYS = ["ANTHROPIC_API_KEY", "FINE_PRINT_MODEL", "FINE_PRINT_ROUTER_MODEL", "FINE_PRINT_TIMEOUT_MS"];
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, projectRoot, "");

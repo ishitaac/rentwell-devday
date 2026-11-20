@@ -32,14 +32,14 @@ const FREQUENCY_SUFFIX: Record<Finding["frequency"], string> = {
 export function formatFindingAmount(f: Finding, occupants = 1): string {
   if (f.percent !== undefined) return formatPercent(f.percent);
   if (f.rentMultiple !== undefined) return `${f.rentMultiple}× rent`;
-  if (f.amount === null) return NOT_STATED;
+  if (typeof f.amount !== "number") return NOT_STATED;
   const total = formatDollars(lineCents(f, occupants)) + FREQUENCY_SUFFIX[f.frequency];
   return f.type === "estimate" ? `about ${total}` : total;
 }
 
 /** "$45 × 2 adults" style breakdown for multi-unit charges, or null. */
 export function formatUnits(f: Finding, occupants: number): string | null {
-  if (f.amount === null) return null;
+  if (typeof f.amount !== "number") return null;
   const parts: string[] = [];
   if (f.quantity !== undefined && f.quantity > 1) parts.push(`× ${f.quantity}`);
   if (f.perPerson) parts.push(`× ${occupants} ${occupants === 1 ? "person" : "people"}`);

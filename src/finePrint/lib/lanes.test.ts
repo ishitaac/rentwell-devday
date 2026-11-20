@@ -13,6 +13,7 @@ import {
   preRoute,
   quoteOnlyReply,
   resolveLane,
+  routeOrFallback,
   sanitizeAck,
 } from "./lanes";
 import { scanTopics } from "./checklist";
@@ -64,7 +65,7 @@ describe("T09 lanes", () => {
   });
 
   test("what-if: skip parking removes it but notes the lease requires it", () => {
-    const result = applyWhatIf(analysis, DEFAULT_SCENARIO, preRoute("what if we skip parking")!.whatIf!);
+    const result = applyWhatIf(analysis, DEFAULT_SCENARIO, preRoute("what if we skip parking", analysis.costs.monthlyLines.map((l) => l.label))!.whatIf!);
     expect(result.message).toMatch(/^Without reserved parking: \$2,248 a month, \$1,124 each for 2\. Note: § 4\.1 lists/);
   });
 
@@ -77,6 +78,35 @@ describe("T09 lanes", () => {
   test("a lease question with 'if we' is not mistaken for a what-if", () => {
     expect(preRoute("Do we have to pay for parking if we don't have a car?")).toBeNull();
     expect(fallbackRoute("Do we have to pay for parking if we don't have a car?")).toMatchObject({ lane: "IN_LEASE", topic: "parking" });
+  });
+
+  test("'without notice' is a lease question, not a what-if (review #5)", () => {
+    const labels = analysis.costs.monthlyLines.map((l) => l.label);
+    expect(preRoute("What happens if I move out without notice?", labels)).toBeNull();
+    expect(preRoute("what if we skip parking", labels)?.lane).toBe("WHAT_IF");
+    expect(preRoute("What if we had 3 roommates?", labels)?.lane).toBe("WHAT_IF");
+  });
+
+  test("charge matching singularizes safely and prefers the best match (review #6)", () => {
+    const pest = analysis.findings.find((f) => /pest/i.test(f.label))!;
+    const trash = applyWhatIf(analysis, DEFAULT_SCENARIO, { occupants: null, removeCharge: "the valet trash fee", includeEstimates: null });
+    expect(trash.message).toMatch(/^Without valet trash/);
+    const pests = applyWhatIf(analysis, DEFAULT_SCENARIO, { occupants: null, removeCharge: "pests", includeEstimates: null });
+    expect(pests.scenario.excludedFindingIds).toEqual([pest.id]);
+    const gas = applyWhatIf(analysis, DEFAULT_SCENARIO, { occupants: null, removeCharge: "gas", includeEstimates: null });
+    expect(gas.message).toMatch(/^Gas isn't in your monthly total/); // gas is unpriced, never "ga"
+  });
+
+  test("relative occupant changes are added by code, not the model", () => {
+    const result = applyWhatIf(analysis, DEFAULT_SCENARIO, { occupants: null, addOccupants: 1, removeCharge: null, includeEstimates: null });
+    expect(result.scenario.occupants).toBe(3);
+    expect(result.message).toMatch(/split 3 ways: \$783 \/ \$783 \/ \$782/);
+  });
+
+  test("a WHAT_IF with no actual change is treated as a lease question (review #4)", () => {
+    expect(routeOrFallback({ lane: "WHAT_IF", topic: null, whatIf: null, ack: null }, "What if my friend moves in?")).toMatchObject({
+      lane: "IN_LEASE",
+    });
   });
 
   test("legal questions about a specific charge cite that charge's clause", () => {

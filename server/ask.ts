@@ -11,10 +11,12 @@ import {
   preRoute,
   quoteOnlyReply,
   resolveLane,
+  routeOrFallback,
   type RouteDecision,
   UNVERIFIED_LINE,
   whatIfReply,
 } from "../src/finePrint/lib/lanes.js";
+import { looksLikeInjection } from "../src/finePrint/lib/injection.js";
 import type { Clause, TopicStatus } from "../src/finePrint/lib/types.js";
 import { canonicalRef, normalizeForMatch, numbersIn } from "../src/finePrint/lib/verify.js";
 import { callStructured, models } from "./anthropic.js";
@@ -22,6 +24,9 @@ import { ANSWER_SYSTEM, formatClauses, ROUTER_SYSTEM } from "./prompts.js";
 import { AnswerSchema, type AnswerOutput, RouterSchema, type RouterOutput } from "./schemas.js";
 
 const MAX_ANSWER_SENTENCES = 3;
+// Router + answer run in sequence; together they must finish inside the browser's 30 s wait.
+const ROUTER_TIMEOUT_MS = 8_000;
+const ANSWER_TIMEOUT_MS = 15_000;
 
 async function routeWithModel(question: string, topics: TopicStatus[]): Promise<RouteDecision> {
   const topicList = topics.map((t) => `${t.topic}: ${t.label}`).join("\n");
@@ -32,6 +37,7 @@ async function routeWithModel(question: string, topics: TopicStatus[]): Promise<
     schema: RouterSchema,
     effort: "low",
     maxTokens: 2_000,
+    timeoutMs: ROUTER_TIMEOUT_MS,
   });
   const known = out.topic && topics.some((t) => t.topic === out.topic) ? out.topic : null;
   return { lane: out.lane, topic: known, whatIf: out.whatIf, ack: out.ack };
@@ -49,7 +55,9 @@ function amountsBackedByQuotes(answer: string, citations: Citation[]): boolean {
   return dollars.every((d) => quoted.some((q) => Math.abs(q - d) < 0.005));
 }
 
-async function answerInLease(question: string, topic: string | null, topics: TopicStatus[], clauses: Clause[]): Promise<AskReply> {
+async function answerInLease(question: string, topic: string | null, topics: TopicStatus[], allClauses: Clause[]): Promise<AskReply> {
+  // Clauses addressed to AI tools are never shown to the answer model, so they can't be cited.
+  const clauses = allClauses.filter((c) => !looksLikeInjection(c.text));
   const out: AnswerOutput = await callStructured({
     model: models.main(),
     system: ANSWER_SYSTEM,
@@ -57,6 +65,7 @@ async function answerInLease(question: string, topic: string | null, topics: Top
     schema: AnswerSchema,
     effort: "low",
     maxTokens: 4_000,
+    timeoutMs: ANSWER_TIMEOUT_MS,
   });
   if (!out.answer) {
     return topic
@@ -87,12 +96,13 @@ function withheld(topic: string | null): AskReply {
  */
 export async function answerQuestion({ question, analysis, leaseClauses }: AskRequest): Promise<AskReply> {
   const { topics } = analysis;
-  let decision = preRoute(question);
+  const labels = analysis.charges.map((c) => c.label);
+  let decision = preRoute(question, labels);
   if (!decision) {
     try {
-      decision = await routeWithModel(question, topics);
+      decision = routeOrFallback(await routeWithModel(question, topics), question);
     } catch {
-      decision = fallbackRoute(question);
+      decision = fallbackRoute(question, labels);
     }
   }
   if (decision.lane === "IN_LEASE" && !decision.topic) decision = { ...decision, topic: matchTopic(question) };

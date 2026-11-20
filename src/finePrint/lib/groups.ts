@@ -59,7 +59,7 @@ export function buildGroups(analysis: AnalysisResult): Group[] {
 
   const baseRent = verified.find((f) => f.kind === "base_rent");
   const monthlyFees = verified.filter(
-    (f) => f.kind === "fee" && f.type === "mandatory" && f.frequency === "monthly" && f.amount !== null,
+    (f) => f.kind === "fee" && f.type === "mandatory" && f.frequency === "monthly" && typeof f.amount === "number",
   );
   const monthly: Group = {
     id: "monthly",

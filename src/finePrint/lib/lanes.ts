@@ -14,7 +14,8 @@ export type RouterLane = "IN_LEASE" | "LEGAL_JUDGMENT" | "WHAT_IF" | "OFF_TOPIC"
 export type Lane = RouterLane | "NOT_IN_LEASE";
 
 export interface WhatIf {
-  occupants: number | null;
+  occupants: number | null; // total people, when stated
+  addOccupants?: number | null; // relative change ("my friend moves in too" = +1); code adds it
   removeCharge: string | null;
   includeEstimates: boolean | null;
 }
@@ -104,21 +105,66 @@ export function parseWhatIf(message: string): WhatIf | null {
   return whatIf.occupants !== null || whatIf.removeCharge !== null || whatIf.includeEstimates !== null ? whatIf : null;
 }
 
-/** Deterministic routing for messages that do not need a model. Null means "ask the router". */
-export function preRoute(message: string): RouteDecision | null {
+const MATCH_STOP = new Set(["the", "a", "an", "our", "my", "fee", "fees", "charge", "charges", "monthly", "month", "cost", "costs", "service", "services"]);
+
+/** Content words, plurals reduced safely ("pests" -> "pest", but "gas" and "glass" stay). */
+export function chargeTerms(text: string): string[] {
+  return (text.toLowerCase().match(/[a-z]+/g) ?? [])
+    .filter((w) => !MATCH_STOP.has(w))
+    .map((w) => (w.length > 4 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w))
+    .filter((w) => w.length > 2);
+}
+
+/** Index of the label that shares the most terms with `term`, or -1 when none share any. */
+export function matchCharge(term: string, labels: string[]): number {
+  const wanted = chargeTerms(term);
+  let best = -1;
+  let bestScore = 0;
+  labels.forEach((label, i) => {
+    const have = chargeTerms(label);
+    const score = wanted.filter((w) => have.some((h) => h.startsWith(w) || w.startsWith(h))).length;
+    if (score > bestScore) {
+      best = i;
+      bestScore = score;
+    }
+  });
+  return best;
+}
+
+/**
+ * Deterministic routing for messages that do not need a model. Null means "ask the router".
+ * A "remove X" what-if is only taken locally when X is a real charge (or a known non-charge
+ * like pets); otherwise "move out without notice" would be mistaken for a scenario change.
+ */
+export function preRoute(message: string, chargeLabels: string[] = []): RouteDecision | null {
   const text = message.trim();
   if (looksLikeInjection(text)) return { lane: "OFF_TOPIC", topic: null, whatIf: null, ack: NEUTRAL_ACK };
   if (LEGAL_RE.test(text)) return { lane: "LEGAL_JUDGMENT", topic: matchTopic(text), whatIf: null, ack: null };
   if (NOT_INCLUDED_RE.test(text)) return { lane: "IN_LEASE", topic: NOT_INCLUDED_TOPIC, whatIf: null, ack: null };
-  // Only explicit scenario phrasing is a local what-if; "do we pay X if we don't have Y" is a lease question.
-  const whatIf = /\b(what if|what would|split|skip|without|drop|include)\b/i.test(text) ? parseWhatIf(text) : null;
-  if (whatIf) return { lane: "WHAT_IF", topic: null, whatIf, ack: null };
-  return null;
+  if (!/\b(what if|what would|split|skip|without|drop|include)\b/i.test(text)) return null;
+  const whatIf = parseWhatIf(text);
+  if (!whatIf) return null;
+  const onlyRemoval = whatIf.occupants === null && whatIf.includeEstimates === null;
+  if (onlyRemoval && matchCharge(whatIf.removeCharge!, chargeLabels) < 0 && !matchTopic(whatIf.removeCharge!)?.match(/^pets$/)) {
+    return null;
+  }
+  return { lane: "WHAT_IF", topic: null, whatIf, ack: null };
+}
+
+const hasChange = (w: WhatIf | null): w is WhatIf =>
+  Boolean(w && (w.occupants !== null || Boolean(w.addOccupants) || w.removeCharge !== null || w.includeEstimates !== null));
+
+/** A router WHAT_IF with no usable change falls back to local parsing, else a lease question. */
+export function routeOrFallback(decision: RouteDecision, question: string): RouteDecision {
+  if (decision.lane !== "WHAT_IF" || hasChange(decision.whatIf)) return decision;
+  const parsed = parseWhatIf(question);
+  if (hasChange(parsed)) return { ...decision, whatIf: parsed };
+  return { lane: "IN_LEASE", topic: matchTopic(question), whatIf: null, ack: null };
 }
 
 /** Offline / router-failure routing: local rules, then topic keywords, else off-topic. */
-export function fallbackRoute(message: string): RouteDecision {
-  const pre = preRoute(message);
+export function fallbackRoute(message: string, chargeLabels: string[] = []): RouteDecision {
+  const pre = preRoute(message, chargeLabels);
   if (pre) return pre;
   const topic = matchTopic(message);
   return topic
@@ -237,16 +283,16 @@ export function applyWhatIf(analysis: AnalysisResult, scenario: CostScenario, wh
   let next: CostScenario = { ...scenario, excludedFindingIds: [...scenario.excludedFindingIds] };
   const notes: string[] = [];
 
-  if (whatIf.occupants !== null) {
-    next = { ...next, occupants: Math.min(4, Math.max(1, Math.round(whatIf.occupants))) };
+  const target = whatIf.addOccupants ? scenario.occupants + whatIf.addOccupants : whatIf.occupants;
+  if (target !== null && target !== undefined) {
+    next = { ...next, occupants: Math.min(4, Math.max(1, Math.round(target))) };
   }
   if (whatIf.includeEstimates !== null) next = { ...next, includeEstimates: whatIf.includeEstimates };
 
   if (whatIf.removeCharge) {
-    const term = whatIf.removeCharge.toLowerCase().replace(/s\b/g, "").split(/\s+/).filter((w) => w.length > 2);
     const costsNow = computeCosts(analysis.findings, analysis.rentSchedule, next, analysis.costs.occupancyLimit);
     const candidates = [...costsNow.monthlyLines, ...(next.includeEstimates ? costsNow.estimateLines : [])];
-    const hit = candidates.find((line) => term.some((w) => line.label.toLowerCase().includes(w)));
+    const hit = candidates[matchCharge(whatIf.removeCharge, candidates.map((c) => c.label))];
     if (hit) {
       next = { ...next, excludedFindingIds: [...next.excludedFindingIds, hit.findingId] };
       const finding = analysis.findings.find((f) => f.id === hit.findingId);
@@ -254,7 +300,7 @@ export function applyWhatIf(analysis: AnalysisResult, scenario: CostScenario, wh
       if (finding?.isRequired) notes.push(`Note: ${section ?? "the lease"} lists ${hit.label.toLowerCase()} as required, so ask before counting on this.`);
       notes.unshift(`Without ${hit.label.toLowerCase()}`);
     } else {
-      notes.unshift(`${capitalize(whatIf.removeCharge)} isn't in your monthly total, so nothing changes`);
+      notes.unshift(`${capitalize(whatIf.removeCharge.replace(/^(the|a|an|our|my)\s+/i, ""))} isn't in your monthly total, so nothing changes`);
     }
   }
 

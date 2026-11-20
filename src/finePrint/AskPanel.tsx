@@ -37,8 +37,10 @@ const LANE_LABEL: Record<AskReply["lane"], string> = {
 };
 
 /** Offline path: the same lanes and templates, with quotes instead of model prose. */
+const chargeLabels = (a: AnalysisResult) => [...a.costs.monthlyLines, ...a.costs.estimateLines].map((l) => l.label);
+
 function localReply(question: string, analysis: AnalysisResult): AskReply {
-  const route = fallbackRoute(question);
+  const route = fallbackRoute(question, chargeLabels(analysis));
   const lane = resolveLane(route, analysis.topics);
   if (lane === "OFF_TOPIC") return offTopicReply(route.ack);
   if (lane === "LEGAL_JUDGMENT") {
@@ -58,9 +60,11 @@ export function AskPanel({ analysis, scenario, onScenario, onHighlight, onOpenCl
   const [sheetOpen, setSheetOpen] = useState(false);
   const [added, setAdded] = useState(false);
 
-  const finish = (r: AskReply) => {
+  const finish = (r: AskReply, question: string) => {
     let final = r;
-    if (r.lane === "WHAT_IF" && r.whatIf) {
+    if (r.lane === "WHAT_IF" && !r.whatIf) {
+      final = localReply(question, analysis);
+    } else if (r.lane === "WHAT_IF" && r.whatIf) {
       const result = applyWhatIf(analysis, scenario, r.whatIf);
       onScenario(result.scenario);
       final = { ...r, text: result.message };
@@ -77,10 +81,10 @@ export function AskPanel({ analysis, scenario, onScenario, onHighlight, onOpenCl
     const q = question.trim();
     if (!q || pending) return;
     setInput("");
-    const local = preRoute(q);
+    const local = preRoute(q, chargeLabels(analysis));
     // Lanes that need no model run instantly and work offline.
     if (local && (local.lane !== "IN_LEASE" || local.topic === NOT_INCLUDED_TOPIC)) {
-      finish(local.lane === "WHAT_IF" ? whatIfReply(local.whatIf) : localReply(q, analysis));
+      finish(local.lane === "WHAT_IF" ? whatIfReply(local.whatIf) : localReply(q, analysis), q);
       return;
     }
     setPending(true);
@@ -91,9 +95,10 @@ export function AskPanel({ analysis, scenario, onScenario, onHighlight, onOpenCl
           analysis: { topics: analysis.topics, charges: analysis.findings.filter((f) => f.verified).map((f) => ({ id: f.id, label: f.label })) },
           leaseClauses: analysis.clauses,
         }),
+        q,
       );
     } catch {
-      finish(localReply(q, analysis));
+      finish(localReply(q, analysis), q);
     } finally {
       setPending(false);
     }

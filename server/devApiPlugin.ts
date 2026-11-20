@@ -56,11 +56,10 @@ async function handle(server: ViteDevServer, req: IncomingMessage, res: ServerRe
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chunk: Buffer) => {
-      data += chunk.toString("utf8");
-    });
-    req.on("end", () => resolve(data));
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    // Decode once so multi-byte characters split across chunks stay intact.
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     req.on("error", reject);
   });
 }

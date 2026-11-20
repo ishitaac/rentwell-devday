@@ -10,7 +10,7 @@ import {
 } from "../server/http.js";
 import type { AskRequest } from "../src/finePrint/lib/lanes.js";
 
-const MAX_CLAUSES = 400;
+const MAX_CLAUSES = 5_000; // the 50k-character cap is the real limit; this only rejects absurd payloads
 
 /** Validates the untrusted request body into an AskRequest, or returns an error message. */
 function parseRequest(body: unknown): AskRequest | string {

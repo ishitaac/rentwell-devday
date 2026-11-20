@@ -24,8 +24,9 @@ export interface VerifiedExtraction {
   droppedFlags: number;
 }
 
+/** Drops null OPTIONAL fields; `amount` is required and keeps its null ("not stated"). */
 function dropNulls<T extends object>(obj: T): T {
-  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== null)) as T;
+  return Object.fromEntries(Object.entries(obj).filter(([k, v]) => v !== null || k === "amount")) as T;
 }
 
 function verifyFlags(flags: RawExtraction["conflicts"], byId: Map<string, Clause>): Flag[] {
