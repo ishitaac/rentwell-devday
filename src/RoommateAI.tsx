@@ -14,18 +14,15 @@ import {
 import { buildScenarios, dayTimeline, SIMULATOR_DISCLAIMER, type Scenario } from "./roommateAI/simulator";
 import { FIELD_DEFS, FIELD_KEYS, normalizeValue, type FieldKey, type Priority, type RoommateProfile } from "./roommateAI/types";
 
-/** Feature flag. Off unless VITE_ROOMMATE_AI=1 at build time. */
-export const ROOMMATE_AI_ENABLED = import.meta.env?.VITE_ROOMMATE_AI === "1";
+/** The guided roommate flow is the default. Set VITE_ROOMMATE_AI=0 at build time to fall back to the older flow. */
+export const ROOMMATE_AI_ENABLED = import.meta.env?.VITE_ROOMMATE_AI !== "0";
 
 type Stage = "context" | "describe" | "clarify" | "confirm" | "results" | "simulator" | "negotiator";
-const STAGES: Array<{ id: Stage; label: string }> = [
-  { id: "context", label: "Housing" },
-  { id: "describe", label: "Your home life" },
-  { id: "clarify", label: "Follow-ups" },
-  { id: "confirm", label: "Confirm" },
-  { id: "results", label: "Matches" },
-  { id: "simulator", label: "Simulator" },
-  { id: "negotiator", label: "Agreement" },
+const STEPS: Array<{ label: string; stages: Stage[] }> = [
+  { label: "Basics", stages: ["context"] },
+  { label: "Your habits", stages: ["describe", "clarify"] },
+  { label: "Review", stages: ["confirm"] },
+  { label: "Matches", stages: ["results", "simulator", "negotiator"] },
 ];
 
 const SAMPLE_TEXT = "I'm vegetarian, like having friends over, study late, and need my own bedroom. I'm fine sharing a bathroom, but I'd prefer separate cooking utensils.";
@@ -65,12 +62,15 @@ function Btn({ children, onClick, secondary = false, disabled = false }: { child
 function Stepper({ stage, go, reachable }: { stage: Stage; go: (s: Stage) => void; reachable: Stage[] }) {
   return (
     <nav className="rai-steps" aria-label="Find a Roommate progress">
-      {STAGES.map((s, i) => (
-        <button key={s.id} type="button" disabled={!reachable.includes(s.id)} aria-current={stage === s.id ? "step" : undefined} className={stage === s.id ? "active" : ""} onClick={() => go(s.id)}>
-          <span>{i + 1}</span>
-          {s.label}
-        </button>
-      ))}
+      {STEPS.map((s, i) => {
+        const active = s.stages.includes(stage);
+        return (
+          <button key={s.label} type="button" disabled={!s.stages.some((x) => reachable.includes(x))} aria-current={active ? "step" : undefined} className={active ? "active" : ""} onClick={() => go(s.stages[0])}>
+            <span>{i + 1}</span>
+            {s.label}
+          </button>
+        );
+      })}
     </nav>
   );
 }
@@ -107,15 +107,15 @@ export function RoommateAI({ onExit }: { onExit: (to: "preferences" | "matches" 
     <main className="app-main rai-main">
       <div className="rai-head">
         <div>
-          <p className="eyebrow">Find a Roommate · Beta</p>
-          <h1>Describe how you live. Find people you could live with.</h1>
-          <p>Housing needs and everyday habits only. Nothing here is saved to a server, and you can delete everything at any time.</p>
+          <p className="eyebrow">Roommate planning</p>
+          <h1>Describe how you live</h1>
+          <p>Find roommates who fit your routine. Nothing is saved to a server.</p>
         </div>
         <span className="demo-tag">FICTIONAL ROOMMATES</span>
       </div>
       <Stepper stage={stage} go={setStage} reachable={reachable} />
 
-      {stage === "context" && <ContextStep profile={profile} setProfile={setProfile} next={() => setStage("describe")} back={() => onExit("preferences")} />}
+      {stage === "context" && <ContextStep profile={profile} setProfile={setProfile} next={() => setStage("describe")} back={() => onExit("home")} />}
       {stage === "describe" && (
         <DescribeStep
           text={text}
@@ -156,11 +156,10 @@ export function RoommateAI({ onExit }: { onExit: (to: "preferences" | "matches" 
       )}
       {stage === "negotiator" && <NegotiatorDemo candidate={candidate} suggested={suggestedTopics} chat={{ scenario: chatScenario, flagged: suggestedTopics, compatibility }} back={() => setStage("simulator")} />}
 
-      <div className="prototype-note">
-        <span>
-          <b>A decision aid, not a screening service.</b> {complianceDisclosure()}
-        </span>
-      </div>
+      <details className="rai-about">
+        <summary>A decision aid, not a screening service</summary>
+        <p>{complianceDisclosure()}</p>
+      </details>
     </main>
   );
 }
@@ -200,19 +199,9 @@ function ContextStep({ profile, setProfile, next, back }: { profile: RoommatePro
   );
   return (
     <section className="rai-panel">
-      <h2>Where and what kind of home?</h2>
-      <p className="rai-sub">Location picks which housing rules apply; it is never used to target people by background.</p>
+      <h2>The basics</h2>
+      <p className="rai-sub">About a minute. You can change anything later.</p>
       <div className="rai-grid">
-        <div className="rai-field"><label htmlFor="loc-state">State</label><input id="loc-state" maxLength={2} value={profile.location.state ?? ""} onChange={(e) => setLoc({ state: e.target.value.toUpperCase() })} /></div>
-        <div className="rai-field"><label htmlFor="loc-city">City</label><input id="loc-city" value={profile.location.city ?? ""} onChange={(e) => setLoc({ city: e.target.value })} placeholder="Salt Lake City" /></div>
-        <div className="rai-field"><label htmlFor="loc-zip">ZIP code</label><input id="loc-zip" inputMode="numeric" maxLength={5} value={profile.location.zip ?? ""} onChange={(e) => setLoc({ zip: e.target.value.replace(/\D/g, "") })} /></div>
-        <div className="rai-field">
-          <label htmlFor="has-housing">Your situation</label>
-          <select id="has-housing" value={profile.hasHousing ? "yes" : "no"} onChange={(e) => setProfile((p) => ({ ...p, hasHousing: e.target.value === "yes" }))}>
-            <option value="no">I'm searching with future roommates</option>
-            <option value="yes">I already have housing with space to share</option>
-          </select>
-        </div>
         <div className="rai-field">
           <label htmlFor="h-budgetMax">Monthly budget (your share)</label>
           <div className="rai-inline">
@@ -223,25 +212,43 @@ function ContextStep({ profile, setProfile, next, back }: { profile: RoommatePro
           </div>
         </div>
         {choice("moveInMonth", "Move-in month", months.map((m) => [m, monthLabel(m)]))}
-        {choice("leaseMonths", "Lease length", [["6", "6 months"], ["12", "12 months"], ["24", "24 months"]])}
         {choice("bedroom", "Bedroom", [["private", "Private"], ["shared", "Shared is fine"]])}
         {choice("bathroom", "Bathroom", [["private", "Private"], ["shared", "Shared is fine"]])}
         {choice("roommateCount", "Number of roommates", [["1", "1"], ["2", "2"], ["3", "3"]])}
-        {choice("furnished", "Furnished", [["yes", "Yes"], ["no", "No"], ["either", "Either"]])}
-        {choice("parking", "Parking", [["yes", "Needed"], ["no", "Not needed"], ["either", "Either"]])}
       </div>
-      <div className="rai-compliance" role="note">
-        <b>Policy check for {profile.location.state || "your area"}{profile.location.city ? `, ${profile.location.city}` : ""}</b>
-        <p>Applicable levels considered: {chain.levels.join(" → ")}. Not evaluated: {chain.notEvaluated.join("; ")}.</p>
-        <ul>
-          {decisions.filter((d) => d.behavior === "filter-by-gender" || d.behavior === "exclude-assistance-animal" || d.behavior === "filter-by-religion").map((d) => (
-            <li key={d.behavior}><span className={`rai-status ${d.status.toLowerCase()}`}>{d.status}</span> {d.behavior.replace(/-/g, " ")} — {d.enabled ? "enabled" : "disabled"}</li>
-          ))}
-        </ul>
-        <small>{COMPLIANCE_RULES.length} sensitive behaviors are tracked; none is enabled. No rule has had legal review.</small>
-      </div>
+      <details className="rai-more">
+        <summary>More options</summary>
+        <div className="rai-grid">
+          <div className="rai-field"><label htmlFor="loc-state">State</label><input id="loc-state" maxLength={2} value={profile.location.state ?? ""} onChange={(e) => setLoc({ state: e.target.value.toUpperCase() })} /></div>
+          <div className="rai-field"><label htmlFor="loc-city">City</label><input id="loc-city" value={profile.location.city ?? ""} onChange={(e) => setLoc({ city: e.target.value })} placeholder="Salt Lake City" /></div>
+          <div className="rai-field"><label htmlFor="loc-zip">ZIP code</label><input id="loc-zip" inputMode="numeric" maxLength={5} value={profile.location.zip ?? ""} onChange={(e) => setLoc({ zip: e.target.value.replace(/\D/g, "") })} /></div>
+          <div className="rai-field">
+            <label htmlFor="has-housing">Your situation</label>
+            <select id="has-housing" value={profile.hasHousing ? "yes" : "no"} onChange={(e) => setProfile((p) => ({ ...p, hasHousing: e.target.value === "yes" }))}>
+              <option value="no">Searching with future roommates</option>
+              <option value="yes">I have housing to share</option>
+            </select>
+          </div>
+          {choice("leaseMonths", "Lease length", [["6", "6 months"], ["12", "12 months"], ["24", "24 months"]])}
+          {choice("furnished", "Furnished", [["yes", "Yes"], ["no", "No"], ["either", "Either"]])}
+          {choice("parking", "Parking", [["yes", "Needed"], ["no", "Not needed"], ["either", "Either"]])}
+        </div>
+      </details>
+      <details className="rai-more">
+        <summary>Policy check for {profile.location.state || "your area"}</summary>
+        <div className="rai-compliance" role="note">
+          <b>Policy check for {profile.location.state || "your area"}{profile.location.city ? `, ${profile.location.city}` : ""}</b>
+          <p>Levels considered: {chain.levels.join(" → ")}. Not evaluated: {chain.notEvaluated.join("; ")}.</p>
+          <ul>
+            {decisions.filter((d) => d.behavior === "filter-by-gender" || d.behavior === "exclude-assistance-animal" || d.behavior === "filter-by-religion").map((d) => (
+              <li key={d.behavior}><span className={`rai-status ${d.status.toLowerCase()}`}>{d.status}</span> {d.behavior.replace(/-/g, " ")} — {d.enabled ? "enabled" : "disabled"}</li>
+            ))}
+          </ul>
+          <small>{COMPLIANCE_RULES.length} sensitive behaviors are tracked; none is enabled. No rule has had legal review.</small>
+        </div>
+      </details>
       <div className="bottom-actions">
-        <Btn secondary onClick={back}>Back to preferences</Btn>
+        <Btn secondary onClick={back}>Back</Btn>
         <Btn onClick={next}>Continue</Btn>
       </div>
     </section>
@@ -255,19 +262,19 @@ function ContextStep({ profile, setProfile, next, back }: { profile: RoommatePro
 function DescribeStep({ text, setText, analyze, back, ignoredNote }: { text: string; setText: (t: string) => void; analyze: () => void; back: () => void; ignoredNote: boolean }) {
   return (
     <section className="rai-panel">
-      <h2>Describe your ideal living environment</h2>
-      <p className="rai-sub">Write it the way you'd tell a friend: schedule, noise, cleaning, cooking, guests, shared costs. We read the practical household details only.</p>
+      <h2>How do you like to live?</h2>
+      <p className="rai-sub">A sentence or two is plenty: schedule, noise, cleaning, guests.</p>
       <label htmlFor="rai-text" className="rai-sr">Your living preferences</label>
       <textarea id="rai-text" rows={6} maxLength={1500} value={text} onChange={(e) => setText(e.target.value)} placeholder={SAMPLE_TEXT} />
       <div className="rai-row">
         <button type="button" className="text-button" onClick={() => setText(SAMPLE_TEXT)}>Use an example</button>
         <small>{text.length}/1500</small>
       </div>
-      {ignoredNote && <p className="rai-warn">Part of your text mentioned personal characteristics. RentWell doesn't use those for matching, so that part was ignored.</p>}
-      <p className="rai-note">Reading your text happens on this device with built-in rules. Claude-assisted reading is prepared on the server but not connected in this build.</p>
+      {ignoredNote && <p className="rai-warn">Personal characteristics aren't used for matching, so that part was ignored.</p>}
+      <p className="rai-note">Read on this device with built-in rules.</p>
       <div className="bottom-actions">
         <Btn secondary onClick={back}>Back</Btn>
-        <Btn onClick={analyze}>{text.trim() ? "Find my preferences" : "Skip to follow-ups"}</Btn>
+        <Btn onClick={analyze}>{text.trim() ? "Continue" : "Skip"}</Btn>
       </div>
     </section>
   );
@@ -279,8 +286,8 @@ function ClarifyStep({ profile, setProfile, asked, setAsked, done }: { profile: 
   if (!q) {
     return (
       <section className="rai-panel">
-        <h2>That's enough to get started</h2>
-        <p className="rai-sub">You can adjust everything on the next screen.</p>
+        <h2>That's enough to start</h2>
+        <p className="rai-sub">You can adjust everything next.</p>
         <div className="bottom-actions"><Btn onClick={done}>Review my profile</Btn></div>
       </section>
     );
@@ -296,14 +303,14 @@ function ClarifyStep({ profile, setProfile, asked, setAsked, done }: { profile: 
   };
   return (
     <section className="rai-panel">
-      <p className="eyebrow">Question {asked.length + 1} of up to {MAX_CLARIFYING_QUESTIONS}</p>
+      <p className="eyebrow">Quick question {asked.length + 1} of {MAX_CLARIFYING_QUESTIONS}</p>
       <h2>{q.question}</h2>
       <div className="chips">
         {q.options.map((o) => <button key={String(o.value)} type="button" onClick={() => answer(o.value)}>{o.label}</button>)}
       </div>
       <div className="rai-inline">
         <label className="rai-sr" htmlFor="rai-free">Or answer in your own words</label>
-        <input id="rai-free" value={free} onChange={(e) => setFree(e.target.value)} placeholder="Or say it in your own words" maxLength={200} />
+        <input id="rai-free" value={free} onChange={(e) => setFree(e.target.value)} placeholder="Or type your own answer" maxLength={200} />
         <Btn secondary disabled={!free.trim()} onClick={() => {
           const r = extractFromText(free).accepted.find((a) => a.key === q.key);
           if (r) answer(r.value);
@@ -313,7 +320,7 @@ function ClarifyStep({ profile, setProfile, asked, setAsked, done }: { profile: 
           }
         }}>Use my answer</Btn>
       </div>
-      <p className="rai-note">We'll only use what you answer. Skipping is fine — unknown never counts against a match.</p>
+      <p className="rai-note">Skipping is fine. Unknown never counts against a match.</p>
       <div className="bottom-actions">
         <Btn secondary onClick={skip}>Skip this question</Btn>
         <Btn secondary onClick={done}>I'm done</Btn>
@@ -350,21 +357,21 @@ function ConfirmStep({ profile, setProfile, onDelete, next, back }: { profile: R
   const summary = confirmedKeys.length === 0 ? "Nothing is confirmed yet." : `You confirmed ${confirmedKeys.length} preference${confirmedKeys.length === 1 ? "" : "s"}: ${required.length} required, ${confirmedKeys.length - required.length - flexible.length} preferred and ${flexible.length} flexible.`;
   return (
     <section className="rai-panel">
-      <h2>Confirm your compatibility profile</h2>
-      <p className="rai-sub">Only confirmed items are used. Suggested items from your description start as "Preferred", never "Required", until you decide.</p>
-      {keys.length === 0 && <p className="rai-warn">No preferences yet. Go back and add a few, or answer a follow-up.</p>}
+      <h2>Review your preferences</h2>
+      <p className="rai-sub">Only confirmed items are used. Mark dealbreakers as "Required".</p>
+      {keys.length === 0 && <p className="rai-warn">No preferences yet. Go back and add a few.</p>}
       <div className="rai-table" role="table" aria-label="Your preferences">
         {keys.map((k) => {
           const f = profile.fields[k]!;
           return (
             <div className={`rai-row-card ${f.confirmed ? "ok" : ""}`} role="row" key={k}>
-              <div role="cell"><b>{FIELD_DEFS[k].label}</b><small>{f.source === "user-form" ? "You entered" : "Suggested from your words"}{f.uncertainty === "high" ? " · uncertain" : ""}</small></div>
+              <div role="cell"><b>{FIELD_DEFS[k].label}</b><small>{f.source === "user-form" ? "You entered" : "From your words"}{f.uncertainty === "high" ? " · uncertain" : ""}</small></div>
               <div role="cell"><ValueEditor k={k} value={f.value} onChange={(v) => setProfile((p) => confirmField(p, k, { value: FIELD_DEFS[k].kind === "number" || FIELD_DEFS[k].kind === "scale" ? Number(v) : v }))} /></div>
               <div role="cell">
                 <select aria-label={`${FIELD_DEFS[k].label} importance`} value={f.priority} onChange={(e) => setProfile((p) => confirmField(p, k, { priority: e.target.value as Priority }))}>
                   {(Object.keys(PRIORITY_LABEL) as Priority[]).map((pr) => <option key={pr} value={pr}>{PRIORITY_LABEL[pr]}</option>)}
                 </select>
-                {f.suggestedRequired && !f.confirmed && <small>You mentioned a need — set "Required" if it's a dealbreaker.</small>}
+                {f.suggestedRequired && !f.confirmed && <small>Set "Required" if it's a dealbreaker.</small>}
               </div>
               <div role="cell" className="rai-actions">
                 {f.confirmed ? <span className="rai-chip ok">Confirmed</span> : <button type="button" className="btn-secondary" onClick={() => setProfile((p) => confirmField(p, k))}>Confirm</button>}
@@ -377,7 +384,6 @@ function ConfirmStep({ profile, setProfile, onDelete, next, back }: { profile: R
       <div className="rai-summary">
         <h3>Summary</h3>
         <p>{summary}</p>
-        <small>Generated from your confirmed fields only.</small>
         {unresolved.length > 0 && (
           <details>
             <summary>{unresolved.length} open item{unresolved.length === 1 ? "" : "s"}</summary>
@@ -388,7 +394,7 @@ function ConfirmStep({ profile, setProfile, onDelete, next, back }: { profile: R
       <div className="bottom-actions">
         <Btn secondary onClick={back}>Back</Btn>
         <button type="button" className="text-button" onClick={onDelete}>Delete my profile</button>
-        <Btn onClick={() => { setProfile((p) => keys.reduce((acc, k) => (acc.fields[k]?.confirmed ? acc : confirmField(acc, k)), p)); next(); }}>Confirm all & see matches</Btn>
+        <Btn onClick={() => { setProfile((p) => keys.reduce((acc, k) => (acc.fields[k]?.confirmed ? acc : confirmField(acc, k)), p)); next(); }}>See matches</Btn>
       </div>
     </section>
   );
@@ -403,7 +409,7 @@ function ResultsStep({ profile, select, back }: { profile: RoommateProfile; sele
   return (
     <section className="rai-panel">
       <h2>Your matches</h2>
-      <p className="rai-sub">All profiles below are fictional demo data. A required need that doesn't line up is shown plainly and can't be outweighed by a good overall score.</p>
+      <p className="rai-sub">Fictional demo profiles. A high score never hides a missed requirement.</p>
       <div className="rai-matches">
         {results.map((r) => <MatchCard key={r.candidateId} result={r} candidate={DEMO_CANDIDATES.find((c) => c.profile.profileId === r.candidateId)!} select={select} />)}
       </div>
@@ -429,13 +435,16 @@ function MatchCard({ result, candidate, select }: { result: MatchResult; candida
       <div className="rai-cols">
         <div><h4>Shared strengths</h4>{result.strengths.length ? <ul>{result.strengths.slice(0, 4).map((s) => <li key={s}>{s}</li>)}</ul> : <p className="rai-muted">None confirmed on both sides yet.</p>}</div>
         <div><h4>Potential friction</h4>{result.friction.length ? <ul>{result.friction.slice(0, 4).map((s) => <li key={s}>{s}</li>)}</ul> : <p className="rai-muted">None found in what's shared.</p>}</div>
-        <div><h4>Worth asking</h4>{result.unknowns.length ? <ul>{result.unknowns.slice(0, 3).map((s) => <li key={s}>{s}</li>)}</ul> : <p className="rai-muted">Nothing outstanding.</p>}</div>
       </div>
-      <div className="rai-breakdown">{result.breakdown.map((b) => <span key={b.group}>{b.group}: {b.score === null ? "unknown" : `${Math.round(b.score * 100)}%`} <small>({b.knownKeys}/{b.totalKeys} known)</small></span>)}</div>
-      <small className="rai-muted">{result.disclaimer}</small>
+      <details className="rai-more">
+        <summary>More detail</summary>
+        <div className="rai-cols"><div><h4>Worth asking</h4>{result.unknowns.length ? <ul>{result.unknowns.slice(0, 3).map((s) => <li key={s}>{s}</li>)}</ul> : <p className="rai-muted">Nothing outstanding.</p>}</div></div>
+        <div className="rai-breakdown">{result.breakdown.map((b) => <span key={b.group}>{b.group}: {b.score === null ? "unknown" : `${Math.round(b.score * 100)}%`} <small>({b.knownKeys}/{b.totalKeys} known)</small></span>)}</div>
+        <small className="rai-muted">{result.disclaimer}</small>
+      </details>
       <div className="rai-actions">
-        <Btn disabled={blocked} onClick={() => select(candidate.profile.profileId, "simulator")}>See What Living Together Could Look Like</Btn>
-        <Btn secondary disabled={blocked} onClick={() => select(candidate.profile.profileId, "negotiator")}>Start Roommate Agreement (demo)</Btn>
+        <Btn disabled={blocked} onClick={() => select(candidate.profile.profileId, "simulator")}>Try a day together</Btn>
+        <Btn secondary disabled={blocked} onClick={() => select(candidate.profile.profileId, "negotiator")}>Draft an agreement (demo)</Btn>
       </div>
     </article>
   );
@@ -466,16 +475,16 @@ function SimulatorStep({ profile, candidate, back, negotiate }: { profile: Roomm
   return (
     <section className="rai-panel">
       <h2>What living together could look like</h2>
-      <p className="rai-sub">Hypothetical situations built from confirmed preferences. They are conversation starters, not predictions.</p>
+      <p className="rai-sub">Conversation starters from your preferences, not predictions.</p>
       <div className="rai-consent">
         <label>
           <input type="checkbox" checked={useShared} onChange={(e) => { setUseShared(e.target.checked); setSelected(0); }} />
           Use the preferences {name} shared ({candidate.sharedKeys.length} items)
         </label>
-        <small>{useShared ? `Demo: ${name} is fictional, so these shared items are fixture data, not a real person's consent.` : "Single-user preview: only your own preferences are used; the other person appears as an unknown."}</small>
+        <small>{useShared ? `${name} is fictional, so this is demo data, not real consent.` : "Preview with only your own preferences."}</small>
       </div>
       {scenarios.length === 0 ? (
-        <p className="rai-warn">Not enough confirmed preferences to build scenarios yet. Add a few on the profile screen.</p>
+        <p className="rai-warn">Not enough confirmed preferences yet. Add a few on the review step.</p>
       ) : (
         <div className="rai-sim">
           <div className="rai-sim-list" role="tablist" aria-label="Scenarios">
@@ -508,7 +517,7 @@ function SimulatorStep({ profile, candidate, back, negotiate }: { profile: Roomm
               <div className="rai-actions">
                 <Btn secondary onClick={() => setFlagged((f) => (f.includes(current.id) ? f.filter((x) => x !== current.id) : [...f, current.id]))}>{flagged.includes(current.id) ? "Marked to negotiate ✓" : "Mark as worth negotiating"}</Btn>
               </div>
-              <small className="rai-muted">{SIMULATOR_DISCLAIMER} Exploring a scenario does not change your saved preferences.</small>
+              <small className="rai-muted">{SIMULATOR_DISCLAIMER}</small>
             </article>
           )}
         </div>
@@ -586,10 +595,10 @@ function NegotiatorDemo({ candidate, suggested, chat, back }: { candidate: DemoC
   return (
     <section className="rai-panel">
       <div className="rai-demo-banner" role="note">
-        <b>DEMO — AI-simulated fictional roommate.</b> {first} is not a real person. Their replies are generated by an AI (or a scripted fallback), and any "acceptance" or "approval" from {first} is simulated: it is not real consent and nothing here is a legally binding agreement. Please don't enter real personal information. In the real product, invitations, consent and approvals would come from a signed-in second person and be enforced on a server; that backend is not built yet.
+        <b>DEMO — AI-simulated fictional roommate.</b> {first} is not a real person, and any "acceptance" from {first} is simulated. Nothing here is real consent or a binding agreement. Please don't enter personal information.
       </div>
       <h2>Roommate agreement</h2>
-      <p className="rai-sub">Neutral household expectations you both agree to, one term at a time. It is not a lease or a legal contract.</p>
+      <p className="rai-sub">Household expectations, agreed one at a time. Not a lease or legal contract.</p>
       {error && <p className="rai-warn" role="alert">{error}</p>}
 
       {!session && (
@@ -613,7 +622,7 @@ function NegotiatorDemo({ candidate, suggested, chat, back }: { candidate: DemoC
             <div className="rai-actions">
               <Btn secondary onClick={() => run((s) => setTopicOptIn(s, ME, myTopics, s.revision))}>Save my topics</Btn>
             </div>
-            <small>A topic opens only when you both opt in. For this demo, {first} (fictional) was simulated as having accepted and opted in to 5 topics automatically; that is not real consent.</small>
+            <small>A topic opens when you both opt in. {first} (fictional) opted in automatically for this demo.</small>
           </div>
           <ChatPanel session={session} setSession={setSession} me={ME} demo={DEMO} first={first} chat={chat} />
           {openTopics(session).length === 0 && <p className="rai-muted">No topics are open yet.</p>}
@@ -776,7 +785,7 @@ function ChatPanel({ session, setSession, me, demo, first, chat }: { session: Se
   return (
     <div className="rai-box rai-chat">
       <h3>Chat with {first} (fictional AI roommate)</h3>
-      <p className="rai-muted">{first} is an AI character, not a person. Propose quiet hours, cleaning, guests, kitchen rules or bills in your own words; {first} may agree, disagree or suggest something else, within their own fictional preferences. Proposals you make become terms below.</p>
+      <p className="rai-muted">{first} is an AI character. Propose a house rule in your own words; {first} may agree, disagree or counter.</p>
       <details>
         <summary>About {first} (fictional)</summary>
         <ul>{persona.about.map((a) => <li key={a}>{a}</li>)}</ul>
@@ -809,7 +818,7 @@ function ChatPanel({ session, setSession, me, demo, first, chat }: { session: Se
       <div className="rai-field">
         <label htmlFor="rai-demo-code">Presenter access code (optional)</label>
         <input id="rai-demo-code" type="password" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} />
-        <small>Only the demo operator has this. It is kept in memory only and sent to RentWell's own server, never to a third party.</small>
+        <small>Demo operator only. Kept in memory and sent only to RentWell's server.</small>
       </div>
     </div>
   );

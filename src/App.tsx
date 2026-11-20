@@ -1199,7 +1199,7 @@ export function Preferences({
         </Button>
         {ROOMMATE_AI_ENABLED && (
           <Button secondary onClick={() => go("roommate-ai")}>
-            Describe how you live (AI beta)
+            Use the guided roommate flow
           </Button>
         )}
         <Button onClick={() => go("matches")}>
@@ -1429,7 +1429,7 @@ function App() {
   const startRoommateFirst = () => {
     setRoommateContext(createRoommateFirstContext());
     setJourneyNotice(null);
-    go("preferences");
+    go(ROOMMATE_AI_ENABLED ? "roommate-ai" : "preferences");
   };
   const planWithRoommates = () => {
     if (!activeDecision) return;
