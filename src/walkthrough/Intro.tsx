@@ -1,4 +1,7 @@
 import { useRef } from "react";
+import type { SavedWalkthrough } from "../cloud/walkthroughs";
+import { UNIT_TYPES } from "./lib/shots";
+import type { UnitType } from "./lib/types";
 import type { RentalContext } from "./view";
 
 interface IntroProps {
@@ -8,9 +11,34 @@ interface IntroProps {
   onDemo: () => void;
   onSample: () => void;
   onOpenRecord: (file: File) => void;
+  account?: { displayName: string } | null;
+  onSignIn?: () => void;
+  saved?: SavedWalkthrough[] | null;
+  savedError?: string | null;
+  openingId?: string | null;
+  onOpenSaved?: (saved: SavedWalkthrough) => void;
+  onDeleteSaved?: (saved: SavedWalkthrough) => void;
 }
 
-export function Intro({ rental, error, onStart, onDemo, onSample, onOpenRecord }: IntroProps) {
+function unitLabel(unitType: string): string {
+  return UNIT_TYPES[unitType as UnitType]?.label ?? unitType;
+}
+
+export function Intro({
+  rental,
+  error,
+  onStart,
+  onDemo,
+  onSample,
+  onOpenRecord,
+  account = null,
+  onSignIn,
+  saved = null,
+  savedError = null,
+  openingId = null,
+  onOpenSaved,
+  onDeleteSaved,
+}: IntroProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   return (
     <section className="wt-intro">
@@ -28,8 +56,9 @@ export function Intro({ rental, error, onStart, onDemo, onSample, onOpenRecord }
         <strong>Renter observations from photos.</strong> Not an inspection, safety check, or
         verification. Avoid people, personal items, and license plates in your photos.
         <br />
-        Photos are analyzed in memory and not stored by RentWell. You can save your own copy to your
-        device.
+        {account
+          ? "Photos are analyzed in memory. They are stored only if you choose Save to my account, privately, and you can delete them any time."
+          : "Photos are analyzed in memory and not stored by RentWell. You can save your own copy to your device."}
       </div>
       {error && (
         <p className="wt-alert" role="alert">
@@ -72,7 +101,63 @@ export function Intro({ rental, error, onStart, onDemo, onSample, onOpenRecord }
           }}
         />
       </div>
-      <p className="wt-micro">Saved walkthroughs open on this device only. Nothing is uploaded.</p>
+      {account ? (
+        <section className="wt-panel wt-saved" aria-labelledby="wt-saved-title">
+          <h2 id="wt-saved-title">Your saved walkthroughs</h2>
+          {savedError && <p className="wt-alert">{savedError}</p>}
+          {saved === null ? (
+            <p className="wt-micro">Loading…</p>
+          ) : saved.length === 0 ? (
+            <p className="wt-micro">
+              None yet. Finish a tour and choose <strong>Save to my account</strong>.
+            </p>
+          ) : (
+            <ul className="wt-saved-list">
+              {saved.map((item) => (
+                <li key={item.id}>
+                  <div>
+                    <strong>{item.rentalName ?? unitLabel(item.unitType)}</strong>
+                    <span className="wt-micro">
+                      {new Date(item.recordedAt).toLocaleDateString()} · {unitLabel(item.unitType)}{" "}
+                      · {item.photoCount} photo{item.photoCount === 1 ? "" : "s"}
+                      {item.isSample ? " · sample" : ""}
+                    </span>
+                  </div>
+                  <div className="wt-saved-actions">
+                    <button
+                      className="wt-btn"
+                      onClick={() => onOpenSaved?.(item)}
+                      disabled={openingId !== null}
+                    >
+                      {openingId === item.id ? "Opening…" : "Open"}
+                    </button>
+                    <button
+                      className="wt-btn wt-btn-ghost"
+                      onClick={() => onDeleteSaved?.(item)}
+                      aria-label={`Delete saved walkthrough from ${new Date(item.recordedAt).toLocaleDateString()}`}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : (
+        <p className="wt-micro">
+          Saved walkthroughs open on this device only. Nothing is uploaded.
+          {onSignIn && (
+            <>
+              {" "}
+              <button className="wt-link" onClick={onSignIn}>
+                Sign in
+              </button>{" "}
+              to keep them in your account.
+            </>
+          )}
+        </p>
+      )}
     </section>
   );
 }

@@ -26,6 +26,7 @@ import { SAMPLE, sampleAnalysis } from "./sample";
 import { Tour, type ShotStatus } from "./Tour";
 import { TypePicker } from "./TypePicker";
 import type { RentalContext, ResultsView } from "./view";
+import type { SavedWalkthrough } from "../cloud/walkthroughs";
 import "./walkthrough.css";
 import "./tour.css";
 
@@ -136,7 +137,19 @@ function recordPhotos(view: ResultsView): {
   return { photos, slots };
 }
 
-export function Walkthrough({ rental = null }: { rental?: RentalContext | null }) {
+/** A signed-in renter (Supabase). Null keeps the original download-only behaviour. */
+export type WalkthroughAccount = { userId: string; displayName: string };
+
+export function Walkthrough({
+  rental = null,
+  account = null,
+  onSignIn,
+}: {
+  rental?: RentalContext | null;
+  account?: WalkthroughAccount | null;
+  /** Shown as "Sign in to save to your account" when accounts exist but nobody is signed in. */
+  onSignIn?: () => void;
+}) {
   const [stage, setStage] = useState<Stage>(
     memory?.stage === "analyzing" ? "results" : (memory?.stage ?? "intro"),
   );
@@ -153,6 +166,10 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [savedList, setSavedList] = useState<SavedWalkthrough[] | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [openingId, setOpeningId] = useState<string | null>(null);
+  const accountId = account?.userId ?? null;
   // shotId -> photo id that the latest analysis belongs to, so a retake's result wins over an older one.
   const latest = useRef<Record<string, string>>({});
 
@@ -314,6 +331,21 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
     window.setTimeout(() => setStage("results"), SAMPLE_DELAY_MS);
   };
 
+  const refreshSaved = useCallback(async () => {
+    if (!accountId) {
+      setSavedList(null);
+      return;
+    }
+    const { listWalkthroughs } = await import("../cloud/walkthroughs");
+    const list = await listWalkthroughs();
+    setSavedList(list ?? []);
+    setListError(list ? null : "Couldn't load your saved walkthroughs.");
+  }, [accountId]);
+
+  useEffect(() => {
+    if (stage === "intro") void refreshSaved();
+  }, [stage, refreshSaved]);
+
   const startTour = (demo: boolean) => {
     setIsDemo(demo);
     setStaticView(null);
@@ -321,11 +353,44 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
     setStage("type");
   };
 
-  const openSaved = async (file: File) => {
+  const openSaved = async (file: File) => openRecordBytes(new Uint8Array(await file.arrayBuffer()));
+
+  const openFromAccount = async (saved: SavedWalkthrough) => {
+    setError(null);
+    setOpeningId(saved.id);
+    try {
+      const { downloadWalkthrough } = await import("../cloud/walkthroughs");
+      const bytes = await downloadWalkthrough(saved.storagePath);
+      if (!bytes) {
+        setError("Couldn't download that walkthrough. Try again.");
+        return;
+      }
+      await openRecordBytes(bytes);
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const deleteFromAccount = async (saved: SavedWalkthrough) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm("Delete this saved walkthrough from your account?")
+    ) {
+      return;
+    }
+    const { deleteWalkthrough } = await import("../cloud/walkthroughs");
+    if (await deleteWalkthrough(saved)) {
+      setSavedList((list) => list?.filter((item) => item.id !== saved.id) ?? null);
+    } else {
+      setListError("Couldn't delete that walkthrough. Try again.");
+    }
+  };
+
+  const openRecordBytes = async (bytes: Uint8Array) => {
     setError(null);
     try {
       const { openRecord, recordAnalyses } = await import("./lib/record");
-      const opened = openRecord(new Uint8Array(await file.arrayBuffer()));
+      const opened = openRecord(bytes);
       const takenAt: ResultsView["takenAt"] = {};
       const notes: Record<string, string> = {};
       const quickChecks: Record<string, QuickAnswer> = {};
@@ -362,7 +427,7 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
     }
   };
 
-  const save = async () => {
+  const save = async (target: "download" | "account" = "download") => {
     setSaving(true);
     setSaveMessage(null);
     try {
@@ -386,6 +451,24 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
         rental: view.rental,
         isSample: view.source === "sample",
       });
+      if (target === "account" && account) {
+        const { uploadWalkthrough } = await import("../cloud/walkthroughs");
+        const result = await uploadWalkthrough({
+          userId: account.userId,
+          zip,
+          rentalName: saved.rental?.name ?? null,
+          unitType: saved.unitType,
+          photoCount: Object.keys(realPhotos).length,
+          isSample: saved.isSample,
+          recordedAt: saved.createdAt,
+        });
+        setSaveMessage(
+          result.ok
+            ? "Saved to your account. Reopen it any time from Walkthrough."
+            : `${result.error} You can still download a copy.`,
+        );
+        return;
+      }
       downloadBytes(zip, recordFileName(saved));
       setSaveMessage("Saved to your downloads. Keep it until you move out.");
     } catch {
@@ -425,6 +508,13 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
           onDemo={() => startTour(true)}
           onSample={runSample}
           onOpenRecord={openSaved}
+          account={account}
+          onSignIn={onSignIn}
+          saved={savedList}
+          savedError={listError}
+          openingId={openingId}
+          onOpenSaved={openFromAccount}
+          onDeleteSaved={deleteFromAccount}
         />
       )}
       {stage === "type" && (
@@ -503,6 +593,8 @@ export function Walkthrough({ rental = null }: { rental?: RentalContext | null }
           onNote={onNote}
           onRetry={retry}
           onSave={save}
+          signedIn={Boolean(account)}
+          onSignIn={onSignIn}
           onBack={() => setStage("tour")}
           onStartOver={startOver}
         />

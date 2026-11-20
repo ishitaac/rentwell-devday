@@ -8,4 +8,7 @@ interface ImportMetaEnv {
   /** Supabase project URL and public anon key (read-only listings). Safe to expose; never the service key. */
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
+  /** Optional one-click presenter login for a throwaway demo renter account. Public values. */
+  readonly VITE_DEMO_RENTER_EMAIL?: string;
+  readonly VITE_DEMO_RENTER_PASSWORD?: string;
 }

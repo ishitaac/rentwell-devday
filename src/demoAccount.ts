@@ -134,7 +134,7 @@ function isRoommateSelection(value: unknown): value is RoommateSelection {
   );
 }
 
-function isSavedRentalPlan(value: unknown): value is SavedRentalPlan {
+export function isSavedRentalPlan(value: unknown): value is SavedRentalPlan {
   if (!isRecord(value) || value.version !== 1) return false;
   const origins = ["listings", "rental-entry", "manager"];
   const roommateStatuses = ["not-started", "selected", "skipped"];
